@@ -6,7 +6,7 @@
 <img alt="GitHub package.json dependency version (prod)" src="https://img.shields.io/github/package-json/dependency-version/ayberktandogan/ForFansubs-NodeApp---Back-End/express?style=for-the-badge">
 <img alt="GitHub package.json dependency version (prod)" src="https://img.shields.io/github/package-json/dependency-version/ayberktandogan/ForFansubs-NodeApp---Back-End/mariadb?style=for-the-badge"> 
 <br/>
-<img src="https://repository-images.githubusercontent.com/211534524/95359180-e5e8-11e9-9fc9-71644c546917" alt="cover-image" width="1000px"/>
+<img src="https://repository-images.githubusercontent.com/212566993/16902280-e5ef-11e9-9ed4-77af26c3f71a" alt="cover-image" width="1000px"/>
 </p>
 
 ## Yükleme Talimatları
