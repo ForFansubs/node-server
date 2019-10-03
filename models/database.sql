@@ -12,11 +12,11 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
 
--- Dumping database structure for puzzlesubs
-CREATE DATABASE IF NOT EXISTS `puzzlesubs` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `puzzlesubs`;
+-- Dumping database structure for forfansubs
+CREATE DATABASE IF NOT EXISTS `forfansubs` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `forfansubs`;
 
--- Dumping structure for table puzzlesubs.anime
+-- Dumping structure for table forfansubs.anime
 CREATE TABLE IF NOT EXISTS `anime` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `slug` char(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `anime` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table puzzlesubs.download_link
+-- Dumping structure for table forfansubs.download_link
 CREATE TABLE IF NOT EXISTS `download_link` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `anime_id` int(11) NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS `download_link` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table puzzlesubs.episode
+-- Dumping structure for table forfansubs.episode
 CREATE TABLE IF NOT EXISTS `episode` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `anime_id` int(11) NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `episode` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table puzzlesubs.log
+-- Dumping structure for table forfansubs.log
 CREATE TABLE IF NOT EXISTS `log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user` char(255) NOT NULL,
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `log` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table puzzlesubs.manga
+-- Dumping structure for table forfansubs.manga
 CREATE TABLE IF NOT EXISTS `manga` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `slug` char(255) NOT NULL,
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `manga` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table puzzlesubs.notification
+-- Dumping structure for table forfansubs.notification
 CREATE TABLE IF NOT EXISTS `notification` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `content` text NOT NULL,
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS `notification` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table puzzlesubs.permission
+-- Dumping structure for table forfansubs.permission
 CREATE TABLE IF NOT EXISTS `permission` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `slug` char(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -135,14 +135,14 @@ CREATE TABLE IF NOT EXISTS `permission` (
   UNIQUE KEY `slug` (`slug`)
 ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
 
--- Dumping data for table puzzlesubs.permission: ~4 rows (approximately)
+-- Dumping data for table forfansubs.permission: ~4 rows (approximately)
 DELETE FROM `permission`;
 /*!40000 ALTER TABLE `permission` DISABLE KEYS */;
 INSERT INTO `permission` (`id`, `slug`, `name`, `permission_set`, `color`) VALUES
 	(1, 'yonetici', 'Yönetici', '["see-admin-page","see-logs","add-anime","update-anime","delete-anime","add-manga","update-manga","delete-manga","add-permission","update-permission","delete-permission","add-user","update-user","delete-user","add-episode","update-episode","delete-episode","add-watch-link","delete-watch-link","featured-anime","add-download-link","delete-download-link","see-administrative-stuff","take-backup"]', '#CC0000');
 /*!40000 ALTER TABLE `permission` ENABLE KEYS */;
 
--- Dumping structure for table puzzlesubs.user
+-- Dumping structure for table forfansubs.user
 CREATE TABLE IF NOT EXISTS `user` (
   `id` int(55) NOT NULL AUTO_INCREMENT,
   `slug` char(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table puzzlesubs.watch_link
+-- Dumping structure for table forfansubs.watch_link
 CREATE TABLE IF NOT EXISTS `watch_link` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `anime_id` int(11) NOT NULL,
