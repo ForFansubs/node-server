@@ -1,0 +1,37 @@
+{
+  "name": "puzzlesubs-back",
+  "version": "2.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client": "cd client && npm start",
+    "server": "nodemon server.js",
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "production": "node ./server"
+  },
+  "author": "aybertocarlos",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.1",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.18.3",
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "gravatar": "^1.8.0",
+    "isbot": "^2.3.0",
+    "jsdom": "^13.2.0",
+    "jsonwebtoken": "^8.4.0",
+    "mariadb": "^2.0.3",
+    "mysqldump": "^2.2.1",
+    "nodemailer": "^6.1.1",
+    "nodemon": "^1.18.11",
+    "passport": "^0.4.0",
+    "passport-jwt": "^4.0.0",
+    "path": "^0.12.7",
+    "qs": "^6.6.0",
+    "sharp": "^0.22.0",
+    "uniqid": "^5.0.3",
+    "validator": "^10.11.0"
+  }
+}
