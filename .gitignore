@@ -6,10 +6,10 @@
 /client
 /admin
 /images/*
-.idea/
 .vscode/
 
 # misc
+.idea/
 /config/ads.txt
 run-service-dev.bat
 .env

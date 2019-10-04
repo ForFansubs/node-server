@@ -1,3 +1,5 @@
+const sendMail = require('../../config/mailer').sendMail;
+const SHA256 = require("crypto-js/sha256");
 const express = require('express');
 const router = express.Router();
 const gravatar = require('gravatar');
@@ -9,7 +11,7 @@ const log_fail = require('../../config/log_fail')
 const mariadb = require('../../config/maria')
 const keys = require('../../config/keys');
 
-const { NODE_ENV } = process.env
+const {NODE_ENV} = process.env
 
 // Load Input Validation
 const validateRegisterInput = require('../../validation/register');
@@ -31,15 +33,86 @@ const slugify = text => {
         .replace(/-+$/, '') // Trim - from end of text
 }
 
+// @route   GET api/kullanici/kayit
+// @desc    Register user
+// @access  Public
+router.post('/kayit', (req, res) => {
+    const {name, email, password} = req.body
+    const {errors, isValid} = validateRegisterInput(req.body);
+    // Check Validation
+    if (!isValid) {
+        return res.status(400).json(errors);
+    }
+    mariadb.query(`SELECT name, email FROM user WHERE email='${email}' OR name='${name}'`).then(user => {
+        if (user[0]) {
+            errors.username = "Kullanıcı adı veya email kullanılıyor."
+            return res.status(400).json({
+                ...errors,
+                'err': 'Kullanıcı adı veya email kullanılıyor'
+            });
+        } else {
+            const avatar = gravatar.url(req.body.email, {
+                s: '200', // Size
+                r: 'pg', // Rating
+                d: 'mm' // Default
+            });
+            let newUser = {
+                slug: slugify(name),
+                name: name,
+                email: email,
+                avatar,
+                password: password,
+                activated: 0,
+            }
+            bcrypt.genSalt(10, (err, salt) => {
+                bcrypt.hash(newUser.password, salt, (err, hash) => {
+                    if (err) throw err;
+                    newUser.password = hash;
+                    const keys = Object.keys(newUser)
+                    const values = Object.values(newUser)
+                    mariadb.query(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
+                        .then(user_result => {
+                            const hash = SHA256(`${(new Date()).toString()} ${user_result.insertId}`)
+                            mariadb.query(`INSERT INTO pending_user (user_id, hash_key) VALUES (${user_result.insertId}, "${hash}")`)
+                                .then(_ => {
+                                    const payload = {
+                                        to: email,
+                                        subject: `${process.env.SITE_NAME} Mail Onaylama - no-reply`,
+                                        text: "",
+                                        html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/512.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle"> Sitemize hoş geldin ${name}. Kaydını tamamlamak için lütfen aşağıdaki butona bas. (Bu link 10 dakika sonra geçersiz olacaktır.) </p><a class="buton" href="${process.env.HOST_URL}/kayit-tamamla/${hash}" > Kaydı tamamla </a> </div></div></body></html>`
+                                    }
+                                    sendMail(payload)
+                                        .then(_ => res.status(200).json({'success': 'success'}))
+                                        .catch(_ => {
+                                            res.status(400).json({'err': 'Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin.'})
+                                            mariadb.query(`DELETE FROM user WHERE id=${user_result.insertId}`)
+                                                .catch(_ => console.log(`${user_result.insertId} id'li kullanıcının hash'i oluşturuldu, fakat mail yollayamadık. Fazlalık hesabı da silerken bir sorunla karşılaştık.`))
+                                        })
+                                })
+                                .catch(_ => {
+                                    res.status(400).json({'err': 'Ekleme sırasında bir şeyler yanlış gitti.'})
+                                    mariadb.query(`DELETE FROM user WHERE id=${user_result.insertId}`)
+                                        .catch(_ => console.log(`${user_result.insertId} id'li kullanıcının hash'i oluşturulamadı. Fazlalık hesabı da silerken bir sorunla karşılaştık.`))
+                                })
+                        })
+                        .catch(_ => {
+                            res.status(400).json({'err': 'Ekleme sırasında bir şeyler yanlış gitti.'})
+                        })
+                });
+            })
+        }
+    })
+})
+
 // @route   GET api/kullanici/kayit/admin
 // @desc    Register user (perm: "add-user")
 // @access  Private
 router.post('/kayit/admin', (req, res) => {
-    const { name, email, password } = req.body
+    const {name, email, password} = req.body
 
-    is_perm(req.headers.authorization, "add-user").then(({ is_perm, username }) => {
+    is_perm(req.headers.authorization, "add-user").then(({is_perm, username}) => {
         if (is_perm) {
-            const { errors, isValid } = validateRegisterInput(req.body);
+            const {errors, isValid} = validateRegisterInput(req.body);
             // Check Validation
             if (!isValid) {
                 return res.status(400).json(errors);
@@ -73,24 +146,23 @@ router.post('/kayit/admin', (req, res) => {
                             const values = Object.values(newUser)
                             mariadb.query(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
                                 .then(result => {
-                                    res.status(200).json({ 'success': 'success' })
+                                    res.status(200).json({'success': 'success'})
                                     log_success('add-user', username, result.insertId)
                                 })
                                 .catch(_ => {
                                     log_fail('add-user', username, '', name)
-                                    res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
+                                    res.status(400).json({'err': 'Ekleme sırasında bir şeyler yanlış gitti.'})
                                 })
                         });
                     })
                 }
             })
-        }
-        else {
+        } else {
             log_fail('add-user', username, '', name)
-            res.status(403).json({ 'err': 'Yetkisiz kullanım!' })
+            res.status(403).json({'err': 'Yetkisiz kullanım!'})
         }
     })
-        .catch(_ => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
+        .catch(_ => res.status(403).json({'err': 'Yetkisiz kullanım!'}))
 })
 
 // @route   GET api/kullanici/login
@@ -141,8 +213,8 @@ router.post('/giris', (req, res) => {
                 jwt.sign(
                     payload,
                     keys.secretOrKey, {
-                    expiresIn: NODE_ENV === "development" ? '3650d' : '12h'
-                },
+                        expiresIn: NODE_ENV === "development" ? '3650d' : '12h'
+                    },
                     (err, token) => {
                         res.json({
                             success: true,
@@ -168,7 +240,7 @@ router.post('/giris', (req, res) => {
 // @desc    Update user (perm: "update-user")
 // @access  Private
 router.post('/uye-guncelle', (req, res) => {
-    const { id, slug, name, password, permission_level, avatar } = req.body
+    const {id, slug, name, password, permission_level, avatar} = req.body
     is_perm(req.headers.authorization, "update-user").then((is_perm, username) => {
         if (is_perm) {
             const updatedUser = {
@@ -198,47 +270,45 @@ router.post('/uye-guncelle', (req, res) => {
                     console.log(err)
                 })
             return false
-        }
-        else {
+        } else {
             log_fail('update-user', username, id)
-            res.status(403).json({ 'err': 'Yetkisiz kullanım!' })
+            res.status(403).json({'err': 'Yetkisiz kullanım!'})
         }
-    }).catch(_ => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
+    }).catch(_ => res.status(403).json({'err': 'Yetkisiz kullanım!'}))
 })
 
 // @route   GET api/kullanici/uye-sil
 // @desc    Delete user (perm: "delete-permission")
 // @access  Private
 router.post('/uye-sil', (req, res) => {
-    const { user_id } = req.body
-    is_perm(req.headers.authorization, "delete-user").then(({ is_perm, username }) => {
+    const {user_id} = req.body
+    is_perm(req.headers.authorization, "delete-user").then(({is_perm, username}) => {
         if (is_perm) {
             mariadb.query(`SELECT name FROM user WHERE id='${user_id}'`)
                 .then(user => {
                     mariadb.query(`DELETE FROM user WHERE id=${user_id}`)
                         .then(_ => {
-                            res.status(200).json({ 'success': 'success' })
+                            res.status(200).json({'success': 'success'})
                             log_success('delete-user', username, '', user[0].name)
                         })
                         .catch(_ => {
                             log_fail('delete-user', username, user_id)
-                            res.status(400).json({ 'err': 'Silme sırasında bir şeyler yanlış gitti.' })
+                            res.status(400).json({'err': 'Silme sırasında bir şeyler yanlış gitti.'})
                         })
                     return false
                 })
-        }
-        else {
+        } else {
             log_fail('delete-user', username, user_id)
-            res.status(403).json({ 'err': 'Yetkisiz kullanım!' })
+            res.status(403).json({'err': 'Yetkisiz kullanım!'})
         }
-    }).catch(_ => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
+    }).catch(_ => res.status(403).json({'err': 'Yetkisiz kullanım!'}))
 })
 
 // @route   GET api/kullanici/adminpage
 // @desc    Return to see if user can see the page or not (perm: "see-admin-page")
 // @access  Private
 router.get('/adminpage', (req, res) => {
-    is_perm(req.headers.authorization, "see-admin-page").then(({ is_perm, username }) => {
+    is_perm(req.headers.authorization, "see-admin-page").then(({is_perm, username}) => {
         if (is_perm) {
             if (!req.query.withprops)
                 return res.status(200).json({
@@ -247,21 +317,20 @@ router.get('/adminpage', (req, res) => {
             else {
                 mariadb.query(`SELECT (SELECT COUNT(*) FROM anime) AS ANIME_COUNT, (SELECT COUNT(*) FROM manga) AS MANGA_COUNT, (SELECT COUNT(*) FROM episode) AS EPISODE_COUNT, (SELECT COUNT(*) FROM download_link) AS DOWNLOADLINK_COUNT, (SELECT COUNT(*) FROM watch_link) AS WATCHLINK_COUNT, (SELECT COUNT(*) FROM user) AS USER_COUNT, (SELECT permission_set FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_LIST, (SELECT name FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_NAME`)
                     .then(count => {
-                        return res.status(200).json({ ...count[0] })
+                        return res.status(200).json({...count[0]})
                     })
             }
+        } else {
+            return res.status(403).json({'err': 'Yetkisiz kullanım!'})
         }
-        else {
-            return res.status(403).json({ 'err': 'Yetkisiz kullanım!' })
-        }
-    }).catch(_ => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
+    }).catch(_ => res.status(403).json({'err': 'Yetkisiz kullanım!'}))
 });
 
 // @route   GET api/kullanici/uye-liste
 // @desc    Get all users (perm: "update-permission")
 // @access  Private
 router.get('/uye-liste', (req, res) => {
-    is_perm(req.headers.authorization, "update-permission").then(({ is_perm }) => {
+    is_perm(req.headers.authorization, "update-permission").then(({is_perm}) => {
         if (is_perm) {
             mariadb.query(`SELECT id, slug, name, permission_level, avatar, email FROM user`)
                 .then(users => {
@@ -269,13 +338,12 @@ router.get('/uye-liste', (req, res) => {
                 })
                 .catch(err => console.log(err))
             return false
-        }
-        else {
+        } else {
             res.status(403).json({
                 'err': 'Yetkisiz kullanım!'
             })
         }
-    }).catch(_ => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
+    }).catch(_ => res.status(403).json({'err': 'Yetkisiz kullanım!'}))
 })
 
 module.exports = router;

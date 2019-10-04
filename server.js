@@ -17,7 +17,7 @@ const administrative = require('./routes/api/administrative')
 const permission = require('./routes/api/permission')
 const opgAnime = require('./routes/opg/anime')
 const opgManga = require('./routes/opg/manga')
-//const ceviriler = require('./config/ceviriler')
+const activateUser = require('./routes/kayit-tamamla/index')
 
 // Passport middleware
 app.use(passport.initialize())
@@ -54,8 +54,7 @@ app.use('/api/resimler', images)
 app.use('/api/sistem', administrative)
 app.use('/opg/anime', opgAnime)
 app.use('/opg/manga', opgManga)
-//TODO: Bot special page too experimental
-//app.use('/ceviriler/', ceviriler)
+app.use('/kayit-tamamla', activateUser)
 
 app.use('/admin', express.static(__dirname + '/admin/'));
 app.use(express.static(__dirname + '/client/'));
