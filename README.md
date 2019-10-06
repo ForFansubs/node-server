@@ -10,40 +10,5 @@
 </p>
 
 ## Yükleme Talimatları
-```
-npm i
-```
 
-sonrasında da 
-
-```
-npm run server
-npm run production
-```
-
-yazarak çalıştırabilirsiniz. Ancak startlamadan ya da buildlemeden önce aşağıda gereken dosyaları oluşturun.
-
-### Gerekenler
-
-#### 1. ./.env
-```env
-PORT=                       // Servisin çalışacağı port.
-HOST_URL=                   // Servisin çalışacağı url.
-NODE_ENV=                   // Servisin çalışacağı enviroment.
-SITE_NAME=                  // Sitenin ismi. (Örn: PuzzleSubs)
-SECRET_OR_KEY=              // Passportjs'in kullanacağı secret key.
-DISCORD_ANIME_WH=           // Discord Anime kanalı Webhook
-DISCORD_EPISODE_WH=         // Discord Bölüm kanalı Webhook
-DISCORD_MANGA_WH=           // Discord Manga kanalı Webhook
-DB_HOST=                    // MariaDB Host
-DB_USER=                    // MariaDB Kullanıcı ismi
-DB_NAME=                    // MariaDB Database ismi
-DB_PASSWORD=                // MariaDB Kullanıcı şifre
-DB_CONNECTION_LIMIT=100     // MariaDB bağlantı limit sayısı
-CF_ZONEID=                  // CloudFlare cache temizleme API yolu, ZONEID
-CF_EMAIL=                   // CloudFlare cache temizleme API yolu, EMAIL    
-CF_APIKEY=                  // CloudFlare cache temizleme API yolu, APIKEY
-SMTP_USERNAME=              // SMTP Mail için kullanıcı adı
-SMTP_PASSWORD=              // SMTP Mail için şifre
-SMTP_HOST=                  // SMTP Mail için host
-```
+**[Buraya tıklayarak wiki'ye gidin.](https://ayberktandogan.github.io/ForFansubs-Wiki/)**
