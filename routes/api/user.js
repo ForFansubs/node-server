@@ -200,7 +200,7 @@ router.post('/giris', (req, res) => {
 
                     return res.status(403).json({
                         ...errors,
-                        'err': 'Lütfen email kutunuzu kontrol edin.'
+                        'err': 'Lütfen emailinizi kontrol edin.'
                     });
                 }
                 // User Matched

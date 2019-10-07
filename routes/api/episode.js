@@ -55,7 +55,7 @@ const internalAddWatchLink = (link, anime_id, episode_number, created_by_id) => 
 router.get('/:slug/watch', (req, res) => {
     const { slug } = req.params
 
-    mariadb.query(`SELECT *, (SELECT name FROM anime WHERE id=episode.anime_id) as anime_name, (SELECT cover_art FROM anime WHERE id=episode.anime_id) as cover_art FROM episode WHERE anime_id=(SELECT id FROM anime WHERE slug="${slug}") AND special_type!='toplu' ORDER BY special_type, ABS(episode_number)`)
+    mariadb.query(`SELECT *, (SELECT name FROM anime WHERE id=episode.anime_id) as anime_name, (SELECT slug FROM anime WHERE id=episode.anime_id) as anime_slug, (SELECT cover_art FROM anime WHERE id=episode.anime_id) as cover_art FROM episode WHERE anime_id=(SELECT id FROM anime WHERE slug="${slug}") AND special_type!='toplu' ORDER BY special_type, ABS(episode_number)`)
         .then(eps => {
             res.status(200).json(eps)
         })
