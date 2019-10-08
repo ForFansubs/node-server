@@ -124,6 +124,15 @@ CREATE TABLE IF NOT EXISTS `notification` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table forfansubs.pending_user
+CREATE TABLE IF NOT EXISTS `pending_user` (
+  `user_id` int(11) NOT NULL,
+  `hash_key` text NOT NULL,
+  `created_time` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 -- Dumping structure for table forfansubs.permission
 CREATE TABLE IF NOT EXISTS `permission` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
