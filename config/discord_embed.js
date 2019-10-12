@@ -4,7 +4,7 @@ const axios = require('axios')
 const episodeId = process.env.DISCORD_EPISODE_WH
 const animeId = process.env.DISCORD_ANIME_WH
 const mangaId = process.env.DISCORD_MANGA_WH
-const logoLink = `${process.env.HOST_URL}/512.png`
+const logoLink = `${process.env.HOST_URL}/logo.png`
 
 const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
     if (process.env.NODE_ENV !== 'production') return
