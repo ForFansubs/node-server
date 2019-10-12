@@ -40,10 +40,7 @@ const slugify = text => {
 }
 
 //Anime ekleme ekranında bölümlerin toplu açılması istenmişse, bu fonksiyon çalışır.
-const internalBulkEpisodeAdd = (token, mal_link, anime_id, translators, encoders, ta_link, origin, episode_count, version) => {
-    let decoded = jwt.verify(token, keys.secretOrKey)
-    const link = mal_link.split('/')
-    const id = link[4]
+const internalBulkEpisodeAdd = (user_id, mal_link, anime_id, translators, encoders, ta_link, origin, episode_count) => {
     let episodeList = []
     let episodeNumbers = []
     //Bulunan bölümleri döndür.
@@ -52,7 +49,7 @@ const internalBulkEpisodeAdd = (token, mal_link, anime_id, translators, encoders
         const credits = `${translators} / ${encoders}`
         //Bölüm objesini oluştur.
         const newEpisode = [
-            anime_id, episode, credits, decoded.id, ''
+            anime_id, episode, credits, user_id, ''
         ]
         //Objeyi listenin sonuna ekle.
         episodeList.push(newEpisode)
@@ -61,16 +58,7 @@ const internalBulkEpisodeAdd = (token, mal_link, anime_id, translators, encoders
     //İlk parantez içindeki değerler, objelerin içinde sıralı verilerin, databaseteki tablein hangi sütunlarına ekleneceğini belirliyor.
     //İkinci virgül içindekiler de hangi verilerin alınacağını, hangilerinin alınmayacağını belirtiyor.
     mariadb.batch(`INSERT INTO episode (anime_id,episode_number,credits,created_by,special_type) VALUES (?, ?, ?, ?, ?)`, episodeList)
-        .then(_ => {
-            const newWatchLink = {
-                anime_id,
-                link: ta_link,
-                episodes: episodeNumbers.join(','),
-                token
-            }
-            axios.post(`${version === 'bd' ? `http://${origin}/api/episode/ta-bolum-cek-bd` : `http://${origin}/api/episode/ta-bolum-cek`}`, newWatchLink)
-                .catch(err => console.log(err))
-        })
+        .then(_ => _)
         .catch(err => console.log(err))
 }
 
@@ -157,7 +145,7 @@ router.post('/anime-ekle', (req, res) => {
                                 sendDiscordEmbed('anime', result.insertId, req.headers.origin)
                                 //Eğer ön taraftan bölümlerin eklenmesi de istenmişse ekle.
                                 if (req.body.getEpisodes && req.body.episode_count !== 0) {
-                                    internalBulkEpisodeAdd(req.body.token, req.body.mal_link, result.insertId, req.body.translators, req.body.encoders, req.body.ta_link, req.headers.host, req.body.episode_count, req.body.version)
+                                    internalBulkEpisodeAdd(user_id, req.body.mal_link, result.insertId, req.body.translators, req.body.encoders, req.body.ta_link, req.headers.host, req.body.episode_count)
                                 }
                             })
                             .catch(err => {
@@ -294,36 +282,6 @@ router.post('/update-featured-anime', (req, res) => {
     })
         .catch(err => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
 })
-
-/* // @route   GET api/anime/arama-liste
-// @desc    Get latest animes
-// @access  Private
-router.get('/arama-liste/:page?', (req, res) => {
-    if (!req.query.text) {
-        mariadb.query(`SELECT id, slug, name, synopsis, cover_art, genres, studios, premiered, version FROM anime ORDER BY name LIMIT ${req.params.page * 24},24`)
-            .then(animes => {
-                const animeList = animes.map(anime => {
-                    anime.genres = anime.genres.split(',')
-                    anime.studios = anime.studios.split(',')
-                    return anime
-                })
-                res.status(200).json(animeList)
-            })
-    }
-    else {
-        const text = req.query.text.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-        mariadb.query(`SELECT id, slug, name, synopsis, cover_art, genres, studios, premiered, version FROM anime WHERE name LIKE '%${text}%' ORDER BY name`)
-            .then(animes => {
-                const animeList = animes.map(anime => {
-                    anime.genres = anime.genres.split(',')
-                    anime.studios = anime.studios.split(',')
-                    return anime
-                })
-                res.status(200).json(animeList)
-            })
-            .catch(err => res.status(200).json({ 'err': err }))
-    }
-}) */
 
 // @route   GET api/featured-anime
 // @desc    Get featured-anime

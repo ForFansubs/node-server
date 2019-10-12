@@ -33,20 +33,15 @@ router.get('/force-header-update', (req, res) => {
                     }
                 }
                 mariadb.query(`SELECT slug FROM anime`).then(animes => {
-                    const lenght = Object.keys(animes).length
-                    for (let i = 0; i < lenght; i++) {
+                    for (let i = 0; i < animes.length-1; i++) {
                         const slug = animes[i].slug
                         setTimeout(() => {
-                            axios.get('https://wallhaven.now.sh/search?keyword=' + slug)
+                            axios.get('https://kitsu.io/api/edge/anime?filter[slug]=' + slug)
                                 .then(resp => {
-                                    for (const image of resp.data.images) {
-                                        if (image.width >= 1920 && image.width > image.height) {
-                                            axios.get('https://wallhaven.now.sh/details/' + image.id).then(resp => {
-                                                downloadImage(resp.data.fullImage, "header", slug, "anime")
-                                            }).catch(_ => console.log(slug + " alırken bir sorun oluştu."))
-                                            break;
-                                        }
+                                    if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original){
+                                        downloadImage(resp.data.data[0].attributes.coverImage.original, "header", slug, "anime")
                                     }
+                                    else return
                                 })
                                 .catch(_ => console.log(slug + " alırken bir sorun oluştu."))
                         }, 3000 * i, slug)
@@ -64,20 +59,15 @@ router.get('/force-header-update', (req, res) => {
                     }
                 }
                 mariadb.query(`SELECT slug FROM manga`).then(mangas => {
-                    const lenght = Object.keys(mangas).length
-                    for (let i = 0; i < lenght; i++) {
+                    for (let i = 0; i < mangas.length-1; i++) {
                         const slug = mangas[i].slug
                         setTimeout(() => {
-                            axios.get('https://wallhaven.now.sh/search?keyword=' + slug)
+                            axios.get('https://kitsu.io/api/edge/manga?filter[slug]=' + slug)
                                 .then(resp => {
-                                    for (const image of resp.data.images) {
-                                        if (image.width >= 1920 && image.width > image.height) {
-                                            axios.get('https://wallhaven.now.sh/details/' + image.id).then(resp => {
-                                                downloadImage(resp.data.fullImage, "header", slug, "manga")
-                                            }).catch(_ => console.log(slug + " alırken bir sorun oluştu."))
-                                            break;
-                                        }
+                                    if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original){
+                                        downloadImage(resp.data.data[0].attributes.coverImage.original, "header", slug, "manga")
                                     }
+                                    else return
                                 })
                                 .catch(_ => console.log(slug + " alırken bir sorun oluştu."))
                         }, 3000 * i, slug)
@@ -113,16 +103,12 @@ router.get('/force-anime-header-update', (req, res) => {
                     for (let i = 0; i < lenght; i++) {
                         const slug = animes[i].slug
                         setTimeout(() => {
-                            axios.get('https://wallhaven.now.sh/search?keyword=' + slug)
+                            axios.get('https://kitsu.io/api/edge/anime?filter[slug]=' + slug)
                                 .then(resp => {
-                                    for (const image of resp.data.images) {
-                                        if (image.width >= 1920 && image.width > image.height) {
-                                            axios.get('https://wallhaven.now.sh/details/' + image.id).then(resp => {
-                                                downloadImage(resp.data.fullImage, "header", slug, "anime")
-                                            }).catch(_ => console.log(slug + " alırken bir sorun oluştu."))
-                                            break;
-                                        }
+                                    if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original){
+                                        downloadImage(resp.data.data[0].attributes.coverImage.original, "header", slug, "anime")
                                     }
+                                    else return
                                 })
                                 .catch(_ => console.log(slug + " alırken bir sorun oluştu."))
                         }, 3000 * i, slug)
@@ -158,16 +144,12 @@ router.get('/force-manga-header-update', (req, res) => {
                     for (let i = 0; i < lenght; i++) {
                         const slug = mangas[i].slug
                         setTimeout(() => {
-                            axios.get('https://wallhaven.now.sh/search?keyword=' + slug)
+                            axios.get('https://kitsu.io/api/edge/manga?filter[slug]=' + slug)
                                 .then(resp => {
-                                    for (const image of resp.data.images) {
-                                        if (image.width >= 1920 && image.width > image.height) {
-                                            axios.get('https://wallhaven.now.sh/details/' + image.id).then(resp => {
-                                                downloadImage(resp.data.fullImage, "header", slug, "manga")
-                                            }).catch(_ => console.log(slug + " alırken bir sorun oluştu."))
-                                            break;
-                                        }
+                                    if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original){
+                                        downloadImage(resp.data.data[0].attributes.coverImage.original, "header", slug, "manga")
                                     }
+                                    else return
                                 })
                                 .catch(_ => console.log(slug + " alırken bir sorun oluştu."))
                         }, 3000 * i, slug)
@@ -306,20 +288,6 @@ router.get('/force-header-optimize', (req, res) => {
                     }, 1000 * i, fileName)
                 }
             });
-        }
-        else {
-            res.status(403).json({ 'err': 'Bu yetkiyi kullanamazsınız.' })
-        }
-    }).catch(_ => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
-})
-
-// @route   GET api/administrative/force-restart
-// @desc    Force restart
-// @access  Public
-router.get('/force-restart', (req, res) => {
-    is_perm(req.headers.authorization, "see-administrative-stuff").then(({ is_perm }) => {
-        if (is_perm) {
-            process.exit(1);
         }
         else {
             res.status(403).json({ 'err': 'Bu yetkiyi kullanamazsınız.' })
