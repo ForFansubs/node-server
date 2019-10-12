@@ -4,7 +4,7 @@ const axios = require('axios')
 const episodeId = process.env.DISCORD_EPISODE_WH
 const animeId = process.env.DISCORD_ANIME_WH
 const mangaId = process.env.DISCORD_MANGA_WH
-const logoLink = "https://puzzlesubs.com/512.png"
+const logoLink = `${process.env.HOST_URL}/512.png`
 
 const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
     if (process.env.NODE_ENV !== 'production') return
@@ -32,8 +32,8 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                             url: `${cover_art}`
                         },
                         author: {
-                            name: "puzzlesubs.com",
-                            url: "https://puzzlesubs.com",
+                            name: process.env.SITE_NAME,
+                            url: process.env.HOST_URL,
                             icon_url: logoLink
                         }
                     }]
@@ -82,7 +82,7 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                             },
                             {
                                 name: `Konu Link`,
-                                value: `[PuzzleSubs](${prop2}/ceviriler/anime/${slug})`,
+                                value: `[${process.env.SITE_NAME}](${prop2}/ceviriler/anime/${slug})`,
                                 "inline": true
                             }
                         ],
@@ -95,8 +95,8 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                             url: `${cover_art}`
                         },
                         author: {
-                            name: "puzzlesubs.com",
-                            url: "https://puzzlesubs.com",
+                            name: process.env.SITE_NAME,
+                            url: process.env.HOST_URL,
                             icon_url: logoLink
                         }
                     }]
@@ -145,7 +145,7 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                             },
                             {
                                 name: `Konu Link`,
-                                value: `[PuzzleSubs](${prop2}/ceviriler/manga/${slug})`,
+                                value: `[${process.env.SITE_NAME}](${prop2}/ceviriler/manga/${slug})`,
                                 "inline": true
                             }
                         ],
@@ -158,8 +158,8 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                             url: `${cover_art}`
                         },
                         author: {
-                            name: "puzzlesubs.com",
-                            url: "https://puzzlesubs.com",
+                            name: process.env.SITE_NAME,
+                            url: process.env.HOST_URL,
                             icon_url: logoLink
                         }
                     }]
