@@ -23,12 +23,13 @@ module.exports = async function downloadImage(link, type, slug, type2) {
                         if (err) return console.log(err)
                         sharp(file).resize({ width: 1920, withoutEnlargement: true }).jpeg({ quality: 90 }).toFile(path)
                     })
-
                 })
                 writer.on('error', reject => {
                     console.log(reject)
                     console.log(slug + " yolunun headerında sorun var.")
-                    fs.unlinkSync(path)
+                    fs.unlink(path, (err) => {
+                        if (err) return console.log(err)
+                    })
                 })
             })
             break;
