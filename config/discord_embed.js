@@ -17,6 +17,9 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                 const title = `${name} | ${prop3 ? prop4 !== null ? prop3.toUpperCase() + " " + prop4 : prop3.toUpperCase() : prop4 + ". Bölüm"}`
                 const newEpisodeEmbed = {
                     username: "Yeni Bölüm Habercisi",
+                    // Embed kodun hemen üzerine tek mesajda sunucuyu etiketler.
+                    // @everyone yerine herhangi bir rolü etiketlemek isterseniz discord üzerinden \@RolAdı yazarak rol id'sini alıp @everyone yerine yazınız.
+                    content: " <:emojiadı:emoji-id> **Yeni Bir Bölüm Eklendi** @everyone ",
                     embeds: [{
                         title,
                         fields: [{
