@@ -241,7 +241,7 @@ router.post('/giris', (req, res) => {
 // @access  Private
 router.post('/uye-guncelle', (req, res) => {
     const {id, slug, name, password, permission_level, avatar} = req.body
-    is_perm(req.headers.authorization, "update-user").then((is_perm, username) => {
+    is_perm(req.headers.authorization, "update-user").then(({is_perm, username}) => {
         if (is_perm) {
             const updatedUser = {
                 slug,
