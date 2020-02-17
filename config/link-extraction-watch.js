@@ -27,7 +27,15 @@ const watchLinkExtract = link => {
         else if (link.match("userscloud.com")) extract.type = 'userscloud'
         else if (link.match("yourupload.com")) extract.type = 'yourupload'
         else if (link.match("www.fembed.com")) extract.type = 'fembed'
-        else if (link.match("www.fembed.com")) extract.type = 'rutube.ru'
+        else if (link.match("www.rutube.ru")) extract.type = 'rutube'
+        else if (link.match("vidfast.co")) extract.type = 'vidfast'
+        else if (link.match("vidia.tv")) extract.type = 'vidia'
+        else if (link.match("vidsat.net")) extract.type = 'vidsat'
+        else if (link.match("supervideo.tv")) extract.type = 'supervideo'
+        else if (link.match("clipwatching.com")) extract.type = 'clipwatching'
+        else if (link.match("jetload.net")) extract.type = 'jetload'
+        else if (link.match("fastplay.to")) extract.type = 'fastplay'
+        else if (link.match("streamwire.net")) extract.type = 'streamwire'
         else return false
         return extract
     }
@@ -151,6 +159,71 @@ const watchLinkExtract = link => {
         const videoId = link.split('/')[4]
         extract.src = `//www.fembed.com/v/${videoId}`
         extract.type = 'fembed'
+        return extract
+    }
+    else if (link.match("vidfast.co")) {
+        const videoId = link.split('/')[3].replace('.html', '').replace("embed-", '')
+        extract.src = `https://vidfast.co/embed-${videoId}.html`
+        extract.type = 'vidfast'
+        return extract
+    }
+    else if (link.match("vidia.tv")) {
+        const videoId = link.split('/')[3].replace('.html', '').replace("embed-", '')
+        extract.src = `https://vidia.tv/embed-${videoId}.html`
+        extract.type = 'vidia'
+        return extract
+    }
+    else if (link.match("vidsat.net")) {
+        const videoId = link.split('/')[3].replace('.html', '').replace("embed-", '')
+        extract.src = `https://vidsat.net/embed-${videoId}.html`
+        extract.type = 'vidsat'
+        return extract
+    }
+    else if (link.match("supervideo.tv")) {
+        let videoId
+        if (link.split('/')[3] === "e") {
+            extract.src = link
+            extract.type = 'supervideo'
+            return extract
+        }
+        else videoId = link.split('/')[3]
+        extract.src = `https://supervideo.tv/e/${videoId}`
+        extract.type = 'supervideo'
+        return extract
+    }
+    else if (link.match("clipwatching.com")) {
+        const videoId = link.split('/')[3].replace('.html', '').replace("embed-", '')
+        extract.src = `https://clipwatching.com/embed-${videoId}.html`
+        extract.type = 'clipwatching'
+        return extract
+    }
+    else if (link.match("jetload.net")) {
+        const videoId = link.split('/')[4]
+        extract.src = `https://jetload.net/e/${videoId}`
+        extract.type = 'jetload'
+        return extract
+    }
+    else if (link.match("jetload.net")) {
+        const videoId = link.split('/')[4]
+        extract.src = `https://jetload.net/e/${videoId}`
+        extract.type = 'jetload'
+        return extract
+    }
+    else if (link.match("fastplay.to")) {
+        extract.src = link
+        extract.type = 'fastplay'
+        return extract
+    }
+    else if (link.match("mystream.to")) {
+        const videoId = link.split('/')[4]
+        extract.src = `https://embed.mystream.to/${videoId}`
+        extract.type = 'mystream'
+        return extract
+    }
+    else if (link.match("streamwire.net")) {
+        const videoId = link.split('/')[3]
+        extract.src = `https://streamwire.net/e/${videoId}`
+        extract.type = 'streamwire'
         return extract
     }
     else {

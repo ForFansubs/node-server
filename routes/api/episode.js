@@ -403,7 +403,7 @@ router.post('/izleme-linki-sil', (req, res) => {
 router.get('/download-link-list', (req, res) => {
     is_perm(req.headers.authorization, "add-download-link").then(({ is_perm }) => {
         if (is_perm) {
-            const list = ['mega.nz', 'yadi.sk', 'mail.ru', 'userscloud', 'pcloud', '1drv.ms', 'onedrive.live', 'stream.moe', 'drive.google.com', 'mediafire.com', 'ddl.to', 'https://oload.life', 'https://download.ru/']
+            const list = ['mega.nz', 'yadi.sk', 'mail.ru', 'userscloud', 'pcloud', '1drv.ms', 'onedrive.live', 'stream.moe', 'drive.google.com', 'mediafire.com', 'ddl.to', 'https://oload.life', 'https://download.ru/', 'vidfast.co', 'vidia.tv', 'vidsat.net', 'supervideo.tv', 'clipwatching.com', 'jetload.net', 'fastplay.to', 'mystream.to', 'streamwire.net']
             res.status(200).json({ list })
         }
         else {
