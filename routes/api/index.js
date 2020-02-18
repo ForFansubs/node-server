@@ -34,7 +34,7 @@ router.get('/', (req, res) => {
     const response = {
         author: 'aybertocarlos',
         contact: 'aybertocarlos@gmail.com',
-        version: '2.2.1.0',
+        version: '2.2.2',
         status: 'OK',
     }
     res.status(200).json(response)
