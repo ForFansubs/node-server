@@ -403,7 +403,7 @@ router.post('/izleme-linki-sil', (req, res) => {
 router.get('/download-link-list', (req, res) => {
     is_perm(req.headers.authorization, "add-download-link").then(({ is_perm }) => {
         if (is_perm) {
-            const list = ['mega.nz', 'yadi.sk', 'mail.ru', 'userscloud', 'pcloud', '1drv.ms', 'onedrive.live', 'stream.moe', 'drive.google.com', 'mediafire.com', 'ddl.to', 'https://oload.life', 'https://download.ru/', 'vidfast.co', 'vidia.tv', 'vidsat.net', 'supervideo.tv', 'clipwatching.com', 'jetload.net', 'fastplay.to', 'mystream.to', 'streamwire.net']
+            const list = ['mega.nz', 'yadi.sk', 'mail.ru', 'userscloud', 'pcloud', '1drv.ms', 'onedrive.live', 'stream.moe', 'drive.google.com', 'mediafire.com', 'ddl.to', 'https://oload.life', 'https://download.ru/']
             res.status(200).json({ list })
         }
         else {
@@ -418,7 +418,7 @@ router.get('/download-link-list', (req, res) => {
 router.get('/watch-link-list', (req, res) => {
     is_perm(req.headers.authorization, "add-watch-link").then(({ is_perm }) => {
         if (is_perm) {
-            const list = ['vk.com', 'tune.pk', 'sendvid.com', 'oload.life', 'video.sibnet.ru', 'drive.google.com', 'ok.ru', 'dailymotion.com', 'my.mail.ru', 'mega.nz', 'myvi.ru', 'mp4upload.com', 'cloudvideo.tv', 'hdvid.tv', 'rapidvideo.com', 'rapidvid.to', 'streamango.com', 'userscloud.com', 'yourupload.com', 'www.fembed.com', 'youtu.be', 'youtube', 'rutube.ru']
+            const list = ['vk.com', 'tune.pk', 'sendvid.com', 'oload.life', 'video.sibnet.ru', 'drive.google.com', 'ok.ru', 'dailymotion.com', 'my.mail.ru', 'mega.nz', 'myvi.ru', 'mp4upload.com', 'cloudvideo.tv', 'hdvid.tv', 'rapidvideo.com', 'rapidvid.to', 'streamango.com', 'userscloud.com', 'yourupload.com', 'www.fembed.com', 'youtu.be', 'youtube', 'rutube.ru', 'vidfast.co', 'vidia.tv', 'vidsat.net', 'supervideo.tv', 'clipwatching.com', 'jetload.net', 'fastplay.to', 'mystream.to', 'streamwire.net']
             res.status(200).json({ list })
         }
         else {
