@@ -1,3 +1,4 @@
+const package = require('../../package.json')
 const express = require('express')
 const router = express.Router()
 const jwt = require('jsonwebtoken');
@@ -34,7 +35,7 @@ router.get('/', (req, res) => {
     const response = {
         author: 'aybertocarlos',
         contact: 'aybertocarlos@gmail.com',
-        version: '2.2.2',
+        version: package.version,
         status: 'OK',
     }
     res.status(200).json(response)
