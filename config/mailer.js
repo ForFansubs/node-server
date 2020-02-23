@@ -1,19 +1,20 @@
 const nodemailer = require('nodemailer')
 
 const transporter = nodemailer.createTransport({
-    direct:true,
+    direct: true,
     host: process.env.SMTP_HOST,
-    port: 465,
+    port: process.env.SMTP_PORT,
     auth: {
         user: process.env.SMTP_USERNAME,
-        pass:  process.env.SMTP_PASSWORD},
+        pass: process.env.SMTP_PASSWORD
+    },
     secure: true
 })
 
 const from = `${process.env.SITE_NAME} <${process.env.SMTP_USERNAME}>`
 
 async function sendMail(payload) {
-    const {to, subject, text, html} = payload
+    const { to, subject, text, html } = payload
 
     const mailOptions = {
         from,
@@ -31,4 +32,4 @@ async function sendMail(payload) {
     })
 }
 
-module.exports = {sendMail}
+module.exports = { sendMail }

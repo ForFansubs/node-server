@@ -7,7 +7,7 @@ const mangaId = process.env.DISCORD_MANGA_WH
 const logoLink = `${process.env.HOST_URL}/logo.png`
 
 const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
-    if (process.env.NODE_ENV !== 'production') return
+    // if (process.env.NODE_ENV !== 'production') return
     switch (type) {
         case 'episode':
             if (!episodeId) return
@@ -17,6 +17,7 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                 const title = `${name} | ${prop3 ? prop4 !== null ? prop3.toUpperCase() + " " + prop4 : prop3.toUpperCase() : prop4 + ". Bölüm"}`
                 const newEpisodeEmbed = {
                     username: "Yeni Bölüm Habercisi",
+                    content: process.env.DISCORD_MENTION_ID ? `<@&${process.env.DISCORD_MENTION_ID}>` : "",
                     embeds: [{
                         title,
                         fields: [{
@@ -57,9 +58,10 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                 const timestamp = new Date()
                 const newAnimeEmbed = {
                     username: "Yeni Anime Habercisi",
+                    content: process.env.DISCORD_MENTION_ID ? `<@&${process.env.DISCORD_MENTION_ID}>` : "",
                     embeds: [{
                         title: name,
-                        description: '',
+                        description: "",
                         fields: [
                             {
                                 name: `Özet`,
@@ -120,6 +122,7 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                 const timestamp = new Date()
                 const newMangaEmbed = {
                     username: "Yeni Manga Habercisi",
+                    content: process.env.DISCORD_MENTION_ID ? `<@&${process.env.DISCORD_MENTION_ID}>` : "",
                     embeds: [{
                         title: name,
                         description: '',
