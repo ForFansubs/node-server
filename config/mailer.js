@@ -8,8 +8,10 @@ const transporter = nodemailer.createTransport({
         user: process.env.SMTP_USERNAME,
         pass: process.env.SMTP_PASSWORD
     },
-    secure: true
+    secure: process.env.SMTP_PORT === "587" || process.env.SMTP_PORT === "25" ? false : true
 })
+
+console.log(transporter)
 
 const from = `${process.env.SITE_NAME} <${process.env.SMTP_USERNAME}>`
 

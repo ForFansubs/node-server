@@ -18,3 +18,5 @@ ecosystem.config.js
 npm-debug\.log
 
 *.jar
+yarn.lock
+package-lock.json
