@@ -11,8 +11,6 @@ const transporter = nodemailer.createTransport({
     secure: process.env.SMTP_PORT === "587" || process.env.SMTP_PORT === "25" ? false : true
 })
 
-console.log(transporter)
-
 const from = `${process.env.SITE_NAME} <${process.env.SMTP_USERNAME}>`
 
 async function sendMail(payload) {
