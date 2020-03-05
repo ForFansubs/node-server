@@ -19,6 +19,26 @@ const opgAnime = require('./routes/opg/anime')
 const opgManga = require('./routes/opg/manga')
 const activateUser = require('./routes/kayit-tamamla/index')
 
+// Pre-render middleware
+if (process.env.USE_NEW_SEO_METHOD === "true") {
+    const redis = require("redis")
+    const prerender = require('prerender-node')
+    const redisClient = redis.createClient({ port: process.env.REDIS_PORT || 6379 })
+    const cacheableStatusCodes = { 200: true, 302: true, 404: true };
+
+    prerender.set('beforeRender', function (req, done) {
+        redisClient.get(req.url, done);
+    }).set('afterRender', function (err, req, prerender_res) {
+        redisClient.set(req.url, prerender_res.body, 'EX', process.env.REDIS_CACHE_TIMEOUT)
+    });
+    if (process.env.NODE_ENV === "development") {
+        app.use(prerender.blacklisted('^/api').set('prerenderServiceUrl', process.env.PRERENDER_SERVICE_URL).set('host', process.env.HOST_URL.replace(/(https:\/\/)|(http:\/\/)/, '')));
+    }
+    else {
+        app.use(prerender.blacklisted('^/api').set('prerenderServiceUrl', process.env.PRERENDER_SERVICE_URL).set('host', process.env.HOST_URL.replace(/(https:\/\/)|(http:\/\/)/, '')).set('protocol', 'https'));
+    }
+}
+
 // Passport middleware
 app.use(passport.initialize())
 app.use(function (req, res, next) {
@@ -66,4 +86,4 @@ app.get('*', (req, res) => {
 })
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`Listening on port ${port}`));
+app.listen(port, () => console.log(`Port ${port} üzerinden istekler bekleniyor...`));
