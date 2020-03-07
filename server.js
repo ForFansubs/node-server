@@ -23,7 +23,7 @@ const activateUser = require('./routes/kayit-tamamla/index')
 if (process.env.USE_NEW_SEO_METHOD === "true") {
     const redis = require("redis")
     const prerender = require('prerender-node')
-    const redisClient = redis.createClient({ port: process.env.REDIS_PORT || 6379 })
+    const redisClient = redis.createClient({ ...JSON.parse(process.env.REDIS_OPTIONS) })
     const cacheableStatusCodes = { 200: true, 302: true, 404: true };
 
     prerender.set('beforeRender', function (req, done) {
