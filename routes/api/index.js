@@ -140,25 +140,6 @@ router.get('/header-getir/:link', (req, res) => {
         })
 })
 
-// @route   GET api/mos-konu-getir
-// @desc    Get manga synopsis from MOS
-// @access  Public
-router.get('/mos-konu-getir/:name', (req, res) => {
-    axios.get('https://puzzmos.com/manga/' + slugify(req.params.name))
-        .then(resp => {
-            const dom = new JSDOM(resp.data)
-            if (dom.window.document.querySelector("#blog-page").querySelector(".col-md-9").querySelector("p") !== null) {
-                res.status(200).json({ 'konu': dom.window.document.querySelector("#blog-page").querySelector(".col-md-9").querySelector("p").textContent, 'mos_link': 'https://puzzmos.com/manga/' + slugify(req.params.name) })
-            }
-            else {
-                res.status(404).json({ 'data': 'Konu MOŞ\'da bulunamadı' })
-            }
-        })
-        .catch(err => {
-            res.status(404).json({ 'data': 'Konu MOŞ\'da bulunamadı' })
-        })
-})
-
 // @route   GET api/genre-list
 // @desc    Get genre-list
 // @access  Public

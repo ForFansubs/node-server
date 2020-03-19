@@ -15,6 +15,8 @@ const axios = require('axios')
     dump().then(result => res.status(200).json(result))
 }) */
 
+/*
+
 // @route   GET api/administrative/force-header-update
 // @desc    Force update header images
 // @access  Public
@@ -309,5 +311,5 @@ router.get('/force-cf-cache-purge', (req, res) => {
     }).catch(_ => res.status(403).json({ 'err': 'Yetkisiz kullanım!' }))
 })
 
-
+*/
 module.exports = router;
