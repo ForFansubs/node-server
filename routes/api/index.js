@@ -62,25 +62,6 @@ router.get('/logs', (req, res) => {
     })
 })
 
-// @route   GET api/en-son-konular
-// @desc    Get latest animes
-// @access  Public
-router.get('/en-son-konular', (req, res) => {
-    mariadb.query(`SELECT id, slug, name, synopsis, cover_art, genres, version FROM anime ORDER BY id DESC LIMIT 16`)
-        .then(
-            animes => mariadb.query(`SELECT ep.*, an.cover_art, an.name as anime_name, an.id as anime_id, an.version as anime_version, an.slug as anime_slug FROM episode as ep INNER JOIN anime as an on ep.anime_id = an.id WHERE ep.special_type!='toplu' ORDER BY ep.id DESC LIMIT 18`)
-                .then(episodes => mariadb.query(`SELECT id, slug, name, synopsis, cover_art, genres FROM manga ORDER BY created_time DESC LIMIT 16`).then(mangas => {
-                    const data = {
-                        animes,
-                        mangas,
-                        episodes
-                    }
-                    res.status(200).json(data)
-                })
-                )
-        )
-})
-
 // @route   GET api/latest-batch-episodes
 // @desc    Get latest batch links
 // @access  Public
@@ -113,7 +94,7 @@ router.get('/latest-works', (req, res) => {
 // @desc    Get featured-anime
 // @access  Public
 router.get('/featured-anime', (req, res) => {
-    mariadb.query("SELECT `pv`, `name`, `synopsis`, `id`, `slug`, `premiered`, `genres` FROM anime WHERE is_featured = 1")
+    mariadb.query("SELECT `pv`, `name`, `synopsis`, `id`, `slug`, `premiered`, `genres`, `version` FROM anime WHERE is_featured = 1")
         .then(anime => res.status(200).json(anime))
 })
 
