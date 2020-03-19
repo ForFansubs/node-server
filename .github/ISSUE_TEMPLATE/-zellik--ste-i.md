@@ -18,3 +18,8 @@ assignees: ayberktandogan
 
 ## Aşağıdakileri doğruluyorum:
 - [ ] Sistemde böyle bir özelliğin olup olmadığını buraya yazmadan önce araştırdım.
+- [x] Üstteki kutucuklar yandaki gibi gözüküyor. (işiniz bittiğinde bu satırı silin lütfen...)
+<!--
+  Eğer yukardaki iki kutucuk işaretli değilse, sorun ilgilenilmeden kapatılacak.
+  Lütfen kutucukları sadece "x" harfiyle doldurun. Başka bir işaret koyarsanız düzgün işaretlenmeyecektir.
+-->

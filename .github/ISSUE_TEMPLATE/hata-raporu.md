@@ -16,7 +16,7 @@ assignees: ayberktandogan
 ## Aşağıdakileri doğruluyorum:
 - [ ] Kodda kendi değiştirdiğim bir şey yüzünden aldığım bir hata değil.
 - [ ] node-server'ın son versiyonunu kullanıyorum.
-- [x] üstteki kutucuklar yandaki gibi gözüküyor. (işiniz bittiğinde bu satırı silin lütfen...)
+- [x] Üstteki kutucuklar yandaki gibi gözüküyor. (işiniz bittiğinde bu satırı silin lütfen...)
 <!--
   Eğer yukardaki iki kutucuk işaretli değilse, sorun ilgilenilmeden kapatılacak.
   Lütfen kutucukları sadece "x" harfiyle doldurun. Başka bir işaret koyarsanız düzgün işaretlenmeyecektir.
