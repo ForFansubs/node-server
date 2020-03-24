@@ -262,7 +262,7 @@ router.post('/update-featured-anime', (req, res) => {
         if (is_perm) {
             mariadb.query(`UPDATE anime SET is_featured = "0" WHERE is_featured="1"`)
                 .then(_ => {
-                    mariadb.query(`UPDATE anime SET is_featured = 1 WHERE name IN(${data.map(({ name }) => `"${name}"`)}) AND version IN(${data.map(({ version }) => `"${version}"`)})`)
+                    mariadb.query(`UPDATE anime SET is_featured = 1 WHERE (name, version) IN(${data.map(({ name, version }) => `("${name}", "${version}")`)})`)
                         .then(_ => {
                             res.status(200).json({ 'success': 'success' })
                             log_success('featured-anime', username)
