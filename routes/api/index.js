@@ -66,7 +66,7 @@ router.get('/logs', (req, res) => {
 // @desc    Get latest batch links
 // @access  Public
 router.get('/latest-batch-episodes', (req, res) => {
-    mariadb.query(`SELECT id, episode_number, anime_id, (SELECT name FROM anime WHERE id=episode.anime_id) as anime_name, (SELECT slug FROM anime WHERE id=episode.anime_id) as anime_slug FROM episode WHERE episode_number="0" ORDER BY created_time DESC LIMIT 6`)
+    mariadb.query(`SELECT id, episode_number, anime_id, (SELECT name FROM anime WHERE id=episode.anime_id) as name, (SELECT slug FROM anime WHERE id=episode.anime_id) as slug FROM episode WHERE episode_number="0" ORDER BY created_time DESC LIMIT 6`)
         .then(episodes => res.status(200).json(episodes))
 })
 

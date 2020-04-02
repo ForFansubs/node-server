@@ -1,4 +1,4 @@
-const mariadb = require('./maria')
+const mariadb = require('../config/maria')
 const axios = require('axios')
 
 const episodeId = process.env.DISCORD_EPISODE_WH

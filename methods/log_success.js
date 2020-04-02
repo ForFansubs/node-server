@@ -1,4 +1,4 @@
-const mariadb = require('./maria')
+const mariadb = require('../config/maria')
 
 const log_success = (prop1, prop2, prop3, prop4) => {
 	const process = prop1

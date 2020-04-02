@@ -1,4 +1,4 @@
-const sendMail = require('../../config/mailer').sendMail;
+const sendMail = require('../../methods/mailer').sendMail;
 const SHA256 = require("crypto-js/sha256");
 const express = require('express')
 const router = express.Router()

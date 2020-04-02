@@ -3,8 +3,8 @@ const router = express.Router()
 const jwt = require('jsonwebtoken');
 const keys = require('../../config/keys');
 const is_perm = require('../../validation/is_perm')
-const log_success = require('../../config/log_success')
-const log_fail = require('../../config/log_fail')
+const log_success = require('../../methods/log_success')
+const log_fail = require('../../methods/log_fail')
 const mariadb = require('../../config/maria')
 
 const slugify = text => {
@@ -27,7 +27,7 @@ const slugify = text => {
 // @desc    Update permission (perm: "add-permission")
 // @access  Private
 router.post('/yetki-ekle', (req, res) => {
-    const {name, color, permission_set} = req.body
+    const { name, color, permission_set } = req.body
     is_perm(req.headers.authorization, "add-permission").then(({ is_perm, username }) => {
         if (is_perm) {
             const newPerm = {
@@ -61,7 +61,7 @@ router.post('/yetki-ekle', (req, res) => {
 // @desc    Update permission (perm: "update-permission")
 // @access  Private
 router.post('/yetki-guncelle', (req, res) => {
-    const {id, name, color, permission_set} = req.body
+    const { id, name, color, permission_set } = req.body
     is_perm(req.headers.authorization, "update-permission").then(({ is_perm, username }) => {
         if (is_perm) {
             const updatedPerm = {
@@ -94,7 +94,7 @@ router.post('/yetki-guncelle', (req, res) => {
 // @desc    Delete permission (perm: "delete-permission")
 // @access  Private
 router.post('/yetki-sil', (req, res) => {
-    const {permission_id} = req.body
+    const { permission_id } = req.body
     is_perm(req.headers.authorization, "delete-permission").then(({ is_perm, username }) => {
         if (is_perm) {
             mariadb.query(`SELECT name FROM permission WHERE id='${permission_id}'`)
