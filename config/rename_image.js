@@ -8,10 +8,16 @@ module.exports = async function renameImage(slugOld, slugNew, type) {
     let path
     let writer
     switch (type) {
-        case "anime":
+        case "anime-cover":
+            fs.renameSync(Path.resolve(__dirname, '../images/anime', `${slugOld}-cover.jpeg`), Path.resolve(__dirname, '../images/anime', `${slugNew}-cover.jpeg`))
+            break;
+        case "anime-header":
             fs.renameSync(Path.resolve(__dirname, '../images/anime', `${slugOld}-header.jpeg`), Path.resolve(__dirname, '../images/anime', `${slugNew}-header.jpeg`))
             break;
-        case "manga":
+        case "manga-cover":
+            fs.renameSync(Path.resolve(__dirname, '../images/manga', `${slugOld}-cover.jpeg`), Path.resolve(__dirname, '../images/manga', `${slugNew}-cover.jpeg`))
+            break;
+        case "manga-header":
             fs.renameSync(Path.resolve(__dirname, '../images/manga', `${slugOld}-header.jpeg`), Path.resolve(__dirname, '../images/manga', `${slugNew}-header.jpeg`))
             break;
         default:

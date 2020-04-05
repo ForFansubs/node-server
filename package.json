@@ -1,6 +1,6 @@
 {
   "name": "forfansubsback",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -33,6 +33,7 @@
     "qs": "^6.9.1",
     "redis": "^3.0.2",
     "sharp": "^0.23.4",
+    "standard-slugify": "^2.0.0",
     "uniqid": "^5.2.0",
     "validator": "^12.1.0"
   }

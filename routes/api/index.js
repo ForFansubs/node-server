@@ -74,10 +74,26 @@ router.get('/latest-batch-episodes', (req, res) => {
 // @desc    Get latest animes
 // @access  Public
 router.get('/latest-works', (req, res) => {
-    mariadb.query(`SELECT id, slug, name, synopsis, cover_art, genres, (SELECT name FROM user WHERE id=anime.created_by) as created_by, created_time, version FROM anime ORDER BY id DESC LIMIT 8`)
+    mariadb.query(`
+    SELECT id, slug, name, synopsis, cover_art, genres, (SELECT name FROM user WHERE id=anime.created_by) as created_by, created_time, version 
+    FROM anime 
+    ORDER BY id 
+    DESC LIMIT 8`)
         .then(
-            animes => mariadb.query(`SELECT ep.*, (SELECT name FROM user WHERE id=ep.created_by) as created_by, an.cover_art, an.name as anime_name, an.id as anime_id, an.version as anime_version, an.slug as anime_slug FROM episode as ep INNER JOIN anime as an on ep.anime_id = an.id WHERE ep.special_type!='toplu' ORDER BY ep.id DESC LIMIT 18`)
-                .then(episodes => mariadb.query(`SELECT id, slug, name, synopsis, cover_art, (SELECT name FROM user WHERE id=manga.created_by) as created_by, created_time, genres FROM manga ORDER BY created_time DESC LIMIT 8`).then(mangas => {
+            animes => mariadb.query(`
+            SELECT 
+            ep.id as episode_id, ep.episode_number as episode_number, ep.special_type as special_type, ep.credits as credits, ep.created_time as created_time, (SELECT name FROM user WHERE id=ep.created_by) as created_by, an.cover_art as cover_art, an.name as anime_name, an.id as anime_id, an.version as anime_version, an.slug as anime_slug 
+            FROM episode as ep 
+            INNER JOIN anime as an 
+            ON ep.anime_id = an.id 
+            WHERE ep.special_type!='toplu' 
+            ORDER BY ep.id 
+            DESC LIMIT 18`)
+                .then(episodes => mariadb.query(`
+                SELECT id, slug, name, synopsis, cover_art, (SELECT name FROM user WHERE id=manga.created_by) as created_by, created_time, genres 
+                FROM manga 
+                ORDER BY created_time 
+                DESC LIMIT 8`).then(mangas => {
                     const data = {
                         animes,
                         mangas,

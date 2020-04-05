@@ -5,25 +5,31 @@ module.exports = async function deleteImage(slug, type) {
     //type anime veya manga
     let path
     switch (type) {
-        case "anime":
-            path = Path.resolve(__dirname, '../images/anime', `${slug}-header.jpeg`)
+        case "anime-cover":
+            path = Path.resolve(__dirname, '../images/anime', `${slug}-cover.jpeg`)
             fs.unlink(path, (err) => {
                 if (err) return
-                /* path = Path.resolve(__dirname, '../images/anime', `${slug}-cover_art.jpeg`)
-                fs.unlink(path, (err) => {
-                    if (err) console.log(err)
-                }) */
             })
             return true
             break;
-        case "manga":
+        case "anime-header":
+            path = Path.resolve(__dirname, '../images/anime', `${slug}-header.jpeg`)
+            fs.unlink(path, (err) => {
+                if (err) return
+            })
+            return true
+            break;
+        case "manga-cover":
+            path = Path.resolve(__dirname, '../images/manga', `${slug}-cover.jpeg`)
+            fs.unlink(path, (err) => {
+                if (err) return
+            })
+            return true
+            break;
+        case "manga-header":
             path = Path.resolve(__dirname, '../images/manga', `${slug}-header.jpeg`)
             fs.unlink(path, (err) => {
                 if (err) return
-                /* path = Path.resolve(__dirname, '../images/manga', `${slug}-cover_art.jpeg`)
-                fs.unlink(path, (err) => {
-                    if (err) console.log(err)
-                }) */
             })
             return true
             break;

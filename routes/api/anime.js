@@ -139,7 +139,14 @@ router.post('/anime-ekle', (req, res) => {
                             .then(result => {
                                 //Başarılı olursa logla.
                                 log_success('add-anime', username, result.insertId)
-                                if (header !== "-" && header) downloadImage(header, "header", slug, "anime")
+
+                                try {
+                                    if (header !== "-" && header) downloadImage(header, slug, "anime-header")
+                                    if (cover_art) downloadImage(cover_art, slug, "anime-header")
+                                } catch (err) {
+                                    conmsole.log(err)
+                                }
+
                                 res.status(200).json({ 'success': 'success' })
                                 //Discord Webhook isteği yolla.
                                 sendDiscordEmbed('anime', result.insertId, req.headers.origin)
@@ -180,10 +187,18 @@ router.post('/anime-guncelle', (req, res) => {
                 const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
                 if (slug === anime[0].slug && version !== anime[0].version) {
                     slug = version === "bd" ? `${slug}-bd` : `${slug.replace('-bd', '')}`
-                    renameImage(anime[0].slug, slug, "anime")
+                    renameImage(anime[0].slug, slug, "anime-header")
+                    renameImage(anime[0].slug, slug, "anime-cover")
                 }
-                else { if (header !== "-" && header) downloadImage(header, "header", slug, "anime") }
-                if (header === "-") deleteImage(slug, "anime")
+                else {
+                    try {
+                        if (header !== "-" && header) downloadImage(header, slug, "anime-header")
+                        if (header === "-") deleteImage(slug, "anime-header")
+                        if (cover_art) downloadImage(cover_art, slug, "anime-cover")
+                    } catch (err) {
+                        console.log(err)
+                    }
+                }
                 const updatedAnime = {
                     synopsis,
                     name,
@@ -235,7 +250,7 @@ router.post('/anime-sil/', (req, res) => {
                         mariadb.query(`DELETE FROM episode WHERE anime_id=${id}`)
                         mariadb.query(`DELETE FROM download_link WHERE anime_id=${id}`)
                         mariadb.query(`DELETE FROM watch_link WHERE anime_id=${id}`)
-                        deleteImage(anime[0].slug, "anime")
+                        deleteImage(anime[0].slug, "anime-header")
                         log_success('delete-anime', username, '', anime[0].name)
                     })
                     .catch(_ => {
@@ -375,7 +390,7 @@ router.get('/:slug', (req, res) => {
         res.status(403).json({ "err": "Giriş yapmanız gerekiyor" })
     } */
     //Gelen istekteki ID'yi kullanarak animeyi çek.
-    mariadb.query(`SELECT *, (SELECT name FROM user WHERE id=anime.created_by) as created_by FROM anime WHERE slug="${req.params.slug}"`)
+    mariadb.query(`SELECT name, slug, id, version, synopsis, translators, encoders, studios, genres, cover_art, mal_link, episode_count, release_date, premiered, (SELECT name FROM user WHERE id=anime.created_by) as created_by FROM anime WHERE slug="${req.params.slug}"`)
         .then(anime => {
             //Eğer anime yoksa hata yolla.
             if (!anime[0]) {

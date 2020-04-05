@@ -38,7 +38,7 @@ const slugify = text => {
 // @route   GET api/manga/manga-ekle
 // @desc    Add manga (perm: "add-manga")
 // @access  Private
-router.post('/manga-ekle', (req, res) => {
+router.post('/manga-ekle', async (req, res) => {
     is_perm(req.headers.authorization, "add-manga").then(({ is_perm, username, user_id }) => {
         if (is_perm) {
             mariadb.query(`SELECT name FROM manga WHERE name="${req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")}"`)
@@ -89,9 +89,16 @@ router.post('/manga-ekle', (req, res) => {
                         const keys = Object.keys(newManga)
                         const values = Object.values(newManga)
                         mariadb.query(`INSERT INTO manga (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
-                            .then(result => {
+                            .then(result => async function () {
                                 log_success('add-manga', username, result.insertId)
-                                if (header !== "-" && header) downloadImage(header, "header", slug, "manga")
+
+                                try {
+                                    if (header !== "-" && header) downloadImage(header, slug, "manga-header")
+                                    if (cover_art) downloadImage(header, slug, "manga-cover")
+                                } catch (err) {
+                                    console.log(err)
+                                }
+
                                 res.status(200).json({ 'success': 'success' })
                                 sendDiscordEmbed('manga', result.insertId, req.headers.origin)
                             })
@@ -117,7 +124,7 @@ router.post('/manga-ekle', (req, res) => {
 router.post('/manga-guncelle', (req, res) => {
     const { id } = req.body
 
-    is_perm(req.headers.authorization, "update-anime").then(({ is_perm, username }) => {
+    is_perm(req.headers.authorization, "update-anime").then(async ({ is_perm, username }) => {
         if (is_perm) {
             const { release_date, slug, translators, editors, genres, authors, header } = req.body
             const mal_link = req.body.mal_link.split("?")[0]
@@ -126,8 +133,14 @@ router.post('/manga-guncelle', (req, res) => {
             const cover_art = req.body.cover_art.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
             const download_link = req.body.download_link.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
             const mos_link = req.body.mos_link.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-            if (header !== "-" && header) downloadImage(header, "header", slug, "manga")
-            if (header === "-") deleteImage(slug, "anime")
+            try {
+                if (header !== "-" && header) await downloadImage(header, slug, "manga-header")
+                if (header === "-") await deleteImage(slug, "manga-header")
+                if (cover_art) await downloadImage(header, slug, "manga-cover")
+            } catch (err) {
+                console.log(err)
+            }
+
             const updatedManga = {
                 synopsis,
                 name,
@@ -261,7 +274,7 @@ router.get('/:slug', (req, res) => {
     /* if (!req.params.id) {
         res.status(403).json({ "err": "Giriş yapmanız gerekiyor" })
     } */
-    mariadb.query(`SELECT *, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`).then(manga => {
+    mariadb.query(`SELECT name, slug, id, synopsis, translators, editors, authors, genres, cover_art, mal_link, mos_link, release_date, download_link, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`).then(manga => {
         if (!manga[0]) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
         } else {
