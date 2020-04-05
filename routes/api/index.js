@@ -3,10 +3,11 @@ const express = require('express')
 const router = express.Router()
 const jwt = require('jsonwebtoken');
 const keys = require('../../config/keys');
-const is_perm = require('../../validation/is_perm')
+const check_permission = require('../../validation/check_permission')
 const jsdom = require("jsdom");
 const mariadb = require('../../config/maria')
 const axios = require("axios")
+
 jsdom.defaultDocumentFeatures = {
     FetchExternalResources: ['script'],
     ProcessExternalResources: ['script'],
@@ -15,22 +16,9 @@ jsdom.defaultDocumentFeatures = {
 };
 const { JSDOM } = jsdom;
 
-const slugify = text => {
-    const a = "àáäâèéëêìíïîòóöôùúüûñçßÿœæŕśńṕẃǵǹḿǘẍźḧ♭°·/_,:;'"
-    const b = "aaaaeeeeiiiioooouuuuncsyoarsnpwgnmuxzhf0------'"
-    const p = new RegExp(a.split('').join('|'), 'g')
-
-    return text.toString().toLowerCase()
-        .replace(/\s+/g, '-')           // Replace spaces with -
-        .replace(p, c =>
-            b.charAt(a.indexOf(c)))     // Replace special chars
-        .replace(/&/g, '-and-')         // Replace & with 'and'
-        /* .replace(/[^\w\-]+/g, '')       // Remove all non-word chars */
-        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-        .replace(/^-+/, '')             // Trim - from start of text
-        .replace(/-+$/, '')             // Trim - from end of text
-}
-
+// @route   GET api/
+// @desc    Index route
+// @access  Private
 router.get('/', (req, res) => {
     const response = {
         author: 'aybertocarlos',
@@ -44,87 +32,88 @@ router.get('/', (req, res) => {
 // @route   GET api/logs
 // @desc    View logs (perm: "see-logs")
 // @access  Private
-router.get('/logs', (req, res) => {
-    is_perm(req.headers.authorization, "see-logs").then(({ is_perm }) => {
-        if (is_perm) {
-            mariadb.query(`SELECT user, process_type, text, process, created_time, id FROM log ORDER BY id DESC`)
-                .then(logs => {
-                    res.status(200).json(logs)
-                })
-                .catch(err => {
-                    res.status(400).json({ 'err': 'Kayıtları alırken bir sorun oluştu.' })
-                })
-            return false
-        }
-        else {
-            res.status(403).json({ 'err': 'Bu yetkiyi kullanamazsınız.' })
-        }
-    })
+router.get('/logs', async (req, res) => {
+    let username, user_id
+    try {
+        const check_res = await check_permission(req.headers.authorization, "see-logs")
+        username = check_res.username
+        user_id = check_res.user_id
+    } catch (err) {
+        return res.status(403).json({ 'err': err })
+    }
+    try {
+        const logs = await mariadb(`SELECT user, process_type, text, process, created_time, id FROM log ORDER BY id DESC`)
+        res.status(200).json(logs)
+    } catch (err) {
+        res.status(400).json({ 'err': 'Kayıtları alırken bir sorun oluştu.' })
+        return false
+    }
 })
 
 // @route   GET api/latest-batch-episodes
 // @desc    Get latest batch links
 // @access  Public
-router.get('/latest-batch-episodes', (req, res) => {
-    mariadb.query(`SELECT id, episode_number, anime_id, (SELECT name FROM anime WHERE id=episode.anime_id) as name, (SELECT slug FROM anime WHERE id=episode.anime_id) as slug FROM episode WHERE episode_number="0" ORDER BY created_time DESC LIMIT 6`)
-        .then(episodes => res.status(200).json(episodes))
+router.get('/latest-batch-episodes', async (req, res) => {
+    try {
+        const episodes = await mariadb(`SELECT id, episode_number, anime_id, (SELECT name FROM anime WHERE id=episode.anime_id) as name, (SELECT slug FROM anime WHERE id=episode.anime_id) as slug FROM episode WHERE episode_number="0" ORDER BY created_time DESC LIMIT 6`)
+        res.status(200).json(episodes)
+    } catch (err) {
+        console.log(err)
+    }
 })
 
 // @route   GET api/latest-works
 // @desc    Get latest animes
 // @access  Public
-router.get('/latest-works', (req, res) => {
-    mariadb.query(`SELECT id, slug, name, synopsis, cover_art, genres, (SELECT name FROM user WHERE id=anime.created_by) as created_by, created_time, version FROM anime ORDER BY id DESC LIMIT 8`)
-        .then(
-            animes => mariadb.query(`SELECT ep.*, (SELECT name FROM user WHERE id=ep.created_by) as created_by, an.cover_art, an.name as anime_name, an.id as anime_id, an.version as anime_version, an.slug as anime_slug FROM episode as ep INNER JOIN anime as an on ep.anime_id = an.id WHERE ep.special_type!='toplu' ORDER BY ep.id DESC LIMIT 18`)
-                .then(episodes => mariadb.query(`SELECT id, slug, name, synopsis, cover_art, (SELECT name FROM user WHERE id=manga.created_by) as created_by, created_time, genres FROM manga ORDER BY created_time DESC LIMIT 8`).then(mangas => {
-                    const data = {
-                        animes,
-                        mangas,
-                        episodes
-                    }
-                    res.status(200).json(data)
-                })
-                )
-        )
-        .catch(_ => res.status(404).json({ err: "err" }))
+router.get('/latest-works', async (req, res) => {
+    try {
+        const [animes, mangas, episodes] = await Promise.all([
+            mariadb(`
+            SELECT id, slug, name, synopsis, cover_art, genres, (SELECT name FROM user WHERE id=anime.created_by) as created_by, created_time, version 
+            FROM anime 
+            ORDER BY id 
+            DESC LIMIT 8`
+            ),
+            mariadb(`
+            SELECT id, slug, name, synopsis, cover_art, (SELECT name FROM user WHERE id=manga.created_by) as created_by, created_time, genres 
+            FROM manga 
+            ORDER BY created_time 
+            DESC LIMIT 8`
+            ),
+            mariadb(`
+            SELECT 
+            ep.id as episode_id, ep.episode_number as episode_number, ep.special_type as special_type, ep.credits as credits, ep.created_time as created_time, (SELECT name FROM user WHERE id=ep.created_by) as created_by, an.cover_art as cover_art, an.name as anime_name, an.id as anime_id, an.version as anime_version, an.slug as anime_slug 
+            FROM episode as ep 
+            INNER JOIN anime as an 
+            ON ep.anime_id = an.id 
+            WHERE ep.special_type!='toplu' 
+            ORDER BY ep.id 
+            DESC LIMIT 18`
+            )])
+        const data = {
+            animes,
+            mangas,
+            episodes
+        }
+        res.status(200).json(data)
+    } catch (err) {
+        console.log(err)
+    }
 })
 
 // @route   GET api/featured-anime
 // @desc    Get featured-anime
 // @access  Public
-router.get('/featured-anime', (req, res) => {
-    mariadb.query("SELECT `pv`, `name`, `synopsis`, `id`, `slug`, `premiered`, `genres`, `version` FROM anime WHERE is_featured = 1")
-        .then(anime => res.status(200).json(anime))
+router.get('/featured-anime', async (req, res) => {
+    try {
+        const anime = await mariadb("SELECT `pv`, `name`, `synopsis`, `id`, `slug`, `premiered`, `genres`, `version` FROM anime WHERE is_featured = 1")
+        res.status(200).json(anime)
+    } catch (err) {
+        console.log(err)
+    }
 })
 
-// @route   POST api/ta-konu-getir
-// @desc    Get anime synopsis from TA
-// @access  Public
-router.post('/ta-konu-getir', (req, res) => {
-    //TürkAnime'ye GET isteği at.
-    axios.get('http://www.turkanime.tv/anime/' + slugify(req.body.name))
-        .then(resp => {
-            //Gelen HTML datayı JSDOM'da kontrol edilebilir hale dönüştür.
-            const dom = new JSDOM(resp.data)
-            //#animedetay id'li div var mı kontrol et.
-            if (dom.window.document.querySelector("#animedetay") !== null) {
-                //Eğer varsa #animedetay -> ozet classlı divin içindeki yazıları al. Ön tarafa yolla.
-                res.status(200).json({ 'konu': dom.window.document.querySelector("#animedetay").querySelector(".ozet").textContent, 'ta_link': `http://www.turkanime.tv/anime/${slugify(req.body.name)}` })
-            }
-            //#animedetay id'li div yoksa hata yok. (Genelde slug yanlış olduğu için 404 dönütü alınıyor.)
-            else {
-                res.status(404).json({ 'data': 'Konu TürkAnimede bulunamadı' })
-            }
-        })
-        //Eğer isteği yollarken hata oluştuysa, ön tarafa hata yolla.
-        .catch(err => {
-            console.log(err)
-            res.status(404).json({ 'data': 'Konu TürkAnimede bulunamadı' })
-        })
-})
-
-// @route   GET api/ta-konu-getir
+// @route   GET api/header-getir/:link
 // @desc    Get anime header
 // @access  Public
 router.get('/header-getir/:link', (req, res) => {

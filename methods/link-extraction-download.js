@@ -18,9 +18,6 @@ const downloadLinkExtract = link => {
     else if (link.match("1drv.ms") || link.match("onedrive.live")) {
         extract.type = "onedrive"
     }
-    else if (link.match("stream.moe")) {
-        extract.type = "stream.moe"
-    }
     else if (link.match("drive.google.com")) {
         extract.type = "gdrive"
     }
