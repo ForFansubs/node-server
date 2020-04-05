@@ -94,7 +94,7 @@ router.post('/manga-ekle', async (req, res) => {
 
                                 try {
                                     if (header !== "-" && header) downloadImage(header, slug, "manga-header")
-                                    if (cover_art) downloadImage(header, slug, "manga-cover")
+                                    if (cover_art) downloadImage(cover_art, slug, "manga-cover")
                                 } catch (err) {
                                     console.log(err)
                                 }
@@ -124,19 +124,13 @@ router.post('/manga-ekle', async (req, res) => {
 router.post('/manga-guncelle', (req, res) => {
     const { id } = req.body
 
-    is_perm(req.headers.authorization, "update-anime").then(async ({ is_perm, username }) => {
+    is_perm(req.headers.authorization, "update-anime").then(({ is_perm, username }) => {
         if (is_perm) {
-            const { release_date, slug, translators, editors, genres, authors, header } = req.body
-            const mal_link = req.body.mal_link.split("?")[0]
-            const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-            const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-            const cover_art = req.body.cover_art.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-            const download_link = req.body.download_link.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-            const mos_link = req.body.mos_link.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+            const { release_date, slug, translators, editors, genres, authors, header, mal_link, synopsis, name, cover_art, download_link, mos_link } = req.body
             try {
-                if (header !== "-" && header) await downloadImage(header, slug, "manga-header")
-                if (header === "-") await deleteImage(slug, "manga-header")
-                if (cover_art) await downloadImage(header, slug, "manga-cover")
+                if (header !== "-" && header) downloadImage(header, slug, "manga-header")
+                if (header === "-") deleteImage(slug, "manga-header")
+                if (cover_art) downloadImage(cover_art, slug, "manga-cover")
             } catch (err) {
                 console.log(err)
             }
