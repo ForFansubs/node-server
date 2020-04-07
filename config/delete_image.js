@@ -1,7 +1,9 @@
 const fs = require('fs')
 const Path = require('path')
+const standartSlugify = require('standard-slugify')
 
 module.exports = async function deleteImage(slug, type) {
+    slug = standartSlugify(slug)
     //type anime veya manga
     let path
     switch (type) {

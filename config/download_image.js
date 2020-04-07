@@ -2,8 +2,10 @@ const fs = require('fs')
 const axios = require('axios')
 const Path = require('path')
 const sharp = require('sharp')
+const standartSlugify = require('standard-slugify')
 
 module.exports = async function downloadImage(link, slug, type) {
+    slug = standartSlugify(slug)
     //type anime, manga
     let path
     let writer

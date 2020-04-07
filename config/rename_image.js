@@ -2,8 +2,11 @@ const fs = require('fs')
 const axios = require('axios')
 const Path = require('path')
 const sharp = require('sharp')
+const standartSlugify = require('standard-slugify')
 
 module.exports = async function renameImage(slugOld, slugNew, type) {
+    slugOld = standartSlugify(slugOld)
+    slugNew = standartSlugify(slugNew)
     //type anime veya manga
     let path
     let writer

@@ -45,15 +45,12 @@ router.post('/manga-ekle', async (req, res) => {
                 .then(manga => {
                     if (manga[0]) res.status(400).json({ 'err': 'Bu manga zaten ekli.' })
                     else {
-                        const { translators, editors, authors, header } = req.body
-                        const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+                        const { translators, editors, authors, header, cover_art, download_link, mos_link } = req.body
                         const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+                        const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
                         let release_date = new Date(1)
                         if (req.body.release_date) release_date = req.body.release_date
-                        const cover_art = req.body.cover_art
                         const mal_link = req.body.mal_link.split("?")[0]
-                        const download_link = req.body.download_link
-                        const mos_link = req.body.mos_link
                         const slug = slugify(name)
                         const genreList = []
                         //Önden alınan stringi Array haline getir
@@ -126,7 +123,9 @@ router.post('/manga-guncelle', (req, res) => {
 
     is_perm(req.headers.authorization, "update-anime").then(({ is_perm, username }) => {
         if (is_perm) {
-            const { release_date, slug, translators, editors, genres, authors, header, mal_link, synopsis, name, cover_art, download_link, mos_link } = req.body
+            const { release_date, slug, translators, editors, genres, authors, header, mal_link, cover_art, download_link, mos_link } = req.body
+            const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+            const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
             try {
                 if (header !== "-" && header) downloadImage(header, slug, "manga-header")
                 if (header === "-") deleteImage(slug, "manga-header")
@@ -180,7 +179,8 @@ router.post('/manga-sil/', (req, res) => {
                 mariadb.query(`DELETE FROM manga WHERE id=${id}`)
                     .then(_ => {
                         res.status(200).json({ 'success': 'success' })
-                        deleteImage(manga[0].slug, "manga")
+                        deleteImage(manga[0].slug, "manga-header")
+                        deleteImage(manga[0].slug, "manga-cover")
                         log_success('delete-manga', username, '', manga[0].name)
                     })
                     .catch(err => {

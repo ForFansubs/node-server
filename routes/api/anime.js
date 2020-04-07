@@ -24,8 +24,8 @@ const { JSDOM } = jsdom;
 //TürkAnime'den konu çekme ve database'e anime eklerken slugını oluşturmak için kullanılan fonksiyon.
 //TODO: Bu slug fonksiyonlarını başka bir dosyaya al. 
 const slugify = text => {
-    const a = "àáäâèéëêìíïîòóöôùúüûñçßÿœæŕśńṕẃǵǹḿǘẍźḧ♭°·/_,:;'"
-    const b = "aaaaeeeeiiiioooouuuuncsyoarsnpwgnmuxzhf0------'"
+    const a = "àáäâèéëêìíïîòóöôùúüûñçßÿœæŕśńṕẃǵǹḿǘẍźḧ♭°·/_,:;-"
+    const b = "aaaaeeeeiiiioooouuuuncsyoarsnpwgnmuxzhf0-------"
     const p = new RegExp(a.split('').join('|'), 'g')
 
     return text.toString().toLowerCase()
@@ -142,7 +142,7 @@ router.post('/anime-ekle', (req, res) => {
 
                                 try {
                                     if (header !== "-" && header) downloadImage(header, slug, "anime-header")
-                                    if (cover_art) downloadImage(cover_art, slug, "anime-header")
+                                    if (cover_art) downloadImage(cover_art, slug, "anime-cover")
                                 } catch (err) {
                                     conmsole.log(err)
                                 }
@@ -182,8 +182,9 @@ router.post('/anime-guncelle', (req, res) => {
     is_perm(req.headers.authorization, "update-anime").then(({ is_perm, username }) => {
         if (is_perm) {
             mariadb.query(`SELECT * FROM anime WHERE id="${id}"`).then(anime => {
-                const { name, header, cover_art, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count } = req.body
+                const { header, cover_art, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count } = req.body
                 let { slug, version } = req.body
+                const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
                 const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
                 if (slug === anime[0].slug && version !== anime[0].version) {
                     slug = version === "bd" ? `${slug}-bd` : `${slug.replace('-bd', '')}`
@@ -222,7 +223,8 @@ router.post('/anime-guncelle', (req, res) => {
                         res.status(200).json({ 'success': 'success' })
                         log_success('update-anime', username, id)
                     })
-                    .catch(_ => {
+                    .catch(err => {
+                        console.log(err)
                         log_fail('update-anime', username, id)
                         res.status(400).json({ 'err': 'Güncellemede bir sorun oluştu.' })
                     })
@@ -251,6 +253,7 @@ router.post('/anime-sil/', (req, res) => {
                         mariadb.query(`DELETE FROM download_link WHERE anime_id=${id}`)
                         mariadb.query(`DELETE FROM watch_link WHERE anime_id=${id}`)
                         deleteImage(anime[0].slug, "anime-header")
+                        deleteImage(anime[0].slug, "anime-cover")
                         log_success('delete-anime', username, '', anime[0].name)
                     })
                     .catch(_ => {
