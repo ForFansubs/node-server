@@ -1,14 +1,16 @@
 const express = require('express')
 const router = express.Router()
 const path = require('path')
+const standartSlugify = require('standard-slugify')
 
 // @route   GET api/images/anime/:slug
 // @desc    Get anime images
 // @access  Public
 router.get('/anime/:slug', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../../images/anime', `${req.params.slug}`), (err) => {
+    const slug = standartSlugify(req.params.slug)
+    res.sendFile(path.resolve(__dirname, '../../images/anime', `${slug}.jpeg`), (err) => {
         if (err) {
-            res.status(err.status).end()
+            res.status(404).end()
         }
     })
 })
@@ -17,9 +19,10 @@ router.get('/anime/:slug', (req, res) => {
 // @desc    Get manga images
 // @access  Public
 router.get('/manga/:slug', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../../images/manga', `${req.params.slug}`), (err) => {
+    const slug = standartSlugify(req.params.slug)
+    res.sendFile(path.resolve(__dirname, '../../images/manga', `${slug}.jpeg`), (err) => {
         if (err) {
-            res.status(err.status).end()
+            res.status(404).end()
         }
     })
 })
