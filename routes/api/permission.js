@@ -31,7 +31,7 @@ router.post('/yetki-ekle', async (req, res) => {
         permission_set: permission_set,
         slug: slugify(name)
     }
-    newPerm.permission_set = JSON.stringify(newPerm.permission_set.split(','))
+    newPerm.permission_set = JSON.stringify(newPerm.permission_set)
     const keys = Object.keys(newPerm)
     const values = Object.values(newPerm)
 
@@ -65,7 +65,7 @@ router.post('/yetki-guncelle', async (req, res) => {
         color: color,
         permission_set: permission_set
     }
-    updatedPerm.permission_set = JSON.stringify(updatedPerm.permission_set.split(','))
+    updatedPerm.permission_set = JSON.stringify(updatedPerm.permission_set)
     const keys = Object.keys(updatedPerm)
     const values = Object.values(updatedPerm)
     try {
