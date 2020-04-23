@@ -140,12 +140,8 @@ router.post('/anime-ekle', (req, res) => {
                                 //Başarılı olursa logla.
                                 log_success('add-anime', username, result.insertId)
 
-                                try {
-                                    if (header !== "-" && header) downloadImage(header, slug, "anime-header")
-                                    if (cover_art) downloadImage(cover_art, slug, "anime-cover")
-                                } catch (err) {
-                                    conmsole.log(err)
-                                }
+                                if (header !== "-" && header) downloadImage(header, slug, "anime-header")
+                                if (cover_art) downloadImage(cover_art, slug, "anime-cover")
 
                                 res.status(200).json({ 'success': 'success' })
                                 //Discord Webhook isteği yolla.
@@ -191,15 +187,9 @@ router.post('/anime-guncelle', (req, res) => {
                     renameImage(anime[0].slug, slug, "anime-header")
                     renameImage(anime[0].slug, slug, "anime-cover")
                 }
-                else {
-                    try {
-                        if (header !== "-" && header) downloadImage(header, slug, "anime-header")
-                        if (header === "-") deleteImage(slug, "anime-header")
-                        if (cover_art) downloadImage(cover_art, slug, "anime-cover")
-                    } catch (err) {
-                        console.log(err)
-                    }
-                }
+                if (header !== "-" && header) downloadImage(header, slug, "anime-header")
+                if (header === "-") deleteImage(slug, "anime-header")
+                downloadImage(cover_art, slug, "anime-cover")
                 const updatedAnime = {
                     synopsis,
                     name,
