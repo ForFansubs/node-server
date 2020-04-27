@@ -350,7 +350,7 @@ router.get('/:slug/admin-view', (req, res) => {
     //Gelen istekteki ID'yi kullanarak animeyi çek.
     is_perm(req.headers.authorization, "add-anime").then(({ is_perm }) => {
         if (is_perm) {
-            mariadb.query(`SELECT *, (SELECT name FROM user WHERE id=anime.created_by) as created_by FROM anime WHERE slug="${req.params.slug}"`)
+            mariadb.query(`SELECT id, slug, is_featured, version, pv, name, synopsis, translators, encoders, studios, cover_art, mal_link, episode_count, genres, release_date, premiered, created_time, (SELECT name FROM user WHERE id=anime.created_by) as created_by FROM anime WHERE slug="${req.params.slug}"`)
                 .then(anime => {
                     //Eğer anime yoksa hata yolla.
                     if (!anime[0]) {
@@ -363,10 +363,10 @@ router.get('/:slug/admin-view', (req, res) => {
                                 res.status(200).json({ ...anime[0] });
                                 /* mariadb.query(`INSERT INTO view_count (id, count) VALUES ('${anime[0].slug + '-' + req.params.animeid}',1) ON DUPLICATE KEY UPDATE count = count + 1`) */
                             })
-                            .catch(_ => res.status(400).json({ 'err': 'Bir şeyler yanlış gitti.' }));
+                            .catch(_ => res.status(400).json({ 'err': 'Bir şeyler yanlış gitti.' }))
                     }
                 })
-                .catch(_ => res.status(400).json({ 'err': 'Bir şeyler yanlış gitti.' }));
+                .catch(_ => res.status(400).json({ 'err': 'Bir şeyler yanlış gitti.' }))
         }
         else {
             res.status(403).json({ 'err': 'Yetkisiz kullanım!' })
