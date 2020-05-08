@@ -12,7 +12,9 @@ const renameImage = require('../../methods/rename_image')
 const deleteImage = require('../../methods/delete_image')
 const mariadb = require('../../config/maria')
 const slugify = require('../../methods/slugify').generalSlugify
-const genre_map = require("../../config/genremap")
+const genre_map = require("../../config/maps/genremap")
+const season_map = require("../../config/maps/seasonmap")
+const status_map = require("../../config/maps/statusmap")
 const error_messages = require("../../config/error_messages")
 
 String.prototype.mapReplace = function (map) {
@@ -82,40 +84,47 @@ router.post('/anime-ekle', async (req, res) => {
         return res.status(400).json(errors);
     }
     //Yoksa değerleri variable'lara eşitle.
-    const { header, cover_art, premiered, translators, encoders, studios, version } = req.body
+    const { header, cover_art, translators, encoders, studios, version, trans_status, airing, pv } = req.body
     const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
     //Slug'ı yukardaki fonksiyonla oluştur.
     const slug = version === 'bd' ? slugify(name) + "-bd" : slugify(name)
-    const genreList = []
+    //Release date için default bir değer oluştur, eğer MAL'dan data alındıysa onunla değiştir
     let release_date = new Date(1)
     if (req.body.release_date) release_date = req.body.release_date
-    //MAL linkinden arama değerlerini sil. Örnek => (https://myanimelist.net/anime/32526/Love_Live_Sunshine?q=love%20live)
-    let mal_link = req.body.mal_link.split("?")[0]
-    //MAL linkinden slug'ı sil.
-    mal_link = mal_link.split("/").pop().join("")
-    //Tür listesini Türkçeleştir.
-    genresS = genresS.mapReplace(genre_map)
-    //Again here we gooooooooooooooooooo!!!! (Sezonları İngilizce'den Türkçe'ye çevir.)
-    let premieredS = ''
-    if (premiered) premieredS = premiered.replace(/Fall/, 'Sonbahar').replace(/Winter/, 'Kış').replace(/Summer/, 'Yaz').replace(/Spring/, 'İlkbahar')
-    let episode_count = 0
+    //Mal linkinin id'sini al, tekrardan buildle
+    let mal_link_id = req.body.mal_link.split("/")[4]
+    mal_link = `https://myanimelist.net/anime/${mal_link_id}`
+    //Türleri string olarak al ve mapten Türkçeye çevir
+    let genres = req.body.genres
+    genres = genres.mapReplace(genre_map)
+    //Yayınlanma sezonunu string olarak al, mapten Türkçeye çevir
+    let premiered = req.body.premiered
+    if (premiered) premiered = premiered.mapReplace(season_map)
+    //Bölüm sayısı MAL'da bulunduysa al sisteme kaydet
     if (req.body.episode_count) episode_count = req.body.episode_count
+    //Seri durumunu string olarak al, mapten Türkçeye çevir
+    const series_status = req.body.series_status.mapReplace(status_map)
+    //Yeni animenin objectini oluştur
     const newAnime = {
         synopsis,
         name,
         slug,
         translators,
         encoders,
+        series_status,
+        trans_status,
+        airing,
         release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
         created_by: user_id,
         episode_count,
         studios,
         cover_art,
         mal_link,
-        genres: genreList.join(','),
-        premiered: premieredS,
-        version
+        genres,
+        premiered,
+        version,
+        pv
     }
     //Sütunları ve değerleri belirle.
     const keys = Object.keys(newAnime)
@@ -162,7 +171,7 @@ router.post('/anime-guncelle', async (req, res) => {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
     }
-    const { name, header, cover_art, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count } = req.body
+    const { name, header, cover_art, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, trans_status, airing, pv } = req.body
     let { slug, version } = req.body
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
     if (slug === anime[0].slug && version !== anime[0].version) {
@@ -184,7 +193,11 @@ router.post('/anime-guncelle', async (req, res) => {
         release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
         genres,
         premiered,
-        version
+        version,
+        series_status,
+        trans_status,
+        airing,
+        pv
     }
     const keys = Object.keys(updatedAnime)
     const values = Object.values(updatedAnime)

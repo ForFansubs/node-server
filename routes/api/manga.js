@@ -12,7 +12,7 @@ const jsdom = require("jsdom");
 const mariadb = require('../../config/maria')
 const axios = require("axios")
 const slugify = require('../../methods/slugify').generalSlugify
-const genre_map = require("../../config/genremap")
+const genre_map = require("../../config/maps/genremap")
 const error_messages = require("../../config/error_messages")
 jsdom.defaultDocumentFeatures = {
     FetchExternalResources: ['script'],

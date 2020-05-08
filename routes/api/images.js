@@ -8,11 +8,18 @@ const standartSlugify = require('standard-slugify')
 // @access  Public
 router.get('/anime/:slug', (req, res) => {
     const slug = standartSlugify(req.params.slug)
-    res.sendFile(path.resolve(__dirname, '../../images/anime', `${slug}.jpeg`), (err) => {
-        if (err) {
-            res.status(404).end()
-        }
-    })
+    if (req.query.type === "logo")
+        res.sendFile(path.resolve(__dirname, '../../images/anime', `${slug}.png`), (err) => {
+            if (err) {
+                res.status(404).end()
+            }
+        })
+    else
+        res.sendFile(path.resolve(__dirname, '../../images/anime', `${slug}.jpeg`), (err) => {
+            if (err) {
+                res.status(404).end()
+            }
+        })
 })
 
 // @route   GET api/images/manga/:slug
