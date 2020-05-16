@@ -74,7 +74,7 @@ router.post('/kayit', async (req, res) => {
         bcrypt.genSalt(10, (err, salt) => {
             bcrypt.hash(newUser.password, salt, async (err, p_hash) => {
                 let user_result, insert_result
-                if (err) throw err;
+                if (err) return console.log(err);
                 newUser.password = p_hash;
                 const keys = Object.keys(newUser)
                 const values = Object.values(newUser)
@@ -82,27 +82,27 @@ router.post('/kayit', async (req, res) => {
                     user_result = await mariadb(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
                 } catch (err) {
                     console.log(err)
-                    res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
+                    return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
                 }
                 const c_hash = SHA256(`${(new Date()).toString()} ${user_result.insertId}`)
                 try {
                     insert_result = await mariadb(`INSERT INTO pending_user (user_id, hash_key) VALUES (${user_result.insertId}, "${c_hash}")`)
                 } catch (err) {
-                    res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
                     try {
                         mariadb(`DELETE FROM user WHERE id=${user_result.insertId}`)
                     } catch (err) {
                         console.log(`${user_result.insertId} id'li kullanıcının hash'i oluşturulamadı. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
                     }
+                    return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
                 }
                 const payload = {
                     to: email,
                     subject: `${process.env.SITE_NAME} Mail Onaylama - no-reply`,
                     text: "",
-                    html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/512.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle"> Sitemize hoş geldin ${name}. Kaydını tamamlamak için lütfen aşağıdaki butona bas. (Bu link 10 dakika sonra geçersiz olacaktır.) </p><a class="buton" href="${process.env.HOST_URL}/kayit-tamamla/${hash}" > Kaydı tamamla </a> </div></div></body></html>`
+                    html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/512.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle"> Sitemize hoş geldin ${name}. Kaydını tamamlamak için lütfen aşağıdaki butona bas. (Bu link 10 dakika sonra geçersiz olacaktır.) </p><a class="buton" href="${process.env.HOST_URL}/kayit-tamamla/${c_hash}" > Kaydı tamamla </a> </div></div></body></html>`
                 }
                 try {
-                    sendMail(payload)
+                    await sendMail(payload)
                     res.status(200).json({ 'success': 'success' })
                 } catch (error) {
                     res.status(400).json({ 'err': 'Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin.' })

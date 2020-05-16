@@ -291,7 +291,7 @@ router.get('/admin-featured-anime', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
     try {
-        await mariadb("SELECT * FROM anime WHERE is_featured = 1")
+        const anime = await mariadb("SELECT * FROM anime WHERE is_featured=1")
         res.status(200).json(anime)
     } catch (err) {
         console.log(err)

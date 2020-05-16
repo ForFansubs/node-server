@@ -26,9 +26,12 @@ async function sendMail(payload) {
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.log(error)
+            console.log("Mail yollarken bir sorunla karşılaştık!!!")
+            console.log(error.message)
+            throw "Mail yollanamadı."
         }
         console.log('Message %s sent: %s', info.messageId, info.response)
+        return true
     })
 }
 
