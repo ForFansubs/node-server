@@ -151,7 +151,7 @@ router.post('/manga-sil/', async (req, res) => {
     }
 
     try {
-        manga = mariadb.query(`SELECT name, slug FROM manga WHERE id="${id}"`)
+        manga = await mariadb(`SELECT name, slug FROM manga WHERE id="${id}"`)
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -201,7 +201,7 @@ router.get('/admin-liste', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
     try {
-        mangas = await mariadb.query("SELECT * FROM manga ORDER BY name")
+        mangas = await mariadb("SELECT * FROM manga ORDER BY name")
         const mangaList = mangas.map(manga => {
             manga.genres = manga.genres.split(',')
             return manga
@@ -215,12 +215,12 @@ router.get('/admin-liste', async (req, res) => {
 
 // @route   GET api/manga/:slug
 // @desc    View manga
-// @access  Private
+// @access  Public
 router.get('/:slug', async (req, res) => {
     let manga
 
     try {
-        manga = await mariadb(`SELECT name, slug, id, synopsis, translators, editors, authors, genres, cover_art, mal_link, mos_link, release_date, download_link, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`)
+        manga = await mariadb(`SELECT name, slug, id, synopsis, translators, editors, authors, genres, cover_art, mal_link, mos_link, release_date, download_link, trans_status, series_status, airing, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`)
         if (!manga[0]) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
         } else {
