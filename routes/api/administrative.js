@@ -1,7 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const jwt = require('jsonwebtoken');
-const keys = require('../../config/keys');
 const check_permission = require('../../validation/check_permission')
 const mariadb = require('../../config/maria')
 const downloadImage = require('../../methods/download_image')

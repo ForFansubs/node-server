@@ -1,8 +1,6 @@
 const package = require('../../package.json')
 const express = require('express')
 const router = express.Router()
-const jwt = require('jsonwebtoken');
-const keys = require('../../config/keys');
 const check_permission = require('../../validation/check_permission')
 const jsdom = require("jsdom");
 const mariadb = require('../../config/maria')
@@ -88,7 +86,7 @@ router.get('/latest-works', async (req, res) => {
             ON ep.anime_id = an.id 
             WHERE ep.special_type!='toplu' 
             ORDER BY ep.id 
-            DESC LIMIT 18`
+            DESC LIMIT 12`
             )])
         const data = {
             animes,
@@ -120,7 +118,7 @@ router.get('/header-getir/:link', (req, res) => {
     axios.get('https://kitsu.io/api/edge/anime?filter[slug]=' + req.params.link)
         .then(resp => {
             if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original)
-                res.status(200).json({ header: resp.data.data[0].attributes.coverImage.original })
+                res.status(200).json({ header: resp.data.data[0].attributes.coverImage.original, cover_art: resp.data.data[0].attributes.posterImage.original })
             else res.status(404)
         })
         .catch(err => {

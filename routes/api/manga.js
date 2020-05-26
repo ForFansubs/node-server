@@ -1,26 +1,15 @@
 const express = require('express')
 const router = express.Router()
-const jwt = require('jsonwebtoken');
-const keys = require('../../config/keys');
 const check_permission = require('../../validation/check_permission')
 const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const deleteImage = require('../../methods/delete_image')
 const log_success = require('../../methods/log_success')
 const log_fail = require('../../methods/log_fail')
-const jsdom = require("jsdom");
 const mariadb = require('../../config/maria')
-const axios = require("axios")
 const slugify = require('../../methods/slugify').generalSlugify
 const genre_map = require("../../config/maps/genremap")
 const error_messages = require("../../config/error_messages")
-jsdom.defaultDocumentFeatures = {
-    FetchExternalResources: ['script'],
-    ProcessExternalResources: ['script'],
-    MutationEvents: '2.0',
-    QuerySelector: false
-};
-const { JSDOM } = jsdom;
 
 // @route   GET api/manga/manga-ekle
 // @desc    Add manga (perm: "add-manga")
@@ -79,7 +68,13 @@ router.post('/manga-ekle', async (req, res) => {
             log_success('add-manga', username, result.insertId)
             if (header !== "-" && header) downloadImage(header, "header", slug, "manga")
             res.status(200).json({ 'success': 'success' })
-            sendDiscordEmbed('manga', result.insertId, req.headers.origin)
+
+            const embedData = {
+                type: "manga",
+                manga_id: result.insertId
+            }
+
+            sendDiscordEmbed(embedData)
         } catch (err) {
             log_fail('add-manga', username)
             console.log(err)

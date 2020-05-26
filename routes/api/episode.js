@@ -170,10 +170,19 @@ router.post('/bolum-ekle', async (req, res) => {
         const keys = Object.keys(newEpisode)
         const values = Object.values(newEpisode)
         try {
-            await mariadb(`INSERT INTO episode (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
+            await mariadb(`INSERT INTO episode (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
             log_success('add-episode', username, result.insertId)
             res.status(200).json({ 'success': 'success' })
-            sendDiscordEmbed('episode', anime_id, credits, special_type, episode_number, result.insertId, req.headers.origin)
+
+            const embedData = {
+                type: "episode",
+                anime_id,
+                credits,
+                special_type,
+                episode_number
+            }
+
+            sendDiscordEmbed(embedData)
         } catch (err) {
             log_fail('add-episode', username, req.body.anime_id, req.body.episode_number, req.body.special_type)
             return res.status(500).json({ 'err': error_messages.database_error })

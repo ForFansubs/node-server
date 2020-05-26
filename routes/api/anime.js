@@ -1,7 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const jwt = require('jsonwebtoken');
-const keys = require('../../config/keys');
 const check_permission = require('../../validation/check_permission')
 const log_success = require('../../methods/log_success')
 const log_fail = require('../../methods/log_fail')
@@ -88,7 +86,7 @@ router.post('/anime-ekle', async (req, res) => {
     }
 
     //Yoksa değerleri variable'lara eşitle.
-    const { header, cover_art, translators, encoders, studios, version, trans_status, airing, pv } = req.body
+    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, airing, pv } = req.body
     const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
@@ -147,7 +145,16 @@ router.post('/anime-ekle', async (req, res) => {
         //Başarılı olursa logla.
         log_success('add-anime', username, result.insertId)
 
-        //Eğer cover_art linki database'teki linkten farklıysa, yeni cover_art'ı diske indir
+        //Eğer logo linki verilmişse al ve diske kaydet
+        if (logo) {
+            try {
+                await downloadImage(logo, "logo", slug, "anime")
+            } catch (err) {
+                return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
+            }
+        }
+
+        //Cover_art'ı diske indir
         try {
             await downloadImage(cover_art, "cover", slug, "anime")
         } catch (err) {
@@ -156,10 +163,21 @@ router.post('/anime-ekle', async (req, res) => {
         }
 
         //Header linki yollanmışsa alıp diske kaydet
-        if (header !== "-" && header) downloadImage(header, "header", slug, "anime")
+        if (header) {
+            try {
+                await downloadImage(header, "header", slug, "anime")
+            } catch (err) {
+                console.log(err)
+                return res.status(500).json({ "err": "Header indirilirken bir sorun oluştu." })
+            }
+        }
 
         //Discord Webhook isteği yolla.
-        sendDiscordEmbed('anime', result.insertId, req.headers.origin)
+        const embedData = {
+            type: "anime",
+            anime_id: result.insertId
+        }
+        sendDiscordEmbed(embedData)
 
         //Eğer ön taraftan bölümlerin eklenmesi de istenmişse ekle.
         if (req.body.getEpisodes && req.body.episode_count !== 0) {
@@ -199,7 +217,7 @@ router.post('/anime-guncelle', async (req, res) => {
     }
 
     //Önden gelen dataları variablelara kaydet.
-    const { name, header, cover_art, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, airing, pv } = req.body
+    const { name, header, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, airing, pv } = req.body
     let { slug } = req.body
 
     //Konudaki özel karakterleri Javascripte uygun dönüştür.
@@ -219,17 +237,34 @@ router.post('/anime-guncelle', async (req, res) => {
     try {
         await downloadImage(cover_art, "cover", slug, "anime")
     } catch (err) {
-        console.log(err)
         return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
+    }
+
+    //Eğer logo inputuna "-" konulmuşsa, diskteki logoyu sil
+    if (logo === "-") {
+        try {
+            await deleteImage(slug, "anime", "logo")
+        } catch (err) {
+            return res.status(500).json({ "err": "Logo silinirken bir sorun oluştu." })
+        }
+    }
+
+    //Eğer logo linki verilmişse al ve diske kaydet
+    if (logo && logo !== "-") {
+        try {
+            await downloadImage(logo, "logo", slug, "anime")
+        } catch (err) {
+            return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
+        }
     }
 
     //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
     if (header === "-") {
-        deleteImage(slug, "anime")
+        deleteImage(slug, "anime", "header")
     }
 
     //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
-    if (header !== "-" && header) {
+    if (header && header !== "-") {
         downloadImage(header, "header", slug, "anime")
     }
 
@@ -290,7 +325,22 @@ router.post('/anime-sil/', async (req, res) => {
     try {
         await Promise.all([mariadb(`DELETE FROM anime WHERE id=${id}`), mariadb(`DELETE FROM episode WHERE anime_id=${id}`), mariadb(`DELETE FROM download_link WHERE anime_id=${id}`), mariadb(`DELETE FROM watch_link WHERE anime_id=${id}`)])
         res.status(200).json({ 'success': 'success' })
-        deleteImage(anime[0].slug, "anime")
+        //Animeyle bağlantılı resimleri diskte varsa sil.
+        try {
+            await deleteImage(anime[0].slug, "anime", "header")
+        } catch (err) {
+            console.log(err)
+        }
+        try {
+            await deleteImage(anime[0].slug, "anime", "logo")
+        } catch (err) {
+            console.log(err)
+        }
+        try {
+            await deleteImage(anime[0].slug, "anime", "cover")
+        } catch (err) {
+            console.log(err)
+        }
         log_success('delete-anime', username, '', anime[0].name)
     } catch (err) {
         console.log(err)

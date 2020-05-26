@@ -1,7 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const jwt = require('jsonwebtoken');
-const keys = require('../../config/keys');
 const check_permission = require('../../validation/check_permission')
 const log_success = require('../../methods/log_success')
 const log_fail = require('../../methods/log_fail')

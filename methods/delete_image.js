@@ -1,34 +1,21 @@
 const fs = require('fs')
 const Path = require('path')
+const LogConsole = require('./console_logs')
 
-module.exports = async function deleteImage(slug, type) {
-    //type anime veya manga
-    let path
-    switch (type) {
-        case "anime":
-            path = Path.resolve(__dirname, '../images/anime', `${slug}-header.jpeg`)
-            fs.unlink(path, (err) => {
-                if (err) return
-                /* path = Path.resolve(__dirname, '../images/anime', `${slug}-cover_art.jpeg`)
-                fs.unlink(path, (err) => {
-                    if (err) console.log(err)
-                }) */
-            })
+module.exports = async function deleteImage(slug, contentType, imageType) {
+    //contentType [anime, manga]
+    //imageType [logo, header, cover_art]
+    const path = Path.resolve(__dirname, `../images/${contentType}`, `${slug}-${imageType === "logo" ? `${imageType}.png` : `${imageType}.jpeg`}`)
+
+    if (fs.existsSync(path)) {
+        fs.unlink(path, (err) => {
+            if (err) {
+                LogConsole.unlinkFileError(path, err)
+                throw err
+            }
+            LogConsole.unlinkFileDone(path)
             return true
-            break;
-        case "manga":
-            path = Path.resolve(__dirname, '../images/manga', `${slug}-header.jpeg`)
-            fs.unlink(path, (err) => {
-                if (err) return
-                /* path = Path.resolve(__dirname, '../images/manga', `${slug}-cover_art.jpeg`)
-                fs.unlink(path, (err) => {
-                    if (err) console.log(err)
-                }) */
-            })
-            return true
-            break;
-        default:
-            return false
-            break;
+        })
     }
+    else throw `${path} yolundaki dosya diskte bulunamadı.`
 }
