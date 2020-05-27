@@ -16,8 +16,6 @@ const user = require('./routes/api/user')
 const images = require('./routes/api/images')
 const administrative = require('./routes/api/administrative')
 const permission = require('./routes/api/permission')
-const opgAnime = require('./routes/opg/anime')
-const opgManga = require('./routes/opg/manga')
 const activateUser = require('./routes/kayit-tamamla/index')
 
 // Pre-render middleware
@@ -73,8 +71,6 @@ app.use('/api/kullanici', user)
 app.use('/api/yetki', permission)
 app.use('/api/resimler', images)
 app.use('/api/sistem', administrative)
-app.use('/opg/anime', opgAnime)
-app.use('/opg/manga', opgManga)
 app.use('/api/manga-bolum', mangaEpisode)
 app.use('/kayit-tamamla', activateUser)
 

@@ -17,12 +17,21 @@ const { JSDOM } = jsdom;
 // @route   GET api/
 // @desc    Index route
 // @access  Private
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+    let admin = false
+    try {
+        await check_permission(req.headers.authorization, "see-admin-page")
+        admin = true
+    } catch (err) {
+        admin = false
+    }
+
     const response = {
         author: 'aybertocarlos',
         contact: 'aybertocarlos@gmail.com',
         version: package.version,
         status: 'OK',
+        admin
     }
     res.status(200).json(response)
 })

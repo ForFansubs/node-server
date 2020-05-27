@@ -43,8 +43,8 @@ const upload = multer({
 }).array('manga_pages')
 
 // @route   GET api/manga-bolum/ekle
-// @desc    View manga
-// @access  Public
+// @desc    Add manga chapters to service
+// @access  Private
 router.post('/ekle', async (req, res) => {
     let username, user_id, mangas
     try {
@@ -104,18 +104,20 @@ router.post('/ekle', async (req, res) => {
     })
 })
 
-// @route   GET api/manga-episode/:slug
-// @desc    View manga
+// @route   GET api/manga-bolum/:slug
+// @desc    Get image paths and other stuff for reading page
 // @access  Public
-router.get('/:slug', async (req, res) => {
+router.get('/:slug/read', async (req, res) => {
     let manga
+    const { slug } = req.params
 
     try {
-        manga = await mariadb(`SELECT name, slug, id, synopsis, translators, editors, authors, genres, cover_art, mal_link, mos_link, release_date, download_link, trans_status, series_status, airing, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`)
-        if (!manga[0]) {
+        manga = await mariadb(`SELECT episode_number, episode_name, credits, pages, (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name, (SELECT cover_art FROM manga WHERE id=manga_episode.manga_id) as cover_art, (SELECT name FROM user WHERE id=manga_episode.created_by) as created_by FROM manga_episode WHERE manga_id=(SELECT id FROM manga WHERE slug='${slug}')`)
+        console.log(manga)
+        if (manga.length === 0) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
         } else {
-            res.json({ ...manga[0] });
+            res.json(manga);
         }
     } catch (err) {
         console.log(err)
