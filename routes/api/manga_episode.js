@@ -112,7 +112,21 @@ router.get('/:slug/read', async (req, res) => {
     const { slug } = req.params
 
     try {
-        manga = await mariadb(`SELECT episode_number, episode_name, credits, pages, (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name, (SELECT cover_art FROM manga WHERE id=manga_episode.manga_id) as cover_art, (SELECT name FROM user WHERE id=manga_episode.created_by) as created_by FROM manga_episode WHERE manga_id=(SELECT id FROM manga WHERE slug='${slug}')`)
+        manga = await mariadb(`
+        SELECT 
+        episode_number, 
+        episode_name, 
+        credits, 
+        pages, 
+        (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name,
+        (SELECT cover_art FROM manga WHERE id=manga_episode.manga_id) as cover_art,
+        (SELECT name FROM user WHERE id=manga_episode.created_by) as created_by
+        FROM 
+        manga_episode 
+        WHERE 
+        manga_id=(SELECT id FROM manga WHERE slug='${slug}')
+        ORDER BY
+        ABS(manga_episode.episode_number)`)
         console.log(manga)
         if (manga.length === 0) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });

@@ -76,16 +76,16 @@ router.get('/latest-works', async (req, res) => {
     try {
         const [animes, mangas, episodes] = await Promise.all([
             mariadb(`
-            SELECT id, slug, name, synopsis, cover_art, genres, (SELECT name FROM user WHERE id=anime.created_by) as created_by, created_time, version 
+            SELECT id, slug, name, synopsis, release_date, cover_art, genres, (SELECT name FROM user WHERE id=anime.created_by) as created_by, created_time, version 
             FROM anime 
             ORDER BY id 
-            DESC LIMIT 8`
+            DESC LIMIT 12`
             ),
             mariadb(`
-            SELECT id, slug, name, synopsis, cover_art, (SELECT name FROM user WHERE id=manga.created_by) as created_by, created_time, genres 
+            SELECT id, slug, name, synopsis, release_date, cover_art, (SELECT name FROM user WHERE id=manga.created_by) as created_by, created_time, genres 
             FROM manga 
             ORDER BY created_time 
-            DESC LIMIT 8`
+            DESC LIMIT 12`
             ),
             mariadb(`
             SELECT 
