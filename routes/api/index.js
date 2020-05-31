@@ -74,7 +74,7 @@ router.get('/latest-batch-episodes', async (req, res) => {
 // @access  Public
 router.get('/latest-works', async (req, res) => {
     try {
-        const [animes, mangas, episodes] = await Promise.all([
+        const [animes, mangas, episodes, manga_episodes] = await Promise.all([
             mariadb(`
             SELECT id, slug, name, synopsis, release_date, cover_art, genres, (SELECT name FROM user WHERE id=anime.created_by) as created_by, created_time, version 
             FROM anime 
@@ -96,11 +96,26 @@ router.get('/latest-works', async (req, res) => {
             WHERE ep.special_type!='toplu' 
             ORDER BY ep.id 
             DESC LIMIT 12`
+            ),
+            mariadb(`
+            SELECT
+            (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name,
+            (SELECT cover_art FROM manga WHERE id=manga_episode.manga_id) as manga_cover,
+            (SELECT slug FROM manga WHERE id=manga_episode.manga_id) as manga_slug,
+            episode_number,
+            episode_name,
+            (SELECT name FROM user WHERE id=manga_episode.created_by) as created_by,
+            created_time
+            FROM
+            manga_episode
+            ORDER BY created_time
+            DESC LIMIT 12`
             )])
         const data = {
             animes,
             mangas,
-            episodes
+            episodes,
+            manga_episodes
         }
         res.status(200).json(data)
     } catch (err) {
@@ -124,7 +139,8 @@ router.get('/featured-anime', async (req, res) => {
 // @desc    Get anime header
 // @access  Public
 router.get('/header-getir/:link', (req, res) => {
-    axios.get('https://kitsu.io/api/edge/anime?filter[slug]=' + req.params.link)
+    const { type } = req.query
+    axios.get(`https://kitsu.io/api/edge/${type ? type : "anime"}?filter[slug]=` + req.params.link)
         .then(resp => {
             if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original)
                 res.status(200).json({ header: resp.data.data[0].attributes.coverImage.original, cover_art: resp.data.data[0].attributes.posterImage.original })

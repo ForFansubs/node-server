@@ -127,7 +127,6 @@ router.get('/:slug/read', async (req, res) => {
         manga_id=(SELECT id FROM manga WHERE slug='${slug}')
         ORDER BY
         ABS(manga_episode.episode_number)`)
-        console.log(manga)
         if (manga.length === 0) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
         } else {
