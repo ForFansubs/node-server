@@ -18,11 +18,7 @@ module.exports = async function downloadImage(link, slug, type) {
             }).catch(_ => _)
             return new Promise((resolve, reject) => {
                 writer.on('finish', () => {
-                    const file = fs.readFileSync(path)
-                    fs.unlink(path, (err) => {
-                        if (err) return console.log(err)
-                        sharp(file).jpeg({ quality: 90 }).toFile(path)
-                    })
+                    writer.end()
                 })
                 writer.on('error', reject => {
                     console.log(reject)
