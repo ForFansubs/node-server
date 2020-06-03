@@ -7,7 +7,6 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const check_permission = require('../../validation/check_permission')
 const log_success = require('../../methods/log_success')
-const log_fail = require('../../methods/log_fail')
 const mariadb = require('../../config/maria')
 const keys = require('../../config/keys')
 const error_messages = require("../../config/error_messages")
@@ -174,7 +173,6 @@ router.post('/kayit/admin', async (req, res) => {
                     user_insert = await mariadb(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
                 } catch (err) {
                     console.log(err)
-                    log_fail('add-user', username, '', name)
                     return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
                 }
                 log_success('add-user', username, user_insert.insertId)
@@ -297,7 +295,6 @@ router.post('/uye-guncelle', async (req, res) => {
             'success': 'success'
         })
     } catch (err) {
-        log_fail('update-user', username, id)
         console.log(err)
     }
 })
@@ -329,7 +326,6 @@ router.post('/uye-sil', async (req, res) => {
         res.status(200).json({ 'success': 'success' })
         log_success('delete-user', username, '', user[0].name)
     } catch (err) {
-        log_fail('delete-user', username, user_id_body)
         res.status(400).json({ 'err': 'Silme sırasında bir şeyler yanlış gitti.' })
     }
 })

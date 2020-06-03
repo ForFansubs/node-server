@@ -30,6 +30,7 @@ router.get('/', async (req, res) => {
         author: 'aybertocarlos',
         contact: 'aybertocarlos@gmail.com',
         version: package.version,
+        "release-name": package["release-name"],
         status: 'OK',
         admin
     }

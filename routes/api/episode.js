@@ -1,50 +1,15 @@
 const express = require('express')
 const router = express.Router()
 const check_permission = require('../../validation/check_permission')
-const log_success = require('../../methods/log_success')
-const log_fail = require('../../methods/log_fail')
 const downloadLinkExtract = require('../../methods/link-extraction-download')
 const watchLinkExtract = require('../../methods/link-extraction-watch')
 const sendDiscordEmbed = require('../../methods/discord_embed')
-const jsdom = require("jsdom");
 const mariadb = require('../../config/maria')
 const Validator = require('validator')
 const error_messages = require("../../config/error_messages")
 const supported_sites = require("../../config/supported_sites")
-jsdom.defaultDocumentFeatures = {
-    FetchExternalResources: ['script'],
-    ProcessExternalResources: ['script'],
-    MutationEvents: '2.0',
-    QuerySelector: false
-};
-const { JSDOM } = jsdom;
 
-const internalAddWatchLink = (link, anime_id, episode_number, created_by_id) => {
-    const extract = watchLinkExtract(link)
-    if (!extract && extract.src.match("www.turkanime.tv")) return
-    mariadb.query(`SELECT link FROM watch_link WHERE link='${extract.src}'`)
-        .then(anime => {
-            let linkList = {}
-            if (anime[0]) return
-            else {
-                mariadb.query(`SELECT id FROM episode WHERE special_type="" AND episode_number="${episode_number}" AND anime_id="${anime_id}"`).then(episode => {
-                    const newWatchLink = {
-                        anime_id,
-                        episode_id: episode[0].id,
-                        type: extract.type,
-                        link: extract.src,
-                        created_by: created_by_id
-                    }
-                    const keys = Object.keys(newWatchLink)
-                    const values = Object.values(newWatchLink)
-                    mariadb.query(`INSERT INTO watch_link (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
-                        .catch(err => {
-                            console.log(err)
-                        })
-                })
-            }
-        })
-}
+const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, LogDeleteDownloadLink, LogAddWatchLink, LogDeleteWatchLink } = require("../../methods/database_logs")
 
 // @route   GET api/bolum/:slug/watch
 // @desc    View episodes
@@ -171,20 +136,23 @@ router.post('/bolum-ekle', async (req, res) => {
         const values = Object.values(newEpisode)
         try {
             await mariadb(`INSERT INTO episode (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
-            log_success('add-episode', username, result.insertId)
-            res.status(200).json({ 'success': 'success' })
 
-            const embedData = {
+            LogAddEpisode({
+                process_type: 'add-episode',
+                username: username,
+                episode_id: result.insertId
+            })
+
+            sendDiscordEmbed({
                 type: "episode",
                 anime_id,
                 credits,
                 special_type,
                 episode_number
-            }
+            })
 
-            sendDiscordEmbed(embedData)
+            return res.status(200).json({ 'success': 'success' })
         } catch (err) {
-            log_fail('add-episode', username, req.body.anime_id, req.body.episode_number, req.body.special_type)
             return res.status(500).json({ 'err': error_messages.database_error })
         }
     }
@@ -207,9 +175,14 @@ router.post('/bolum-duzenle', async (req, res) => {
     switch (req.body.request) {
         case "update-visibility":
             try {
-                await mariadb(`UPDATE episode SET seen_download_page="${req.body.value}" WHERE id=${req.body.id}`)
+                await mariadb(`UPDATE episode SET can_user_download="${req.body.value}" WHERE id=${req.body.id}`)
                 res.status(200).json({ 'success': 'success' })
-                log_success('update-episode', username, req.body.id, req.body.value)
+                LogUpdateEpisode({
+                    process_type: 'update-episode',
+                    username: username,
+                    episode_id: req.body.id,
+                    can_user_download: req.body.value
+                })
             } catch (err) {
                 console.log(err)
                 return res.status(500).json({ 'err': error_messages.database_error })
@@ -227,16 +200,22 @@ router.post('/bolum-duzenle', async (req, res) => {
 
             try {
                 await mariadb(`UPDATE episode SET ${keys.map((key, index) => `${key} = "${values[index]}"`)} WHERE id="${id}"`)
-                res.status(200).json({ 'success': 'success' })
-                log_success('update-episode', username, req.body.id, req.body.value)
+
+                LogUpdateEpisode({
+                    process_type: 'update-episode',
+                    username: username,
+                    episode_id: req.body.id,
+                    can_user_download: req.body.value
+                })
+
+                return res.status(200).json({ 'success': 'success' })
             } catch (err) {
                 console.log(err)
                 return res.status(500).json({ 'err': error_messages.database_error })
             }
             break
         default:
-            res.status(500).json({ 'err': 'İşlem türü belirtmediniz!' })
-            break
+            return res.status(500).json({ 'err': 'İşlem türü belirtmediniz!' })
     }
 })
 
@@ -259,11 +238,18 @@ router.post('/bolum-sil', async (req, res) => {
     try {
         episode = await mariadb(`SELECT * FROM episode WHERE id=${episode_id}`)
         Promise.all([mariadb(`DELETE FROM episode WHERE id=${episode_id}`), mariadb(`DELETE FROM download_link WHERE episode_id=${episode_id}`), mariadb(`DELETE FROM watch_link WHERE episode_id=${episode_id}`)])
-        log_success('delete-episode', username, episode[0].anime_id, episode[0].episode_number, episode[0].special_type)
-        res.status(200).json({ 'success': 'success' })
+
+        LogDeleteEpisode({
+            process_type: 'delete-episode',
+            username: username,
+            anime_id: episode[0].anime_id,
+            episode_number: episode[0].episode_number,
+            special_type: episode[0].special_type
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
-        res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
-        log_fail('delete-episode', username, episode[0].anime_id, episode[0].episode_number, episode[0].special_type)
+        return res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
     }
 })
 
@@ -307,11 +293,16 @@ router.post('/indirme-linki-ekle', async (req, res) => {
 
         try {
             const result = await mariadb(`INSERT INTO download_link (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
-            log_success('add-download-link', username, result.insertId)
-            res.status(200).json({ 'success': 'success' })
+
+            LogAddDownloadLink({
+                process_type: 'add-download-link',
+                username: username,
+                download_link_id: result.insertId
+            })
+
+            return res.status(200).json({ 'success': 'success' })
         } catch (err) {
-            res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
-            log_fail('add-download-link', username, req.body.episode_id, extract.type)
+            return res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
         }
     }
 })
@@ -335,8 +326,15 @@ router.post('/indirme-linki-sil', async (req, res) => {
     try {
         downloadlink = await mariadb(`SELECT type FROM download_link WHERE id='${downloadlink_id}'`)
         await mariadb.query(`DELETE FROM download_link WHERE id=${downloadlink_id}`)
-        res.status(200).json({ 'success': 'success' })
-        log_success('delete-download-link', username, episode_id, downloadlink[0].type)
+
+        LogDeleteDownloadLink({
+            process_type: 'delete-download-link',
+            username: username,
+            episode_id: episode_id,
+            download_link_type: downloadlink[0].type
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -355,7 +353,6 @@ router.post('/izleme-linki-ekle', async (req, res) => {
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
-
 
     const { anime_id, episode_id, link } = req.body
     const extract = watchLinkExtract(link)
@@ -380,11 +377,16 @@ router.post('/izleme-linki-ekle', async (req, res) => {
         const values = Object.values(newWatchLink)
         try {
             const result = await mariadb(`INSERT INTO watch_link (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
-            res.status(200).json({ 'success': 'success' })
-            log_success('add-watch-link', username, result.insertId)
+
+            LogAddWatchLink({
+                process_type: 'add-watch-link',
+                username: username,
+                watch_link_id: result.insertId
+            })
+
+            return res.status(200).json({ 'success': 'success' })
         } catch (err) {
             console.log(err)
-            log_fail('add-watch-link', username, req.body.episode_id, extract.type)
         }
     }
 })
@@ -408,8 +410,15 @@ router.post('/izleme-linki-sil', async (req, res) => {
     try {
         watchlink = await mariadb(`SELECT type FROM watch_link WHERE id='${watchlink_id}'`)
         await mariadb(`DELETE FROM watch_link WHERE id=${watchlink_id}`)
-        res.status(200).json({ 'success': 'success' })
-        log_success('delete-watch-link', username, episode_id, watchlink[0].type)
+
+        LogDeleteWatchLink({
+            process_type: 'delete-watch-link',
+            username: username,
+            episode_id: episode_id,
+            watch_link_type: watchlink[0].type
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })

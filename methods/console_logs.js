@@ -1,3 +1,5 @@
+// TODO: Bütün console.logları bu dosyaya al.
+
 function downloadImageWriterError(path, err) {
     return console.log(`${path} yolunu write için açarken bir sorun oluştu.`)
 }

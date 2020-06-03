@@ -2,7 +2,6 @@ const express = require('express')
 const router = express.Router()
 const check_permission = require('../../validation/check_permission')
 const log_success = require('../../methods/log_success')
-const log_fail = require('../../methods/log_fail')
 const mariadb = require('../../config/maria')
 const error_messages = require("../../config/error_messages")
 const slugify = require('../../methods/slugify').permissionSlugify

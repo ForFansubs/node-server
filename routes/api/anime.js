@@ -1,8 +1,6 @@
 const express = require('express')
 const router = express.Router()
 const check_permission = require('../../validation/check_permission')
-const log_success = require('../../methods/log_success')
-const log_fail = require('../../methods/log_fail')
 const validateAnimeInput = require('../../validation/anime')
 const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
@@ -14,6 +12,8 @@ const genre_map = require("../../config/maps/genremap")
 const season_map = require("../../config/maps/seasonmap")
 const status_map = require("../../config/maps/statusmap")
 const error_messages = require("../../config/error_messages")
+
+const { LogAddAnime, LogUpdateAnime, LogDeleteAnime, LogFeaturedAnime } = require("../../methods/database_logs")
 
 String.prototype.mapReplace = function (map) {
     var regex = [];
@@ -86,7 +86,7 @@ router.post('/anime-ekle', async (req, res) => {
     }
 
     //Yoksa değerleri variable'lara eşitle.
-    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, airing, pv } = req.body
+    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, pv } = req.body
     const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
@@ -124,7 +124,6 @@ router.post('/anime-ekle', async (req, res) => {
         encoders,
         series_status,
         trans_status,
-        airing,
         release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
         created_by: user_id,
         episode_count,
@@ -141,16 +140,12 @@ router.post('/anime-ekle', async (req, res) => {
     const values = Object.values(newAnime)
     //Database'e yolla.
     try {
-        const result = await mariadb(`INSERT INTO anime (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
-        //Başarılı olursa logla.
-        log_success('add-anime', username, result.insertId)
-
         //Eğer logo linki verilmişse al ve diske kaydet
         if (logo) {
             try {
                 await downloadImage(logo, "logo", slug, "anime")
             } catch (err) {
-                return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
+                console.log(err)
             }
         }
 
@@ -159,7 +154,6 @@ router.post('/anime-ekle', async (req, res) => {
             await downloadImage(cover_art, "cover", slug, "anime")
         } catch (err) {
             console.log(err)
-            return res.status(500).json({ "err": "Coverart indirilirken bir sorun oluştu." })
         }
 
         //Header linki yollanmışsa alıp diske kaydet
@@ -168,26 +162,29 @@ router.post('/anime-ekle', async (req, res) => {
                 await downloadImage(header, "header", slug, "anime")
             } catch (err) {
                 console.log(err)
-                return res.status(500).json({ "err": "Header indirilirken bir sorun oluştu." })
             }
         }
-
-        //Discord Webhook isteği yolla.
-        const embedData = {
-            type: "anime",
-            anime_id: result.insertId
-        }
-        sendDiscordEmbed(embedData)
-
+        const result = await mariadb(`INSERT INTO anime (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
         //Eğer ön taraftan bölümlerin eklenmesi de istenmişse ekle.
         if (req.body.getEpisodes && req.body.episode_count !== 0) {
             internalBulkEpisodeAdd(user_id, result.insertId, req.body.translators, req.body.encoders, req.headers.host, req.body.episode_count)
         }
 
+        LogAddAnime({
+            process_type: 'add-anime',
+            username: username,
+            anime_id: result.insertId
+        })
+
+        //Discord Webhook isteği yolla.
+        sendDiscordEmbed({
+            type: "anime",
+            anime_id: result.insertId
+        })
+
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        log_fail('add-anime', username)
         return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
     }
 })
@@ -217,7 +214,7 @@ router.post('/anime-guncelle', async (req, res) => {
     }
 
     //Önden gelen dataları variablelara kaydet.
-    const { name, header, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, airing, pv } = req.body
+    const { name, header, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, pv } = req.body
     let { slug } = req.body
 
     //Konudaki özel karakterleri Javascripte uygun dönüştür.
@@ -284,7 +281,6 @@ router.post('/anime-guncelle', async (req, res) => {
         version,
         series_status,
         trans_status,
-        airing,
         pv
     }
     const keys = Object.keys(updatedAnime)
@@ -292,11 +288,14 @@ router.post('/anime-guncelle', async (req, res) => {
     //Database'teki satırı güncelle.
     try {
         await mariadb(`UPDATE anime SET ${keys.map((key, index) => `${key} = "${values[index]}"`)} WHERE id="${id}"`)
+        LogUpdateAnime({
+            process_type: 'update-anime',
+            username: username,
+            anime_id: id
+        })
         res.status(200).json({ 'success': 'success' })
-        log_success('update-anime', username, id)
     } catch (err) {
-        log_fail('update-anime', username, id)
-        res.status(400).json({ 'err': 'Güncellemede bir sorun oluştu.' })
+        res.status(500).json({ 'err': 'Güncellemede bir sorun oluştu.' })
     }
 })
 
@@ -324,7 +323,6 @@ router.post('/anime-sil/', async (req, res) => {
 
     try {
         await Promise.all([mariadb(`DELETE FROM anime WHERE id=${id}`), mariadb(`DELETE FROM episode WHERE anime_id=${id}`), mariadb(`DELETE FROM download_link WHERE anime_id=${id}`), mariadb(`DELETE FROM watch_link WHERE anime_id=${id}`)])
-        res.status(200).json({ 'success': 'success' })
         //Animeyle bağlantılı resimleri diskte varsa sil.
         try {
             await deleteImage(anime[0].slug, "anime", "header")
@@ -341,10 +339,14 @@ router.post('/anime-sil/', async (req, res) => {
         } catch (err) {
             console.log(err)
         }
-        log_success('delete-anime', username, '', anime[0].name)
+        LogDeleteAnime({
+            process_type: 'delete-anime',
+            username: username,
+            anime_name: anime[0].name
+        })
+        res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        log_fail('delete-anime', username, id)
         return res.status(500).json({ 'err': error_messages.database_error })
     }
 })
@@ -373,10 +375,12 @@ router.post('/update-featured-anime', async (req, res) => {
     try {
         await mariadb(`UPDATE anime SET is_featured = 1 WHERE (name, version) IN(${data.map(({ name, version }) => `("${name}", "${version}")`)})`)
         res.status(200).json({ 'success': 'success' })
-        log_success('featured-anime', username)
+        LogFeaturedAnime({
+            process_type: 'featured-anime',
+            username: username
+        })
     } catch (err) {
         console.log(err)
-        log_fail('featured-anime', username)
         return res.status(500).json({ 'err': error_messages.database_error })
     }
 })
@@ -456,7 +460,9 @@ router.get('/:slug/admin-view', async (req, res) => {
     }
 
     try {
-        anime = await mariadb(`SELECT *, (SELECT name FROM user WHERE id=anime.created_by) as created_by FROM anime WHERE slug="${req.params.slug}"`)
+        anime = await mariadb(`
+        SELECT *
+        FROM anime WHERE slug="${req.params.slug}"`)
     } catch (err) {
         console.log(err)
         return res.status(500).json({ err: error_messages.database_error })

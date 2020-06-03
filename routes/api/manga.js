@@ -5,11 +5,12 @@ const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const deleteImage = require('../../methods/delete_image')
 const log_success = require('../../methods/log_success')
-const log_fail = require('../../methods/log_fail')
 const mariadb = require('../../config/maria')
 const slugify = require('../../methods/slugify').generalSlugify
 const genre_map = require("../../config/maps/genremap")
 const error_messages = require("../../config/error_messages")
+
+const { LogAddManga, LogUpdateManga, LogDeleteManga } = require("../../methods/database_logs")
 
 // @route   GET api/manga/manga-ekle
 // @desc    Add manga (perm: "add-manga")
@@ -42,7 +43,7 @@ router.post('/manga-ekle', async (req, res) => {
         let mal_link = req.body.mal_link.split("?")[0]
         mal_link = mal_link.split("/").pop().join("")
         const download_link = req.body.download_link
-        const mos_link = req.body.mos_link
+        const reader_link = req.body.reader_link
         const slug = slugify(name)
         const genreList = []
         genresS = genresS.mapReplace(genre_map)
@@ -58,25 +59,54 @@ router.post('/manga-ekle', async (req, res) => {
             cover_art,
             mal_link,
             download_link,
-            mos_link,
+            reader_link,
             genres: genreList.join(','),
         }
         const keys = Object.keys(newManga)
         const values = Object.values(newManga)
         try {
-            const result = await mariadb(`INSERT INTO manga (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
-            log_success('add-manga', username, result.insertId)
-            if (header !== "-" && header) downloadImage(header, "header", slug, "manga")
-            res.status(200).json({ 'success': 'success' })
-
-            const embedData = {
-                type: "manga",
-                manga_id: result.insertId
+            //Eğer logo linki verilmişse al ve diske kaydet
+            if (logo) {
+                try {
+                    await downloadImage(logo, "logo", slug, "manga")
+                } catch (err) {
+                    console.log(err)
+                }
             }
 
-            sendDiscordEmbed(embedData)
+            //Cover_art'ı diske indir
+            try {
+                await downloadImage(cover_art, "cover", slug, "manga")
+            } catch (err) {
+                console.log(err)
+            }
+
+            //Header linki yollanmışsa alıp diske kaydet
+            if (header) {
+                try {
+                    await downloadImage(header, "header", slug, "manga")
+                } catch (err) {
+                    console.log(err)
+                }
+            }
+
+            const result = await mariadb(`INSERT INTO manga (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
+
+            if (header !== "-" && header) downloadImage(header, "header", slug, "manga")
+
+            LogAddManga({
+                process_type: 'add-manga',
+                username: username,
+                manga_id: result.insertId
+            })
+
+            sendDiscordEmbed({
+                type: "manga",
+                manga_id: result.insertId
+            })
+
+            return res.status(200).json({ 'success': 'success' })
         } catch (err) {
-            log_fail('add-manga', username)
             console.log(err)
             res.status(500).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
         }
@@ -98,10 +128,44 @@ router.post('/manga-guncelle', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
 
-    const { name, cover_art, download_link, mos_link, release_date, slug, translators, editors, genres, authors, header, mal_link } = req.body
+    const { name, cover_art, download_link, reader_link, release_date, slug, translators, editors, genres, authors, header, mal_link } = req.body
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-    if (header !== "-" && header) downloadImage(header, "header", slug, "manga")
-    if (header === "-") deleteImage(slug, "anime")
+
+    //Cover_art'ı diske indir
+    try {
+        await downloadImage(cover_art, "cover", slug, "manga")
+    } catch (err) {
+        return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
+    }
+
+    //Eğer logo inputuna "-" konulmuşsa, diskteki logoyu sil
+    if (logo === "-") {
+        try {
+            await deleteImage(slug, "manga", "logo")
+        } catch (err) {
+            return res.status(500).json({ "err": "Logo silinirken bir sorun oluştu." })
+        }
+    }
+
+    //Eğer logo linki verilmişse al ve diske kaydet
+    if (logo && logo !== "-") {
+        try {
+            await downloadImage(logo, "logo", slug, "manga")
+        } catch (err) {
+            return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
+        }
+    }
+
+    //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
+    if (header === "-") {
+        deleteImage(slug, "manga", "header")
+    }
+
+    //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
+    if (header && header !== "-") {
+        downloadImage(header, "header", slug, "manga")
+    }
+
     const updatedManga = {
         synopsis,
         name,
@@ -112,19 +176,25 @@ router.post('/manga-guncelle', async (req, res) => {
         cover_art,
         mal_link,
         download_link,
-        mos_link,
+        reader_link,
         release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
         genres
     }
+
     const keys = Object.keys(updatedManga)
     const values = Object.values(updatedManga)
 
     try {
         await mariadb(`UPDATE manga SET ${keys.map((key, index) => `${key} = "${values[index]}"`)} WHERE id="${id}"`)
-        res.status(200).json({ 'success': 'success' })
-        log_success('update-manga', username, id)
+
+        LogUpdateManga({
+            process_type: 'update-manga',
+            username: username,
+            manga_id: id
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
-        log_fail('update-manga', username, id)
         res.status(404).json({ 'err': 'Güncellemede bir sorun oluştu.' })
     }
 })
@@ -154,13 +224,18 @@ router.post('/manga-sil/', async (req, res) => {
 
     try {
         await mariadb(`DELETE FROM manga WHERE id=${id}`)
-        res.status(200).json({ 'success': 'success' })
         deleteImage(manga[0].slug, "manga")
-        log_success('delete-manga', username, '', manga[0].name)
+
+        LogDeleteManga({
+            process_type: 'delete-manga',
+            username: username,
+            manga_name: manga[0].name
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         res.status(400).json({ 'err': 'Bir şeyler yanlış gitti.' })
-        log_fail('delete-manga', username, id)
     }
 })
 
@@ -208,6 +283,25 @@ router.get('/admin-liste', async (req, res) => {
     }
 })
 
+// @route   GET api/manga/:slug/admin-view
+// @desc    View manga
+// @access  Private
+router.get('/:slug/admin-view', async (req, res) => {
+    try {
+        const manga = await mariadb(`SELECT * FROM manga WHERE slug='${req.params.slug}'`)
+        const episodes = await mariadb(`SELECT * FROM manga_episode WHERE manga_id=${manga[0].id}`)
+        if (!manga[0]) {
+            return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
+        } else {
+            manga[0].episodes = episodes || []
+            res.json({ ...manga[0] });
+        }
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ 'err': error_messages.database_error })
+    }
+})
+
 // @route   GET api/manga/:slug
 // @desc    View manga
 // @access  Public
@@ -215,7 +309,7 @@ router.get('/:slug', async (req, res) => {
     let manga
 
     try {
-        manga = await mariadb(`SELECT name, slug, id, synopsis, translators, editors, authors, genres, cover_art, mal_link, mos_link, release_date, download_link, trans_status, series_status, airing, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`)
+        manga = await mariadb(`SELECT name, slug, id, synopsis, translators, editors, authors, genres, cover_art, mal_link, reader_link, release_date, download_link, trans_status, series_status, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`)
         if (!manga[0]) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
         } else {

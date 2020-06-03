@@ -46,7 +46,6 @@ router.post('/ekle', async (req, res) => {
         res.status(200).json({ 'success': 'success' })
         sendDiscordEmbed('episode', anime_id, credits, special_type, episode_number, result.insertId, req.headers.origin)
     } catch (err) {
-        log_fail('add-episode', username, req.body.anime_id, req.body.episode_number, req.body.special_type)
         return res.status(500).json({ 'err': error_messages.database_error })
     }
 
