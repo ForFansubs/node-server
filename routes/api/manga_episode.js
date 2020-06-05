@@ -1,17 +1,13 @@
 const express = require('express')
 const router = express.Router()
-const multiparty = require('multiparty');
 const fs = require('fs')
 const Path = require('path')
 const check_permission = require('../../validation/check_permission')
 const sendDiscordEmbed = require('../../methods/discord_embed')
-const downloadImage = require('../../methods/download_image')
-const deleteImage = require('../../methods/delete_image')
-const log_success = require('../../methods/log_success')
 const mariadb = require('../../config/maria')
-const slugify = require('../../methods/slugify').generalSlugify
-const genre_map = require("../../config/maps/genremap")
 const error_messages = require("../../config/error_messages")
+
+const { LogAddMangaEpisode, LogUpdateMangaEpisode, LogDeleteMangaEpisode } = require("../../methods/database_logs")
 
 const multer = require('multer');
 
@@ -75,7 +71,7 @@ const upload = multer({
 
 
 
-// @route   GET api/manga-bolum/ekle
+// @route   GET api/manga-bolum/bolum-ekle
 // @desc    Add manga chapters to service
 // @access  Private
 router.post('/bolum-ekle', async (req, res) => {
@@ -127,18 +123,22 @@ router.post('/bolum-ekle', async (req, res) => {
         const values = Object.values(newEpisode)
         try {
             const result = await mariadb(`INSERT INTO manga_episode (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
-            log_success('add-manga-episode', username, result.insertId)
-            res.status(200).json({ 'success': 'success' })
 
-            const embedData = {
+            LogAddMangaEpisode({
+                process_type: 'add-manga-episode',
+                username: username,
+                manga_episode_id: result.insertId
+            })
+
+            sendDiscordEmbed({
                 type: "manga-episode",
                 manga_id,
                 credits,
                 episode_name,
                 episode_number
-            }
+            })
 
-            sendDiscordEmbed(embedData)
+            return res.status(200).json({ 'success': 'success' })
         } catch (err) {
             console.log(err)
             return res.status(500).json({ 'err': error_messages.database_error })
@@ -171,8 +171,14 @@ router.post('/bolum-guncelle', async (req, res) => {
 
     try {
         await mariadb(`UPDATE manga_episode SET ${keys.map((key, index) => `${key} = "${values[index]}"`)} WHERE id="${id}"`)
-        res.status(200).json({ 'success': 'success' })
-        // log_success('update-manga-episode', username, req.body.id, req.body.value)
+
+        LogUpdateMangaEpisode({
+            process_type: 'update-manga-episode',
+            username: username,
+            manga_episode_id: req.body.id
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -198,22 +204,30 @@ router.post('/bolum-sil', async (req, res) => {
     try {
         const manga_episode_data = await mariadb(
             `SELECT *,
-            (SELECT slug FROM manga WHERE id=manga_episode.manga_id) as manga_slug
+            (SELECT slug FROM manga WHERE id=manga_episode.manga_id) as manga_slug,
+            (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name
             FROM
             manga_episode
             WHERE
             id=${episode_id}`
         )
-        const { manga_slug, episode_number, pages } = manga_episode_data[0]
+        const { manga_id, manga_slug, manga_name, episode_number, pages } = manga_episode_data[0]
         Promise.all([deleteMangaFolder(manga_slug, episode_number, pages), mariadb(`DELETE FROM manga_episode WHERE id=${episode_id}`)])
-        // log_success('delete-episode', username, episode[0].anime_id, episode[0].episode_number, episode[0].special_type)
-        res.status(200).json({ 'success': 'success' })
+
+        LogDeleteMangaEpisode({
+            process_type: 'delete-manga-episode',
+            username: username,
+            episode_number: episode_number,
+            manga_name: manga_name
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
-        res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
+        return res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
     }
 })
 
-// @route   GET api/manga-bolum/:slug
+// @route   GET api/manga-bolum/:slug/read
 // @desc    Get image paths and other stuff for reading page
 // @access  Public
 router.get('/:slug/read', async (req, res) => {

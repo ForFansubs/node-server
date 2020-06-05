@@ -83,6 +83,7 @@ router.post('/indirme-linkleri/admin-view', async (req, res) => {
 
     try {
         eps = await mariadb(`SELECT * FROM download_link WHERE episode_id="${req.body.episode_id}" ORDER BY type`)
+        res.status(200).json(eps)
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -135,7 +136,7 @@ router.post('/bolum-ekle', async (req, res) => {
         const keys = Object.keys(newEpisode)
         const values = Object.values(newEpisode)
         try {
-            await mariadb(`INSERT INTO episode (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
+            const result = await mariadb(`INSERT INTO episode (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
 
             LogAddEpisode({
                 process_type: 'add-episode',
@@ -153,6 +154,7 @@ router.post('/bolum-ekle', async (req, res) => {
 
             return res.status(200).json({ 'success': 'success' })
         } catch (err) {
+            console.log(err)
             return res.status(500).json({ 'err': error_messages.database_error })
         }
     }
@@ -179,6 +181,7 @@ router.post('/bolum-duzenle', async (req, res) => {
                 res.status(200).json({ 'success': 'success' })
                 LogUpdateEpisode({
                     process_type: 'update-episode',
+                    request: req.body.request,
                     username: username,
                     episode_id: req.body.id,
                     can_user_download: req.body.value
@@ -204,6 +207,7 @@ router.post('/bolum-duzenle', async (req, res) => {
                 LogUpdateEpisode({
                     process_type: 'update-episode',
                     username: username,
+                    request: req.body.request,
                     episode_id: req.body.id,
                     can_user_download: req.body.value
                 })
@@ -325,7 +329,7 @@ router.post('/indirme-linki-sil', async (req, res) => {
 
     try {
         downloadlink = await mariadb(`SELECT type FROM download_link WHERE id='${downloadlink_id}'`)
-        await mariadb.query(`DELETE FROM download_link WHERE id=${downloadlink_id}`)
+        await mariadb(`DELETE FROM download_link WHERE id=${downloadlink_id}`)
 
         LogDeleteDownloadLink({
             process_type: 'delete-download-link',
@@ -437,8 +441,8 @@ router.get('/download-link-list', async (req, res) => {
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
-    const links = Object.values(supported_sites.download_links)
-    res.status(200).json({ links })
+    const list = Object.values(supported_sites.download_links)
+    res.status(200).json({ list })
 })
 
 // @route   POST  api/bolum/watch-link-list

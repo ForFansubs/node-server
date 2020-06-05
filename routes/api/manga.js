@@ -4,9 +4,8 @@ const check_permission = require('../../validation/check_permission')
 const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const deleteImage = require('../../methods/delete_image')
-const log_success = require('../../methods/log_success')
 const mariadb = require('../../config/maria')
-const slugify = require('../../methods/slugify').generalSlugify
+const standartSlugify = require('standard-slugify')
 const genre_map = require("../../config/maps/genremap")
 const error_messages = require("../../config/error_messages")
 
@@ -34,19 +33,24 @@ router.post('/manga-ekle', async (req, res) => {
 
     if (manga[0]) res.status(400).json({ 'err': 'Bu manga zaten ekli.' })
     else {
-        const { translators, editors, authors, header } = req.body
+        const { translators, editors, authors, header, cover_art, logo, download_link, reader_link } = req.body
         const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
         const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+
+        //Release date için default bir değer oluştur, eğer MAL'dan data alındıysa onunla değiştir
         let release_date = new Date(1)
         if (req.body.release_date) release_date = req.body.release_date
-        const cover_art = req.body.cover_art
-        let mal_link = req.body.mal_link.split("?")[0]
-        mal_link = mal_link.split("/").pop().join("")
-        const download_link = req.body.download_link
-        const reader_link = req.body.reader_link
-        const slug = slugify(name)
-        const genreList = []
-        genresS = genresS.mapReplace(genre_map)
+
+        //Mal linkinin id'sini al, tekrardan buildle
+        let mal_link_id = req.body.mal_link.split("/")[4]
+        mal_link = `https://myanimelist.net/manga/${mal_link_id}`
+
+        //Türleri string olarak al ve mapten Türkçeye çevir
+        let genres = req.body.genres
+        genres = genres.mapReplace(genre_map)
+
+        const slug = standartSlugify(name)
+
         const newManga = {
             synopsis,
             name,
@@ -60,8 +64,9 @@ router.post('/manga-ekle', async (req, res) => {
             mal_link,
             download_link,
             reader_link,
-            genres: genreList.join(','),
+            genres,
         }
+
         const keys = Object.keys(newManga)
         const values = Object.values(newManga)
         try {
@@ -128,7 +133,7 @@ router.post('/manga-guncelle', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
 
-    const { name, cover_art, download_link, reader_link, release_date, slug, translators, editors, genres, authors, header, mal_link } = req.body
+    const { name, cover_art, download_link, reader_link, release_date, slug, translators, editors, genres, authors, header, logo, mal_link } = req.body
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
     //Cover_art'ı diske indir
@@ -224,7 +229,22 @@ router.post('/manga-sil/', async (req, res) => {
 
     try {
         await mariadb(`DELETE FROM manga WHERE id=${id}`)
-        deleteImage(manga[0].slug, "manga")
+        //Mangayla bağlantılı resimleri diskte varsa sil.
+        try {
+            await deleteImage(manga[0].slug, "manga", "header")
+        } catch (err) {
+            console.log(err)
+        }
+        try {
+            await deleteImage(manga[0].slug, "manga", "logo")
+        } catch (err) {
+            console.log(err)
+        }
+        try {
+            await deleteImage(manga[0].slug, "manga", "cover")
+        } catch (err) {
+            console.log(err)
+        }
 
         LogDeleteManga({
             process_type: 'delete-manga',
@@ -309,7 +329,27 @@ router.get('/:slug', async (req, res) => {
     let manga
 
     try {
-        manga = await mariadb(`SELECT name, slug, id, synopsis, translators, editors, authors, genres, cover_art, mal_link, reader_link, release_date, download_link, trans_status, series_status, (SELECT name FROM user WHERE id=manga.created_by) as created_by FROM manga WHERE slug='${req.params.slug}'`)
+        manga = await mariadb(`
+        SELECT 
+        name, 
+        slug, 
+        id, 
+        synopsis, 
+        translators, 
+        editors, 
+        authors, 
+        genres, 
+        cover_art, 
+        mal_link, 
+        reader_link, 
+        release_date, 
+        download_link, 
+        trans_status, 
+        series_status, 
+        (SELECT name FROM user WHERE id=manga.created_by) as created_by,
+        COUNT((SELECT episode_number FROM manga_episode WHERE manga_id=manga.id)) as episode_count
+        FROM manga 
+        WHERE slug="${req.params.slug}"`)
         if (!manga[0]) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
         } else {

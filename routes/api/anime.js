@@ -7,7 +7,7 @@ const downloadImage = require('../../methods/download_image')
 const renameImage = require('../../methods/rename_image')
 const deleteImage = require('../../methods/delete_image')
 const mariadb = require('../../config/maria')
-const slugify = require('../../methods/slugify').generalSlugify
+const standartSlugify = require('standard-slugify')
 const genre_map = require("../../config/maps/genremap")
 const season_map = require("../../config/maps/seasonmap")
 const status_map = require("../../config/maps/statusmap")
@@ -91,7 +91,7 @@ router.post('/anime-ekle', async (req, res) => {
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
     //Slug'ı yukardaki fonksiyonla oluştur.
-    const slug = version === 'bd' ? slugify(name) + "-bd" : slugify(name)
+    const slug = version === 'bd' ? standartSlugify(name) + "-bd" : standartSlugify(name)
 
     //Release date için default bir değer oluştur, eğer MAL'dan data alındıysa onunla değiştir
     let release_date = new Date(1)
@@ -501,7 +501,7 @@ router.get('/:slug', async (req, res) => {
     } else {
         //Anime bulunduysa bölümlerini çek.
         try {
-            episodes = await mariadb(`SELECT * FROM episode WHERE anime_id="${anime[0].id}" AND seen_download_page="1" ORDER BY special_type, ABS(episode_number)`)
+            episodes = await mariadb(`SELECT * FROM episode WHERE anime_id="${anime[0].id}" AND can_user_download="1" ORDER BY special_type, ABS(episode_number)`)
             anime[0].episodes = episodes
             res.status(200).json({ ...anime[0] })
         } catch (err) {

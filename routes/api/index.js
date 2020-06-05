@@ -4,7 +4,8 @@ const router = express.Router()
 const check_permission = require('../../validation/check_permission')
 const jsdom = require("jsdom");
 const mariadb = require('../../config/maria')
-const axios = require("axios")
+const axios = require("axios");
+const genremap = require('../../config/maps/genremap');
 
 jsdom.defaultDocumentFeatures = {
     FetchExternalResources: ['script'],
@@ -63,7 +64,18 @@ router.get('/logs', async (req, res) => {
 // @access  Public
 router.get('/latest-batch-episodes', async (req, res) => {
     try {
-        const episodes = await mariadb(`SELECT id, episode_number, anime_id, (SELECT name FROM anime WHERE id=episode.anime_id) as name, (SELECT slug FROM anime WHERE id=episode.anime_id) as slug FROM episode WHERE episode_number="0" ORDER BY created_time DESC LIMIT 6`)
+        const episodes = await mariadb(`
+        SELECT 
+        id, 
+        episode_number, 
+        anime_id, 
+        (SELECT name FROM anime WHERE id=episode.anime_id) as name, 
+        (SELECT slug FROM anime WHERE id=episode.anime_id) as slug 
+        FROM episode 
+        WHERE episode_number="0" AND special_type="toplu"
+        ORDER BY 
+        created_time 
+        DESC LIMIT 6`)
         res.status(200).json(episodes)
     } catch (err) {
         console.log(err)
@@ -107,8 +119,7 @@ router.get('/latest-works', async (req, res) => {
             episode_name,
             (SELECT name FROM user WHERE id=manga_episode.created_by) as created_by,
             created_time
-            FROM
-            manga_episode
+            FROM manga_episode
             ORDER BY created_time
             DESC LIMIT 12`
             )])
@@ -129,7 +140,21 @@ router.get('/latest-works', async (req, res) => {
 // @access  Public
 router.get('/featured-anime', async (req, res) => {
     try {
-        const anime = await mariadb("SELECT `pv`, `name`, `synopsis`, `id`, `slug`, `premiered`, `genres`, `version` FROM anime WHERE is_featured = 1")
+        const anime = await mariadb(`
+        SELECT 
+        pv, 
+        name, 
+        synopsis, 
+        id, 
+        slug, 
+        premiered, 
+        genres, 
+        version 
+        FROM anime
+        WHERE is_featured = 1
+        ORDER BY 
+        created_time
+        DESC`)
         res.status(200).json(anime)
     } catch (err) {
         console.log(err)
@@ -157,7 +182,7 @@ router.get('/header-getir/:link', (req, res) => {
 // @desc    Get genre-list
 // @access  Public
 router.get('/genre-list', (req, res) => {
-    const list = ['Aksiyon', 'Arabalar', 'Askeri', 'Bilim Kurgu', 'Büyü', 'Çocuklar', 'Doğaüstü', 'Dram', 'Dövüş Sanatları', 'Fantastik', 'Gerilim', 'Gizem', 'Günlük Yaşam', 'Kişilik Bölünmesi', 'Komedi', 'Korku', 'Macera', 'Müzik', 'Okul', 'Oyun', 'Parodi', 'Polis', 'Psikolojik', 'Romantizm', 'Samuray', 'Sporlar', 'Süper Güçler', 'Şeytanlar', 'Tarihi', 'Uzay', 'Vampir']
+    const list = Object.values(genremap)
 
     res.status(200).json({ list })
 })

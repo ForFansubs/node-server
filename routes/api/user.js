@@ -6,10 +6,10 @@ const gravatar = require('gravatar')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const check_permission = require('../../validation/check_permission')
-const log_success = require('../../methods/log_success')
 const mariadb = require('../../config/maria')
 const keys = require('../../config/keys')
 const error_messages = require("../../config/error_messages")
+const standartSlugify = require('standard-slugify')
 
 const { NODE_ENV } = process.env
 
@@ -17,21 +17,7 @@ const { NODE_ENV } = process.env
 const validateRegisterInput = require('../../validation/register')
 const validateLoginInput = require('../../validation/login')
 
-const slugify = text => {
-    const a = 'àáäâèéëêìíïîòóöôùúüûñçßÿœæŕśńṕẃǵǹḿǘẍźḧ♭·/_,:;'
-    const b = 'aaaaeeeeiiiioooouuuuncsyoarsnpwgnmuxzhf------'
-    const p = new RegExp(a.split('').join('|'), 'g')
-
-    return text.toString().toLowerCase()
-        .replace(/\s+/g, '-') // Replace spaces with -
-        .replace(p, c =>
-            b.charAt(a.indexOf(c))) // Replace special chars
-        .replace(/&/g, '-and-') // Replace & with 'and'
-        .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-        .replace(/\-\-+/g, '-') // Replace multiple - with single -
-        .replace(/^-+/, '') // Trim - from start of text
-        .replace(/-+$/, '') // Trim - from end of text
-}
+const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
@@ -63,7 +49,7 @@ router.post('/kayit', async (req, res) => {
             d: 'mm' // Default
         })
         let newUser = {
-            slug: slugify(name),
+            slug: standartSlugify(name),
             name: name,
             email: email,
             avatar,
@@ -87,6 +73,7 @@ router.post('/kayit', async (req, res) => {
                 try {
                     insert_result = await mariadb(`INSERT INTO pending_user (user_id, hash_key) VALUES (${user_result.insertId}, "${c_hash}")`)
                 } catch (err) {
+                    console.log(err)
                     try {
                         mariadb(`DELETE FROM user WHERE id=${user_result.insertId}`)
                     } catch (err) {
@@ -103,13 +90,15 @@ router.post('/kayit', async (req, res) => {
                 try {
                     await sendMail(payload)
                     res.status(200).json({ 'success': 'success' })
-                } catch (error) {
-                    res.status(400).json({ 'err': 'Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin.' })
+                } catch (err) {
+                    console.log(err)
                     try {
-                        mariadb(`DELETE FROM user WHERE id=${user_result.insertId}`)
+                        await mariadb(`DELETE FROM user WHERE id=${user_result.insertId}`)
+                        await mariadb(`DELETE FROM pending_user WHERE user_id=${user_result.insertId}`)
                     } catch (err) {
                         console.log(`${user_result.insertId} id'li kullanıcının hash'i oluşturuldu, fakat mail yollayamadık. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
                     }
+                    res.status(400).json({ 'err': 'Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin.' })
                 }
             })
         })
@@ -155,7 +144,7 @@ router.post('/kayit/admin', async (req, res) => {
             d: 'mm' // Default
         })
         let newUser = {
-            slug: slugify(name),
+            slug: standartSlugify(name),
             name: name,
             email: email,
             avatar,
@@ -164,18 +153,24 @@ router.post('/kayit/admin', async (req, res) => {
         }
         bcrypt.genSalt(10, (err, salt) => {
             bcrypt.hash(newUser.password, salt, async (err, p_hash) => {
-                let user_insert
+                let result
                 if (err) throw err;
                 newUser.password = p_hash;
                 const keys = Object.keys(newUser)
                 const values = Object.values(newUser)
                 try {
-                    user_insert = await mariadb(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
+                    result = await mariadb(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
                 } catch (err) {
                     console.log(err)
                     return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
                 }
-                log_success('add-user', username, user_insert.insertId)
+
+                LogAddUser({
+                    process_type: 'add-user',
+                    username: username,
+                    user_id: result.insertId
+                })
+
                 return res.status(200).json({ 'success': 'success' })
             })
         })
@@ -290,10 +285,16 @@ router.post('/uye-guncelle', async (req, res) => {
     const values = Object.values(updatedUser)
     try {
         await mariadb(`UPDATE user SET ${keys.map((key, index) => `${key} = '${values[index]}'`)} WHERE id='${id}'`)
-        log_success('update-user', username, id)
-        res.status(200).json({
-            'success': 'success'
+
+
+        LogUpdateUser({
+            process_type: 'update-user',
+            username: username,
+            user_id: id
         })
+
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
     }
@@ -323,8 +324,14 @@ router.post('/uye-sil', async (req, res) => {
 
     try {
         await mariadb(`DELETE FROM user WHERE id=${user_id_body}`)
-        res.status(200).json({ 'success': 'success' })
-        log_success('delete-user', username, '', user[0].name)
+
+        LogDeleteUser({
+            process_type: 'delete-user',
+            username: username,
+            name: user[0].name
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         res.status(400).json({ 'err': 'Silme sırasında bir şeyler yanlış gitti.' })
     }

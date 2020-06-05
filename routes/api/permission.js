@@ -1,10 +1,11 @@
 const express = require('express')
 const router = express.Router()
 const check_permission = require('../../validation/check_permission')
-const log_success = require('../../methods/log_success')
 const mariadb = require('../../config/maria')
 const error_messages = require("../../config/error_messages")
-const slugify = require('../../methods/slugify').permissionSlugify
+const standartSlugify = require('standard-slugify')
+
+const { LogAddPermission, LogUpdatePermission, LogDeletePermission } = require('../../methods/database_logs')
 
 // @route   POST api/yetki/yetki-ekle
 // @desc    Update permission (perm: "add-permission")
@@ -26,7 +27,7 @@ router.post('/yetki-ekle', async (req, res) => {
         name: name,
         color: color,
         permission_set: permission_set,
-        slug: slugify(name)
+        slug: standartSlugify(name)
     }
     newPerm.permission_set = JSON.stringify(newPerm.permission_set)
     const keys = Object.keys(newPerm)
@@ -34,8 +35,14 @@ router.post('/yetki-ekle', async (req, res) => {
 
     try {
         const result = await mariadb(`INSERT INTO permission (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
-        res.status(200).json({ 'success': 'success' })
-        log_success('add-permission', username, result.insertId)
+
+        LogAddPermission({
+            process_type: 'add-permission',
+            username: username,
+            permission_id: result.insertId
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -67,8 +74,14 @@ router.post('/yetki-guncelle', async (req, res) => {
     const values = Object.values(updatedPerm)
     try {
         await mariadb(`UPDATE permission SET ${keys.map((key, index) => `${key} = '${values[index]}'`)} WHERE id='${id}'`)
-        res.status(200).json({ 'success': 'success' })
-        log_success('update-permission', username, id)
+
+        LogUpdatePermission({
+            process_type: 'update-permission',
+            username: username,
+            permission_id: id
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -93,9 +106,15 @@ router.post('/yetki-sil', async (req, res) => {
 
     try {
         permission = await mariadb(`SELECT name FROM permission WHERE id='${permission_id}'`)
-        await mariadb.query(`DELETE FROM permission WHERE id=${permission_id}`)
-        res.status(200).json({ 'success': 'success' })
-        log_success('delete-permission', username, '', permission[0].name)
+        await mariadb(`DELETE FROM permission WHERE id=${permission_id}`)
+
+        LogDeletePermission({
+            process_type: 'delete-permission',
+            username: username,
+            permission_name: permission[0].name
+        })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })

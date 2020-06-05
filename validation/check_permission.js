@@ -1,3 +1,5 @@
+// Her türlü geliştirmeye açıktır.
+
 const mariadb = require('../config/maria')
 const jwt = require('jsonwebtoken');
 

@@ -1,4 +1,5 @@
 module.exports = {
+    "+18": "+18",
     "Action": "Aksiyon",
     "Adventure": "Macera",
     "Cars": "Arabalar",

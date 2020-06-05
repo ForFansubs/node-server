@@ -1,19 +1,25 @@
 const nodemailer = require('nodemailer')
-
-const transporter = nodemailer.createTransport({
-    direct: true,
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    auth: {
-        user: process.env.SMTP_USERNAME,
-        pass: process.env.SMTP_PASSWORD
-    },
-    secure: process.env.SMTP_PORT === "587" || process.env.SMTP_PORT === "25" ? false : true
-})
-
-const from = `${process.env.SITE_NAME} <${process.env.SMTP_USERNAME}>`
+const { NODE_ENV } = process.env
 
 async function sendMail(payload) {
+    let testAccount
+    if (NODE_ENV === "development") {
+        testAccount = await nodemailer.createTestAccount();
+    }
+
+    const transporter = nodemailer.createTransport({
+        direct: true,
+        host: NODE_ENV === "production" ? process.env.SMTP_HOST : "smtp.ethereal.email",
+        port: NODE_ENV === "production" ? process.env.SMTP_PORT : 587,
+        auth: {
+            user: NODE_ENV === "production" ? process.env.SMTP_USERNAME : testAccount.user,
+            pass: NODE_ENV === "production" ? process.env.SMTP_PASSWORD : testAccount.pass
+        },
+        secure: NODE_ENV === "production" ? process.env.SMTP_PORT === "587" || process.env.SMTP_PORT === "25" ? false : true : false
+    })
+
+    const from = `${process.env.SITE_NAME} <${process.env.SMTP_USERNAME}>`
+
     const { to, subject, text, html } = payload
 
     const mailOptions = {
@@ -24,15 +30,13 @@ async function sendMail(payload) {
         html
     }
 
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log("Mail yollarken bir sorunla karşılaştık!!!")
-            console.log(error.message)
-            throw "Mail yollanamadı."
-        }
-        console.log('Message %s sent: %s', info.messageId, info.response)
-        return true
-    })
+    let info = await transporter.sendMail(mailOptions)
+
+    console.log("Message sent: %s", info.messageId)
+
+    if (NODE_ENV === "development") {
+        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    }
 }
 
 module.exports = { sendMail }

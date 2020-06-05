@@ -70,6 +70,7 @@ const sendDiscordEmbed = async (props) => {
                         return true
                     })
                     .catch(err => {
+                        console.log(err)
                         return false
                     })
             } catch (err) {
@@ -97,7 +98,7 @@ const sendDiscordEmbed = async (props) => {
                             name: `Emektarlar`,
                             value: `${credits ? credits : "Belirtilmemiş."}`
                         }],
-                        url: `${hostURL}/ceviriler/anime/${slug}${episodeLinkParser(episode_number, special_type)}`,
+                        url: `${hostURL}/ceviriler/anime/${slug}${episodeLinkParser(episode_number, special_type).slug}`,
                         color: 1161213,
                         timestamp,
                         thumbnail: {
@@ -115,6 +116,7 @@ const sendDiscordEmbed = async (props) => {
                         return true
                     })
                     .catch(err => {
+                        console.log(err)
                         return false
                     })
             } catch (err) {
@@ -185,6 +187,7 @@ const sendDiscordEmbed = async (props) => {
                         return true
                     })
                     .catch(err => {
+                        console.log(err)
                         return false
                     })
             } catch (err) {
@@ -255,6 +258,7 @@ const sendDiscordEmbed = async (props) => {
                         return true
                     })
                     .catch(err => {
+                        console.log(err)
                         return false
                     })
             } catch (err) {

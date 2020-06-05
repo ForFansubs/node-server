@@ -27,11 +27,18 @@ router.get('/anime/:slug', (req, res) => {
 // @access  Public
 router.get('/manga/:slug', (req, res) => {
     const slug = standartSlugify(req.params.slug)
-    res.sendFile(Path.resolve(__dirname, '../../images/manga', `${slug}.jpeg`), (err) => {
-        if (err) {
-            res.status(404).end()
-        }
-    })
+    if (req.query.type === "logo")
+        res.sendFile(Path.resolve(__dirname, '../../images/manga', `${slug}.png`), (err) => {
+            if (err) {
+                res.status(404).end()
+            }
+        })
+    else
+        res.sendFile(Path.resolve(__dirname, '../../images/manga', `${slug}.jpeg`), (err) => {
+            if (err) {
+                res.status(404).end()
+            }
+        })
 })
 
 // @route   GET api/resimler/manga/:slug/oku/:episode_number/:filename
