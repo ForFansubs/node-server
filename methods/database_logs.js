@@ -6,7 +6,9 @@ const cleanText = (text) => {
 }
 
 async function LogAddAnime(props) {
-	const { process_type, username, anime_id } = props
+	const process_type = "add-anime"
+
+	const { username, anime_id } = props
 
 	try {
 		const { anime_id } = props
@@ -20,7 +22,9 @@ async function LogAddAnime(props) {
 }
 
 async function LogUpdateAnime(props) {
-	const { process_type, username, anime_id } = props
+	const process_type = "update-anime"
+
+	const { username, anime_id } = props
 
 	try {
 		const anime = await mariadb(`SELECT name FROM anime WHERE id=${anime_id}`)
@@ -33,7 +37,9 @@ async function LogUpdateAnime(props) {
 }
 
 async function LogDeleteAnime(props) {
-	const { process_type, username, anime_name } = props
+	const process_type = "delete-anime"
+
+	const { username, anime_name } = props
 
 	try {
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animeyi sildi.`
@@ -55,7 +61,9 @@ async function LogFeaturedAnime(props) {
 }
 
 async function LogAddEpisode(props) {
-	const { process_type, username, episode_id } = props
+	const process_type = "add-episode"
+
+	const { username, episode_id } = props
 
 	try {
 		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
@@ -68,7 +76,9 @@ async function LogAddEpisode(props) {
 }
 
 async function LogUpdateEpisode(props) {
-	const { process_type, username, episode_id, can_user_download, request } = props
+	const process_type = "update-episode"
+
+	const { username, episode_id, can_user_download, request } = props
 
 	try {
 		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
@@ -101,7 +111,9 @@ async function LogUpdateEpisode(props) {
 }
 
 async function LogDeleteEpisode(props) {
-	const { process_type, username, anime_id, episode_number, special_type } = props
+	const process_type = "delete-episode"
+
+	const { username, anime_id, episode_number, special_type } = props
 
 	try {
 		const anime = await mariadb(`SELECT name FROM anime WHERE id=${anime_id}`)
@@ -114,7 +126,9 @@ async function LogDeleteEpisode(props) {
 }
 
 async function LogAddDownloadLink(props) {
-	const { process_type, username, download_link_id } = props
+	const process_type = "add-download-link"
+
+	const { username, download_link_id } = props
 
 	try {
 		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type, dl.type FROM anime as an INNER JOIN download_link as dl INNER JOIN episode as ep ON dl.episode_id = ep.id AND ep.anime_id = an.id WHERE dl.id="${download_link_id}"`)
@@ -127,7 +141,9 @@ async function LogAddDownloadLink(props) {
 }
 
 async function LogDeleteDownloadLink(props) {
-	const { process_type, username, episode_id, download_link_type } = props
+	const process_type = "delete-download-link"
+
+	const { username, episode_id, download_link_type } = props
 
 	try {
 		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
@@ -140,7 +156,9 @@ async function LogDeleteDownloadLink(props) {
 }
 
 async function LogAddWatchLink(props) {
-	const { process_type, username, watch_link_id } = props
+	const process_type = "add-watch-link"
+
+	const { username, watch_link_id } = props
 
 	try {
 		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type, wl.type FROM anime as an INNER JOIN watch_link as wl INNER JOIN episode as ep ON wl.episode_id = ep.id AND ep.anime_id = an.id WHERE wl.id="${watch_link_id}"`)
@@ -153,7 +171,9 @@ async function LogAddWatchLink(props) {
 }
 
 async function LogDeleteWatchLink(props) {
-	const { process_type, username, episode_id, watch_link_type } = props
+	const process_type = "delete-watch-link"
+
+	const { username, episode_id, watch_link_type } = props
 
 	try {
 		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
@@ -166,7 +186,9 @@ async function LogDeleteWatchLink(props) {
 }
 
 async function LogAddManga(props) {
-	const { process_type, username, manga_id } = props
+	const process_type = "add-manga"
+
+	const { username, manga_id } = props
 
 	try {
 		const manga = await mariadb(`SELECT name FROM manga WHERE id=${manga_id}`)
@@ -179,7 +201,9 @@ async function LogAddManga(props) {
 }
 
 async function LogUpdateManga(props) {
-	const { process_type, username, manga_id } = props
+	const process_type = "update-manga"
+
+	const { username, manga_id } = props
 
 	try {
 		const manga = await mariadb(`SELECT name FROM manga WHERE id=${manga_id}`)
@@ -192,7 +216,9 @@ async function LogUpdateManga(props) {
 }
 
 async function LogDeleteManga(props) {
-	const { process_type, username, manga_name } = props
+	const process_type = "delete-manga"
+
+	const { username, manga_name } = props
 
 	try {
 		const text = `${username} isimli kullanıcı ${manga_name} isimli mangayı sildi.`
@@ -203,7 +229,9 @@ async function LogDeleteManga(props) {
 }
 
 async function LogAddMangaEpisode(props) {
-	const { process_type, username, manga_episode_id } = props
+	const process_type = "add-manga-episode"
+
+	const { username, manga_episode_id } = props
 
 	try {
 		const manga = await mariadb(`SELECT id, episode_number, (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name FROM manga_episode WHERE id=${manga_episode_id}`)
@@ -216,7 +244,9 @@ async function LogAddMangaEpisode(props) {
 }
 
 async function LogUpdateMangaEpisode(props) {
-	const { process_type, username, manga_episode_id } = props
+	const process_type = "update-manga-episode"
+
+	const { username, manga_episode_id } = props
 
 	try {
 		const manga = await mariadb(`SELECT id, episode_number, (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name FROM manga_episode WHERE id=${manga_episode_id}`)
@@ -229,7 +259,9 @@ async function LogUpdateMangaEpisode(props) {
 }
 
 async function LogDeleteMangaEpisode(props) {
-	const { process_type, username, episode_number, manga_name } = props
+	const process_type = "delete-manga-episode"
+
+	const { username, episode_number, manga_name } = props
 
 	try {
 		const text = `${username} isimli kullanıcı ${manga_name} isimli manganın ${episode_number}. bölümünü sildi.`
@@ -240,7 +272,9 @@ async function LogDeleteMangaEpisode(props) {
 }
 
 async function LogAddPermission(props) {
-	const { process_type, username, permission_id } = props
+	const process_type = "add-permission"
+
+	const { username, permission_id } = props
 
 	try {
 		const permission = await mariadb(`SELECT name FROM permission WHERE id=${permission_id}`)
@@ -253,7 +287,9 @@ async function LogAddPermission(props) {
 }
 
 async function LogUpdatePermission(props) {
-	const { process_type, username, permission_id } = props
+	const process_type = "update-permission"
+
+	const { username, permission_id } = props
 
 	try {
 		const permission = await mariadb(`SELECT name FROM permission WHERE id=${permission_id}`)
@@ -266,7 +302,9 @@ async function LogUpdatePermission(props) {
 }
 
 async function LogDeletePermission(props) {
-	const { process_type, username, permission_name } = props
+	const process_type = "delete-permission"
+
+	const { username, permission_name } = props
 
 	text = `${username} isimli kullanıcı ${permission_name} isimli yetkiyi sildi.`
 	try {
@@ -277,7 +315,9 @@ async function LogDeletePermission(props) {
 }
 
 async function LogAddUser(props) {
-	const { process_type, username, user_id } = props
+	const process_type = "add-user"
+
+	const { username, user_id } = props
 
 	try {
 		const user = await mariadb(`SELECT name FROM user WHERE id=${user_id}`)
@@ -290,7 +330,9 @@ async function LogAddUser(props) {
 }
 
 async function LogUpdateUser(props) {
-	const { process_type, username, user_id } = props
+	const process_type = "update-user"
+
+	const { username, user_id } = props
 
 	try {
 		const user = await mariadb(`SELECT name FROM user WHERE id=${user_id}`)
@@ -303,13 +345,41 @@ async function LogUpdateUser(props) {
 }
 
 async function LogDeleteUser(props) {
-	const { process_type, username, name } = props
+	const process_type = "delete-user"
+
+	const { username, name } = props
 
 	text = `${username} isimli kullanıcı ${name} isimli üyeyi sildi.`
 	try {
 		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
 	} catch (err) {
 		logFailError(process_type, name, err)
+	}
+}
+
+async function LogAddMotd(props) {
+	const process_type = "add-motd"
+
+	const { username, motd_id } = props
+
+	try {
+		const text = `${username} isimli kullanıcı ${motd_id} idli duyuruyu ekledi.`
+		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+	} catch (err) {
+		logFailError(process_type, motd_id, err)
+	}
+}
+
+async function LogDeleteMotd(props) {
+	const process_type = "delete-motd"
+
+	const { username, motd_id } = props
+
+	try {
+		const text = `${username} isimli kullanıcı ${motd_id} idli duyuruyu sildi.`
+		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+	} catch (err) {
+		logFailError(process_type, motd_id, err)
 	}
 }
 
@@ -336,5 +406,7 @@ module.exports = {
 	LogDeletePermission,
 	LogAddUser,
 	LogUpdateUser,
-	LogDeleteUser
+	LogDeleteUser,
+	LogAddMotd,
+	LogDeleteMotd
 }

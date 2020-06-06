@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../validation/check_permission')
+const check_permission = require('../../middlewares/check_permission')
 const mariadb = require('../../config/maria')
 const error_messages = require("../../config/error_messages")
 const standartSlugify = require('standard-slugify')

@@ -5,7 +5,7 @@ const router = express.Router()
 const gravatar = require('gravatar')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const check_permission = require('../../validation/check_permission')
+const check_permission = require('../../middlewares/check_permission')
 const mariadb = require('../../config/maria')
 const keys = require('../../config/keys')
 const error_messages = require("../../config/error_messages")
@@ -13,36 +13,33 @@ const standartSlugify = require('standard-slugify')
 
 const { NODE_ENV } = process.env
 
-// Load Input Validation
-const validateRegisterInput = require('../../validation/register')
-const validateLoginInput = require('../../validation/login')
-
 const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
+const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../middlewares/validate')
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
 // @access  Public
-router.post('/kayit', async (req, res) => {
+router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) => {
     const { name, email, password } = req.body
-    const { errors, isValid } = validateRegisterInput(req.body)
+
     let user
-    // Check Validation
-    if (!isValid) {
-        return res.status(400).json(errors)
-    }
+
     try {
         user = await mariadb(`SELECT name, email FROM user WHERE email='${email}' OR name='${name}'`)
     } catch (err) {
         console.log(err)
         return res.status(500).json({ err: "Database bağlantısı kurulamıyor." })
     }
+
     if (user[0]) {
         errors.username = "Kullanıcı adı veya email kullanılıyor."
         return res.status(400).json({
             ...errors,
             'err': 'Kullanıcı adı veya email kullanılıyor'
         })
-    } else {
+    }
+
+    else {
         const avatar = gravatar.url(req.body.email, {
             s: '200', // Size
             r: 'pg', // Rating
@@ -120,7 +117,9 @@ router.post('/kayit/admin', async (req, res) => {
         res.status(403).json({ 'err': err })
     }
 
-    const { errors, isValid } = validateRegisterInput(req.body)
+
+    // TODO: VALIDATE BODY
+    const { errors, isValid } = {}
     // Check Validation
     if (!isValid) {
         return res.status(400).json(errors)
@@ -180,18 +179,11 @@ router.post('/kayit/admin', async (req, res) => {
 // @route   GET api/kullanici/login
 // @desc    Login User / Returning JWT Token
 // @access  Public
-router.post('/giris', async (req, res) => {
+router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
     let user
 
-    const {
-        errors,
-        isValid
-    } = validateLoginInput(req.body)
-
-    // Check Validation
-    if (!isValid) {
-        return res.status(400).json(errors)
-    }
+    // Genel kontrollerden sonra farklı hata çıkarsa
+    const errors = {}
 
     const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
     const password = req.body.password
@@ -202,19 +194,20 @@ router.post('/giris', async (req, res) => {
     } catch (err) {
         console.log(err)
     }
+
     // Check for user
     if (!user[0]) {
-        errors.username = 'Kullanıcı bulunamadı';
+        errors.name = 'Kullanıcı bulunamadı'
         return res.status(404).json({
-            ...errors,
-            'err': ''
+            ...errors
         })
     }
+
     // Check Password
     bcrypt.compare(password, user[0].password).then(isMatch => {
         if (isMatch) {
             if (!user[0].activated) {
-                errors.username = "Kullanıcı aktif edilmemiş"
+                errors.name = "Kullanıcı aktif edilmemiş"
 
                 return res.status(403).json({
                     ...errors,
@@ -224,7 +217,7 @@ router.post('/giris', async (req, res) => {
             // User Matched
             const payload = {
                 id: user[0].id,
-                username: user[0].name,
+                name: user[0].name,
                 avatar: user[0].avatar
             }; // Create JWT Payload
             // Sign Token
@@ -256,7 +249,7 @@ router.post('/giris', async (req, res) => {
 // @route   POST api/kullanici/uye-guncelle
 // @desc    Update user (perm: "update-user")
 // @access  Private
-router.post('/uye-guncelle', async (req, res) => {
+router.post('/uye-guncelle', ValidateUserRegistration(), Validation, async (req, res) => {
     const { id, slug, name, password, permission_level, avatar } = req.body
 
     let username, user_id
@@ -286,13 +279,11 @@ router.post('/uye-guncelle', async (req, res) => {
     try {
         await mariadb(`UPDATE user SET ${keys.map((key, index) => `${key} = '${values[index]}'`)} WHERE id='${id}'`)
 
-
         LogUpdateUser({
             process_type: 'update-user',
             username: username,
             user_id: id
         })
-
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {

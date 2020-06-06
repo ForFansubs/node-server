@@ -16,6 +16,7 @@ const user = require('./routes/api/user')
 const images = require('./routes/api/images')
 const administrative = require('./routes/api/administrative')
 const permission = require('./routes/api/permission')
+const motd = require('./routes/api/motd')
 const activateUser = require('./routes/kayit-tamamla/index')
 
 // Pre-render middleware
@@ -72,6 +73,7 @@ app.use('/api/yetki', permission)
 app.use('/api/resimler', images)
 app.use('/api/sistem', administrative)
 app.use('/api/manga-bolum', mangaEpisode)
+app.use('/api/motd', motd)
 app.use('/kayit-tamamla', activateUser)
 
 app.use('/admin', express.static(__dirname + '/admin/'));

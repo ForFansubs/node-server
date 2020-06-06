@@ -1,4 +1,5 @@
 module.exports = {
     database_error: "Database bağlantısında sorun var!",
-    manga_episode_exists: "Bu bölüm zaten kayıtlı!"
+    manga_episode_exists: "Bu bölüm zaten kayıtlı!",
+    bad_request: "Parametrelerde hata var!"
 }

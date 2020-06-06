@@ -20,6 +20,7 @@
     "crypto-js": "^4.0.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-validator": "^6.5.0",
     "gravatar": "^1.8.0",
     "jsdom": "^16.2.2",
     "jsonwebtoken": "^8.5.1",
@@ -35,7 +36,6 @@
     "redis": "^3.0.2",
     "sharp": "^0.25.3",
     "standard-slugify": "^2.0.1",
-    "uniqid": "^5.2.0",
-    "validator": "^13.0.0"
+    "uniqid": "^5.2.0"
   }
 }

@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../validation/check_permission')
+const check_permission = require('../../middlewares/check_permission')
 const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const deleteImage = require('../../methods/delete_image')
@@ -133,7 +133,7 @@ router.post('/manga-guncelle', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
 
-    const { name, cover_art, download_link, reader_link, release_date, slug, translators, editors, genres, authors, header, logo, mal_link } = req.body
+    const { name, cover_art, download_link, reader_link, release_date, translators, editors, genres, authors, header, logo, mal_link } = req.body
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
     //Cover_art'ı diske indir
@@ -174,7 +174,6 @@ router.post('/manga-guncelle', async (req, res) => {
     const updatedManga = {
         synopsis,
         name,
-        slug,
         translators,
         editors,
         authors,

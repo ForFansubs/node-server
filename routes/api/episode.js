@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../validation/check_permission')
+const check_permission = require('../../middlewares/check_permission')
 const downloadLinkExtract = require('../../methods/link-extraction-download')
 const watchLinkExtract = require('../../methods/link-extraction-watch')
 const sendDiscordEmbed = require('../../methods/discord_embed')

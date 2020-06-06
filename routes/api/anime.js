@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../validation/check_permission')
-const validateAnimeInput = require('../../validation/anime')
+const check_permission = require('../../middlewares/check_permission')
 const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const renameImage = require('../../methods/rename_image')
@@ -73,17 +72,6 @@ router.post('/anime-ekle', async (req, res) => {
 
     //Eğer varsa öne hata yolla.
     if (anime[0]) return res.status(400).json({ 'err': 'Bu anime zaten ekli.' })
-
-    //Gelen datayı kontrol et
-    const {
-        errors,
-        isValid
-    } = validateAnimeInput(req.body);
-
-    // Kontrole bak. Eğer hata varsa öne yolla.
-    if (!isValid) {
-        return res.status(400).json(errors);
-    }
 
     //Yoksa değerleri variable'lara eşitle.
     const { header, cover_art, logo, translators, encoders, studios, version, trans_status, pv } = req.body
@@ -215,16 +203,19 @@ router.post('/anime-guncelle', async (req, res) => {
 
     //Önden gelen dataları variablelara kaydet.
     const { name, header, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, pv } = req.body
-    let { slug } = req.body
+    let { slug } = anime[0]
 
     //Konudaki özel karakterleri Javascripte uygun dönüştür.
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
     //Eğer içeriğin türü değiştiyse, slug'ı ona göre değiştir.
-    if (slug === anime[0].slug && version !== anime[0].version) {
+    if (version !== anime[0].version) {
+        const oldSlug = slug
         slug = version === "bd" ? `${slug}-bd` : `${slug.replace('-bd', '')}`
         try {
-            await renameImage(anime[0].slug, slug, "anime")
+            await renameImage(oldSlug, slug, "logo", "anime")
+            await renameImage(oldSlug, slug, "header", "anime")
+            await renameImage(oldSlug, slug, "cover", "anime")
         } catch (err) {
             console.log(err)
         }
