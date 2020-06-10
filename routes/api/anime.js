@@ -5,7 +5,7 @@ const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const renameImage = require('../../methods/rename_image')
 const deleteImage = require('../../methods/delete_image')
-const mariadb = require('../../config/maria')
+const Sequelize = require("sequelize");
 const standartSlugify = require('standard-slugify')
 const genre_map = require("../../config/maps/genremap")
 const season_map = require("../../config/maps/seasonmap")
@@ -13,6 +13,11 @@ const status_map = require("../../config/maps/statusmap")
 const error_messages = require("../../config/error_messages")
 
 const { LogAddAnime, LogUpdateAnime, LogDeleteAnime, LogFeaturedAnime } = require("../../methods/database_logs")
+// Models
+const Anime = require('../../models/Anime')
+const Episode = require('../../models/Episode')
+const DownloadLink = require('../../models/DownloadLink')
+const WatchLink = require('../../models/WatchLink')
 
 String.prototype.mapReplace = function (map) {
     var regex = [];
@@ -22,29 +27,6 @@ String.prototype.mapReplace = function (map) {
         return map[word];
     });
 };
-
-//Anime ekleme ekranında bölümlerin toplu açılması istenmişse, bu fonksiyon çalışır.
-const internalBulkEpisodeAdd = (user_id, anime_id, translators, encoders, origin, episode_count) => {
-    let episodeList = []
-    let episodeNumbers = []
-    //Bulunan bölümleri döndür.
-    for (var episode = 1; episode <= episode_count; episode++) {
-        //Emektar yazısını oluştur.
-        const credits = `${translators} / ${encoders}`
-        //Bölüm objesini oluştur.
-        const newEpisode = [
-            anime_id, episode, credits, user_id, ''
-        ]
-        //Objeyi listenin sonuna ekle.
-        episodeList.push(newEpisode)
-        episodeNumbers.push(episode)
-    }
-    //İlk parantez içindeki değerler, objelerin içinde sıralı verilerin, databaseteki tablein hangi sütunlarına ekleneceğini belirliyor.
-    //İkinci virgül içindekiler de hangi verilerin alınacağını, hangilerinin alınmayacağını belirtiyor.
-    mariadb.batch(`INSERT INTO episode (anime_id,episode_number,credits,created_by,special_type) VALUES (?, ?, ?, ?, ?)`, episodeList)
-        .then(_ => _)
-        .catch(err => console.log(err))
-}
 
 // @route   POST api/anime/anime-ekle
 // @desc    Add anime (perm: "add-anime")
@@ -64,19 +46,17 @@ router.post('/anime-ekle', async (req, res) => {
 
     //Eğer varsa anime daha önceden eklenmiş mi diye isimle kontrol et. 
     try {
-        anime = await mariadb(`SELECT name FROM anime WHERE name="${req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")}" AND version="${req.body.version}"`)
+        anime = await Anime.findOne({ where: { name: req.body.name } })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
     }
 
     //Eğer varsa öne hata yolla.
-    if (anime[0]) return res.status(400).json({ 'err': 'Bu anime zaten ekli.' })
+    if (anime) return res.status(400).json({ 'err': 'Bu anime zaten ekli.' })
 
     //Yoksa değerleri variable'lara eşitle.
-    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, pv } = req.body
-    const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-    const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, pv, name, synopsis } = req.body
 
     //Slug'ı yukardaki fonksiyonla oluştur.
     const slug = version === 'bd' ? standartSlugify(name) + "-bd" : standartSlugify(name)
@@ -103,31 +83,40 @@ router.post('/anime-ekle', async (req, res) => {
     //Seri durumunu string olarak al, mapten Türkçeye çevir
     const series_status = req.body.series_status.mapReplace(status_map)
 
-    //Yeni animenin objectini oluştur
-    const newAnime = {
-        synopsis,
-        name,
-        slug,
-        translators,
-        encoders,
-        series_status,
-        trans_status,
-        release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
-        created_by: user_id,
-        episode_count,
-        studios,
-        cover_art,
-        mal_link,
-        genres,
-        premiered,
-        version,
-        pv
-    }
-    //Sütunları ve değerleri belirle.
-    const keys = Object.keys(newAnime)
-    const values = Object.values(newAnime)
     //Database'e yolla.
     try {
+        const result = await Anime.create({
+            synopsis,
+            name,
+            slug,
+            translators,
+            encoders,
+            series_status,
+            trans_status,
+            release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
+            created_by: user_id,
+            episode_count,
+            studios,
+            cover_art,
+            mal_link,
+            genres,
+            premiered,
+            version,
+            pv
+        })
+
+        LogAddAnime({
+            process_type: 'add-anime',
+            username: username,
+            anime_id: result.id
+        })
+
+        //Discord Webhook isteği yolla.
+        sendDiscordEmbed({
+            type: "anime",
+            anime_id: result.id
+        })
+
         //Eğer logo linki verilmişse al ve diske kaydet
         if (logo) {
             try {
@@ -152,25 +141,8 @@ router.post('/anime-ekle', async (req, res) => {
                 console.log(err)
             }
         }
-        const result = await mariadb(`INSERT INTO anime (${keys.join(', ')}) VALUES (${values.map(value => `"${value}"`).join(',')})`)
-        //Eğer ön taraftan bölümlerin eklenmesi de istenmişse ekle.
-        if (req.body.getEpisodes && req.body.episode_count !== 0) {
-            internalBulkEpisodeAdd(user_id, result.insertId, req.body.translators, req.body.encoders, req.headers.host, req.body.episode_count)
-        }
 
-        LogAddAnime({
-            process_type: 'add-anime',
-            username: username,
-            anime_id: result.insertId
-        })
-
-        //Discord Webhook isteği yolla.
-        sendDiscordEmbed({
-            type: "anime",
-            anime_id: result.insertId
-        })
-
-        return res.status(200).json({ 'success': 'success' })
+        res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
@@ -195,7 +167,7 @@ router.post('/anime-guncelle', async (req, res) => {
 
     //Güncellenecek animeyi database'te bul
     try {
-        anime = await mariadb(`SELECT * FROM anime WHERE id="${id}"`)
+        anime = await Anime.findOne({ where: { id: id } })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -203,13 +175,13 @@ router.post('/anime-guncelle', async (req, res) => {
 
     //Önden gelen dataları variablelara kaydet.
     const { name, header, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, pv } = req.body
-    let { slug } = anime[0]
+    let { slug } = anime
 
     //Konudaki özel karakterleri Javascripte uygun dönüştür.
     const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
     //Eğer içeriğin türü değiştiyse, slug'ı ona göre değiştir.
-    if (version !== anime[0].version) {
+    if (version !== anime.version) {
         const oldSlug = slug
         slug = version === "bd" ? `${slug}-bd` : `${slug.replace('-bd', '')}`
         try {
@@ -221,72 +193,64 @@ router.post('/anime-guncelle', async (req, res) => {
         }
     }
 
-    //Cover_art'ı diske indir
-    try {
-        await downloadImage(cover_art, "cover", slug, "anime")
-    } catch (err) {
-        return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
-    }
-
-    //Eğer logo inputuna "-" konulmuşsa, diskteki logoyu sil
-    if (logo === "-") {
-        try {
-            await deleteImage(slug, "anime", "logo")
-        } catch (err) {
-            return res.status(500).json({ "err": "Logo silinirken bir sorun oluştu." })
-        }
-    }
-
-    //Eğer logo linki verilmişse al ve diske kaydet
-    if (logo && logo !== "-") {
-        try {
-            await downloadImage(logo, "logo", slug, "anime")
-        } catch (err) {
-            return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
-        }
-    }
-
-    //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
-    if (header === "-") {
-        deleteImage(slug, "anime", "header")
-    }
-
-    //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
-    if (header && header !== "-") {
-        downloadImage(header, "header", slug, "anime")
-    }
-
-    const updatedAnime = {
-        synopsis,
-        name,
-        slug,
-        translators,
-        encoders,
-        studios,
-        cover_art,
-        episode_count,
-        mal_link,
-        release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
-        genres,
-        premiered,
-        version,
-        series_status,
-        trans_status,
-        pv
-    }
-    const keys = Object.keys(updatedAnime)
-    const values = Object.values(updatedAnime)
     //Database'teki satırı güncelle.
     try {
-        await mariadb(`UPDATE anime SET ${keys.map((key, index) => `${key} = "${values[index]}"`)} WHERE id="${id}"`)
+        await Anime.update({
+            synopsis,
+            name,
+            slug,
+            translators,
+            encoders,
+            series_status,
+            trans_status,
+            release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
+            created_by: user_id,
+            episode_count,
+            studios,
+            cover_art,
+            mal_link,
+            genres,
+            premiered,
+            version,
+            pv
+        }, {
+            where: {
+                id: id
+            }
+        })
+
         LogUpdateAnime({
             process_type: 'update-anime',
             username: username,
             anime_id: id
         })
-        res.status(200).json({ 'success': 'success' })
+
+        //Cover_art'ı diske indir
+        downloadImage(cover_art, "cover", slug, "anime")
+
+        //Eğer logo inputuna "-" konulmuşsa, diskteki logoyu sil
+        if (logo === "-") {
+            deleteImage(slug, "anime", "logo")
+        }
+
+        //Eğer logo linki verilmişse al ve diske kaydet
+        if (logo && logo !== "-") {
+            downloadImage(logo, "logo", slug, "anime")
+        }
+
+        //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
+        if (header === "-") {
+            deleteImage(slug, "anime", "header")
+        }
+
+        //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
+        if (header && header !== "-") {
+            downloadImage(header, "header", slug, "anime")
+        }
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
-        res.status(500).json({ 'err': 'Güncellemede bir sorun oluştu.' })
+        return res.status(500).json({ 'err': 'Güncellemede bir sorun oluştu.' })
     }
 })
 
@@ -305,37 +269,50 @@ router.post('/anime-sil/', async (req, res) => {
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
-    try {
-        anime = await mariadb(`SELECT name, slug FROM anime WHERE id=${id}`)
-    } catch (err) {
-        console.error(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
-    }
+
+    anime = await Anime.findOne({ where: { id: id } })
+    console.log(anime)
+    if (!anime) return res.status(500).json({ 'err': error_messages.database_error })
 
     try {
-        await Promise.all([mariadb(`DELETE FROM anime WHERE id=${id}`), mariadb(`DELETE FROM episode WHERE anime_id=${id}`), mariadb(`DELETE FROM download_link WHERE anime_id=${id}`), mariadb(`DELETE FROM watch_link WHERE anime_id=${id}`)])
+        await Promise.all(
+            [
+                Anime.destroy({ where: { id: id } })
+            ],
+            [
+                Episode.destroy({ where: { anime_id: id } })
+            ],
+            [
+                DownloadLink.destroy({ where: { anime_id: id } })
+            ],
+            [
+                WatchLink.destroy({ where: { anime_id: id } })
+            ]
+        )
         //Animeyle bağlantılı resimleri diskte varsa sil.
         try {
-            await deleteImage(anime[0].slug, "anime", "header")
+            await deleteImage(anime.slug, "anime", "header")
         } catch (err) {
             console.log(err)
         }
         try {
-            await deleteImage(anime[0].slug, "anime", "logo")
+            await deleteImage(anime.slug, "anime", "logo")
         } catch (err) {
             console.log(err)
         }
         try {
-            await deleteImage(anime[0].slug, "anime", "cover")
+            await deleteImage(anime.slug, "anime", "cover")
         } catch (err) {
             console.log(err)
         }
+
         LogDeleteAnime({
             process_type: 'delete-anime',
             username: username,
-            anime_name: anime[0].name
+            anime_name: anime.name
         })
-        res.status(200).json({ 'success': 'success' })
+
+        return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -358,13 +335,22 @@ router.post('/update-featured-anime', async (req, res) => {
     }
 
     try {
-        mariadb(`UPDATE anime SET is_featured = "0" WHERE is_featured="1"`)
+        Anime.update({ is_featured: 0 }, { where: { is_featured: 1 } })
     } catch (err) {
         return res.status(500).json({ 'err': error_messages.database_error })
     }
 
     try {
-        await mariadb(`UPDATE anime SET is_featured = 1 WHERE (name, version) IN(${data.map(({ name, version }) => `("${name}", "${version}")`)})`)
+        await Anime.update({ is_featured: 1 }, {
+            where: {
+                name: {
+                    [Sequelize.Op.in]: data.map(({ name }) => name)
+                },
+                version: {
+                    [Sequelize.Op.in]: data.map(({ version }) => version)
+                }
+            }
+        })
         res.status(200).json({ 'success': 'success' })
         LogFeaturedAnime({
             process_type: 'featured-anime',
@@ -389,7 +375,7 @@ router.get('/admin-featured-anime', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
     try {
-        const anime = await mariadb("SELECT * FROM anime WHERE is_featured=1")
+        const anime = await Anime.findAll({ where: { is_featured: 1 } })
         res.status(200).json(anime)
     } catch (err) {
         console.log(err)
@@ -402,8 +388,9 @@ router.get('/admin-featured-anime', async (req, res) => {
 // @access  Public
 router.get('/liste', async (req, res) => {
     let animes
+
     try {
-        animes = await mariadb("SELECT slug, name, version, synopsis, genres, premiered, cover_art FROM anime ORDER BY name")
+        animes = await Anime.findAll({ attributes: ['slug', 'name', 'synopsis', 'version', 'genres', 'premiered', 'cover_art'], order: ['name'] })
         const animeList = animes.map(anime => {
             anime.genres = anime.genres.split(',')
             return anime
@@ -419,7 +406,7 @@ router.get('/liste', async (req, res) => {
 // @desc    Get all animes with all data
 // @access  Public
 router.get('/admin-liste', async (req, res) => {
-    let username, user_id, animes
+    let username, user_id
     try {
         const check_res = await check_permission(req.headers.authorization, "see-admin-page")
         username = check_res.username
@@ -429,7 +416,7 @@ router.get('/admin-liste', async (req, res) => {
     }
 
     try {
-        animes = await mariadb("SELECT * FROM anime ORDER BY name")
+        const animes = await Anime.findAll({ order: ['name'] })
         res.status(200).json(animes)
     } catch (err) {
         console.log(err)
@@ -451,22 +438,20 @@ router.get('/:slug/admin-view', async (req, res) => {
     }
 
     try {
-        anime = await mariadb(`
-        SELECT *
-        FROM anime WHERE slug="${req.params.slug}"`)
+        anime = await Anime.findOne({ where: { slug: req.params.slug } })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ err: error_messages.database_error })
     }
 
-    if (!anime[0]) {
+    if (!anime) {
         return res.status(404).json({ 'err': 'Görüntülemek istediğiniz animeyi bulamadık.' });
     } else {
         //Anime bulunduysa bölümlerini çek.
         try {
-            episodes = await mariadb(`SELECT * FROM episode WHERE anime_id="${anime[0].id}" ORDER BY special_type, ABS(episode_number)`)
-            anime[0].episodes = episodes
-            res.status(200).json({ ...anime[0] })
+            episodes = await Episode.findAll({ where: { anime_id: anime.id }, order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]] })
+            anime.dataValues.episodes = episodes
+            res.status(200).json(anime)
         } catch (err) {
             console.log(err)
             return res.status(500).json({ err: error_messages.database_error })
@@ -481,20 +466,49 @@ router.get('/:slug/admin-view', async (req, res) => {
 router.get('/:slug', async (req, res) => {
     let anime, episodes
     try {
-        anime = await mariadb(`SELECT name, slug, id, version, synopsis, translators, encoders, studios, genres, cover_art, mal_link, episode_count, release_date, premiered, trans_status, series_status, (SELECT name FROM user WHERE id=anime.created_by) as created_by FROM anime WHERE slug="${req.params.slug}"`)
+        anime = await Anime.findOne({
+            where: { slug: req.params.slug },
+            attributes: [
+                'name',
+                'slug',
+                'id',
+                'version',
+                'synopsis',
+                'translators',
+                'encoders',
+                'studios',
+                'genres',
+                'cover_art',
+                'mal_link',
+                'episode_count',
+                'release_date',
+                'premiered',
+                'trans_status',
+                'series_status',
+                [
+                    Sequelize.literal(`(
+                        SELECT name
+                        FROM user
+                        WHERE
+                            id = anime.created_by
+                    )`),
+                    'created_by'
+                ]
+            ]
+        })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ err: error_messages.database_error })
     }
     //Eğer anime yoksa hata yolla.
-    if (!anime[0]) {
+    if (!anime) {
         return res.status(404).json({ 'err': 'Görüntülemek istediğiniz animeyi bulamadık.' });
     } else {
         //Anime bulunduysa bölümlerini çek.
         try {
-            episodes = await mariadb(`SELECT * FROM episode WHERE anime_id="${anime[0].id}" AND can_user_download="1" ORDER BY special_type, ABS(episode_number)`)
-            anime[0].episodes = episodes
-            res.status(200).json({ ...anime[0] })
+            episodes = await Episode.findAll({ where: { anime_id: anime.id, can_user_download: 1 }, order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]] })
+            anime.dataValues.episodes = episodes
+            res.status(200).json(anime)
         } catch (err) {
             console.log(err)
             return res.status(500).json({ err: error_messages.database_error })

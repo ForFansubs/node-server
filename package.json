@@ -34,6 +34,7 @@
     "prerender-node": "^3.2.5",
     "qs": "^6.9.4",
     "redis": "^3.0.2",
+    "sequelize": "^5.21.12",
     "sharp": "^0.25.3",
     "standard-slugify": "^2.0.1",
     "uniqid": "^5.2.0"

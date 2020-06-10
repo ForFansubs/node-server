@@ -31,6 +31,10 @@ function unlinkFileError(path, err) {
     return console.log(err)
 }
 
+function pathNotFound(path) {
+    return console.log(`${path} yolundaki dosya diskte bulunamadı.`)
+}
+
 function logFailError(process, documentId, err) {
     console.log(err)
     return console.log(`Loglara kayıt ederken hata.\nOlay yeri: ${process}\nSorunu çıkaran girdi: ${documentId}`)
@@ -44,5 +48,6 @@ module.exports = {
     downloadImageConvertError,
     unlinkFileDone,
     unlinkFileError,
+    pathNotFound,
     logFailError
 }

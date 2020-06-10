@@ -2,10 +2,11 @@ const package = require('../../package.json')
 const express = require('express')
 const router = express.Router()
 const check_permission = require('../../middlewares/check_permission')
-const jsdom = require("jsdom");
+const jsdom = require("jsdom")
 const mariadb = require('../../config/maria')
-const axios = require("axios");
-const genremap = require('../../config/maps/genremap');
+const axios = require("axios")
+const genremap = require('../../config/maps/genremap')
+const standartSlugify = require('standard-slugify')
 
 jsdom.defaultDocumentFeatures = {
     FetchExternalResources: ['script'],
@@ -164,9 +165,10 @@ router.get('/featured-anime', async (req, res) => {
 // @route   GET api/header-getir/:link
 // @desc    Get anime header
 // @access  Public
-router.get('/header-getir/:link', (req, res) => {
+router.get('/header-getir', (req, res) => {
     const { type } = req.query
-    axios.get(`https://kitsu.io/api/edge/${type ? type : "anime"}?filter[slug]=` + req.params.link)
+    const { name } = req.body
+    axios.get(`https://kitsu.io/api/edge/${type ? type : "anime"}?filter[slug]=` + standartSlugify(name))
         .then(resp => {
             if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original)
                 res.status(200).json({ header: resp.data.data[0].attributes.coverImage.original, cover_art: resp.data.data[0].attributes.posterImage.original })

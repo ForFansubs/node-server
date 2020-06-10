@@ -25,8 +25,7 @@ async function saveImageToDisk(image, slug, contentType, imageType) {
     const writer = fs.createWriteStream(path, { flags: 'w' })
     //Writer açılamazsa hata ver
     if (!writer) {
-        LogConsole.downloadImageWriterError(path)
-        throw "Dosya kayıt yeri açılamadı."
+        return LogConsole.downloadImageWriterError(path)
     }
     //Resmi dönüştürmek için functionu hazırla
     //Eğer logoysa png olarak al, eğer headersa ve 1920'den büyükse 1920 olarak 
@@ -50,8 +49,7 @@ async function saveImageToDisk(image, slug, contentType, imageType) {
     try {
         image.pipe(converter()).pipe(writer)
     } catch (err) {
-        LogConsole.downloadImageConvertError(slug, imageType, err)
-        throw new Error("Resim işlenirken bir sorun oluştu.")
+        return LogConsole.downloadImageConvertError(slug, imageType, err)
     }
     //Fonksiyon sonunda promise yolla, kullandığın yerde await'le.
     return new Promise((resolve, reject) => {
@@ -86,7 +84,6 @@ module.exports = async function downloadImage(link, imageType, slug, contentType
         image = await getImageFromLink(link)
     } catch (err) {
         LogConsole.downloadImageDownloadError(link, err)
-        throw err
     }
     //Eğer resmi indirebildiysen diske kaydet.
     saveImageToDisk(image, slug, contentType, imageType)

@@ -25,7 +25,7 @@ router.post('/manga-ekle', async (req, res) => {
     }
 
     try {
-        manga = await mariadb(`SELECT name FROM manga WHERE name="${req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")}"`)
+        manga = await mariadb(`SELECT name FROM manga WHERE name="${req.body.name}"`)
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -33,9 +33,7 @@ router.post('/manga-ekle', async (req, res) => {
 
     if (manga[0]) res.status(400).json({ 'err': 'Bu manga zaten ekli.' })
     else {
-        const { translators, editors, authors, header, cover_art, logo, download_link, reader_link } = req.body
-        const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-        const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+        const { translators, editors, authors, header, cover_art, logo, download_link, reader_link, synopsis, name } = req.body
 
         //Release date için default bir değer oluştur, eğer MAL'dan data alındıysa onunla değiştir
         let release_date = new Date(1)
@@ -346,7 +344,7 @@ router.get('/:slug', async (req, res) => {
         trans_status, 
         series_status, 
         (SELECT name FROM user WHERE id=manga.created_by) as created_by,
-        COUNT((SELECT episode_number FROM manga_episode WHERE manga_id=manga.id)) as episode_count
+        (SELECT COUNT(*) FROM manga_episode WHERE manga_id=manga.id) as episode_count
         FROM manga 
         WHERE slug="${req.params.slug}"`)
         if (!manga[0]) {

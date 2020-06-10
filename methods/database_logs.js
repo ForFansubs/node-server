@@ -370,6 +370,19 @@ async function LogAddMotd(props) {
 	}
 }
 
+async function LogUpdateMotd(props) {
+	const process_type = "update-motd"
+
+	const { username, motd_id } = props
+
+	try {
+		const text = `${username} isimli kullanıcı ${motd_id} idli duyurunun görünürlüğünü değiştirdi.`
+		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+	} catch (err) {
+		logFailError(process_type, motd_id, err)
+	}
+}
+
 async function LogDeleteMotd(props) {
 	const process_type = "delete-motd"
 
@@ -408,5 +421,6 @@ module.exports = {
 	LogUpdateUser,
 	LogDeleteUser,
 	LogAddMotd,
+	LogUpdateMotd,
 	LogDeleteMotd
 }

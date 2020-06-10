@@ -10,12 +10,10 @@ module.exports = async function deleteImage(slug, contentType, imageType) {
     if (fs.existsSync(path)) {
         fs.unlink(path, (err) => {
             if (err) {
-                LogConsole.unlinkFileError(path, err)
-                throw err
+                return LogConsole.unlinkFileError(path, err)
             }
             LogConsole.unlinkFileDone(path)
-            return true
         })
     }
-    else throw `${path} yolundaki dosya diskte bulunamadı.`
+    else return LogConsole.pathNotFound(path)
 }

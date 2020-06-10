@@ -4,12 +4,18 @@ const check_permission = require('../../middlewares/check_permission')
 const downloadLinkExtract = require('../../methods/link-extraction-download')
 const watchLinkExtract = require('../../methods/link-extraction-watch')
 const sendDiscordEmbed = require('../../methods/discord_embed')
+const Sequelize = require('sequelize')
 const mariadb = require('../../config/maria')
 const Validator = require('validator')
 const error_messages = require("../../config/error_messages")
 const supported_sites = require("../../config/supported_sites")
 
 const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, LogDeleteDownloadLink, LogAddWatchLink, LogDeleteWatchLink } = require("../../methods/database_logs")
+
+// Models
+const Episode = require('../../models/Episode')
+const WatchLink = require('../../models/WatchLink')
+const DownloadLink = require('../../models/DownloadLink')
 
 // @route   GET api/bolum/:slug/watch
 // @desc    View episodes
@@ -19,7 +25,56 @@ router.get('/:slug/watch', async (req, res) => {
     const { slug } = req.params
 
     try {
-        eps = await mariadb(`SELECT *, (SELECT name FROM anime WHERE id=episode.anime_id) as anime_name, (SELECT slug FROM anime WHERE id=episode.anime_id) as anime_slug, (SELECT cover_art FROM anime WHERE id=episode.anime_id) as cover_art FROM episode WHERE anime_id=(SELECT id FROM anime WHERE slug="${slug}") AND special_type!='toplu' ORDER BY special_type, ABS(episode_number)`)
+        eps = await Episode.findAll({
+            where:
+            {
+                anime_id: {
+                    [Sequelize.Op.eq]: Sequelize.literal(`(
+                        SELECT id
+                        FROM anime
+                        WHERE
+                        slug = "${slug}"
+                        )`)
+                },
+                special_type: {
+                    [Sequelize.Op.ne]: "toplu"
+                }
+            },
+            attributes: [
+                'id',
+                'episode_number',
+                'special_type',
+                'credits',
+                [
+                    Sequelize.literal(`(
+                        SELECT name
+                        FROM anime
+                        WHERE
+                            id = episode.anime_id
+                    )`),
+                    'anime_name'
+                ],
+                [
+                    Sequelize.literal(`(
+                        SELECT slug
+                        FROM anime
+                        WHERE
+                            id = episode.anime_id
+                    )`),
+                    'anime_slug'
+                ],
+                [
+                    Sequelize.literal(`(
+                        SELECT cover_art
+                        FROM anime
+                        WHERE
+                            id = episode.anime_id
+                    )`),
+                    'cover_art'
+                ],
+            ],
+            order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]]
+        })
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
@@ -38,7 +93,21 @@ router.post('/izleme-linkleri', async (req, res) => {
     special_type === "bolum" ? special_type = "" : null
 
     try {
-        eps = await mariadb(`SELECT link, type, id FROM watch_link WHERE episode_id=(SELECT id FROM episode WHERE anime_id=(SELECT id FROM anime WHERE slug="${slug}") AND special_type='${special_type}' AND episode_number='${episode_number}') ORDER BY type`)
+        // TODO: Subquery'leri direkt olarak yazma!
+        eps = await WatchLink.findAll(
+            {
+                attributes: [
+                    'link',
+                    'type',
+                    'id'
+                ],
+                where: {
+                    episode_id: {
+                        [Sequelize.Op.eq]: Sequelize.literal(`(SELECT id FROM episode WHERE anime_id=(SELECT id FROM anime WHERE slug="${slug}") AND special_type='${special_type}' AND episode_number='${episode_number}')`)
+                    }
+                },
+                order: ['type']
+            })
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
@@ -50,17 +119,16 @@ router.post('/izleme-linkleri', async (req, res) => {
 // @desc    View watch links
 // @access  Public
 router.post('/izleme-linkleri/admin-view', async (req, res) => {
-    let username, user_id, eps
+    const { episode_id } = req.body
+
     try {
-        const check_res = await check_permission(req.headers.authorization, "delete-watch-link")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "delete-watch-link")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
     try {
-        eps = await mariadb(`SELECT * FROM watch_link WHERE episode_id="${req.body.episode_id}" ORDER BY type`)
+        const eps = await WatchLink.findAll({ where: { episode_id: episode_id }, order: ['type'] })
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
@@ -72,7 +140,8 @@ router.post('/izleme-linkleri/admin-view', async (req, res) => {
 // @desc    View watch links
 // @access  Public
 router.post('/indirme-linkleri/admin-view', async (req, res) => {
-    let username, user_id, eps
+    const { episode_id } = req.body
+
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-download-link")
         username = check_res.username
@@ -82,7 +151,7 @@ router.post('/indirme-linkleri/admin-view', async (req, res) => {
     }
 
     try {
-        eps = await mariadb(`SELECT * FROM download_link WHERE episode_id="${req.body.episode_id}" ORDER BY type`)
+        const eps = await DownloadLink.findAll({ where: { episode_id: episode_id }, order: ['type'] })
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
@@ -282,13 +351,12 @@ router.post('/indirme-linki-ekle', async (req, res) => {
 
     if (anime[0]) res.status(400).json({ 'err': 'Bu link zaten ekli.' })
     else {
-        const { anime_id, episode_id, resolution } = req.body
+        const { anime_id, episode_id } = req.body
         if (!Validator.isURL(extract.link)) return res.status(400).json({ 'err': 'Link doğru değil' })
         const newDownloadLink = {
             anime_id,
             episode_id,
             type: extract.type,
-            resolution,
             link: extract.link,
             created_by: user_id
         }
@@ -484,7 +552,7 @@ router.post('/download-links/:animeslug', async (req, res) => {
     let eps
 
     try {
-        eps = await mariadb(`SELECT link, type, resolution, id FROM download_link WHERE anime_id=(SELECT id FROM anime WHERE slug='${req.params.animeslug}') AND episode_id='${req.body.episode_id}' ORDER BY type`)
+        eps = await mariadb(`SELECT link, type, id FROM download_link WHERE anime_id=(SELECT id FROM anime WHERE slug='${req.params.animeslug}') AND episode_id='${req.body.episode_id}' ORDER BY type`)
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
