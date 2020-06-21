@@ -46,7 +46,7 @@ router.post('/anime-ekle', async (req, res) => {
 
     //Eğer varsa anime daha önceden eklenmiş mi diye isimle kontrol et. 
     try {
-        anime = await Anime.findOne({ where: { name: req.body.name } })
+        anime = await Anime.findOne({ raw: true, where: { name: req.body.name } })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -167,7 +167,7 @@ router.post('/anime-guncelle', async (req, res) => {
 
     //Güncellenecek animeyi database'te bul
     try {
-        anime = await Anime.findOne({ where: { id: id } })
+        anime = await Anime.findOne({ raw: true, where: { id: id } })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
@@ -270,8 +270,8 @@ router.post('/anime-sil/', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
 
-    anime = await Anime.findOne({ where: { id: id } })
-    console.log(anime)
+    anime = await Anime.findOne({ raw: true, where: { id: id } })
+
     if (!anime) return res.status(500).json({ 'err': error_messages.database_error })
 
     try {
@@ -390,7 +390,7 @@ router.get('/liste', async (req, res) => {
     let animes
 
     try {
-        animes = await Anime.findAll({ attributes: ['slug', 'name', 'synopsis', 'version', 'genres', 'premiered', 'cover_art'], order: ['name'] })
+        animes = await Anime.findAll({ raw: true, attributes: ['slug', 'name', 'synopsis', 'version', 'genres', 'premiered', 'cover_art'], order: ['name'] })
         const animeList = animes.map(anime => {
             anime.genres = anime.genres.split(',')
             return anime

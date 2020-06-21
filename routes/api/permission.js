@@ -1,11 +1,11 @@
 const express = require('express')
 const router = express.Router()
 const check_permission = require('../../middlewares/check_permission')
-const mariadb = require('../../config/maria')
 const error_messages = require("../../config/error_messages")
 const standartSlugify = require('standard-slugify')
 
 const { LogAddPermission, LogUpdatePermission, LogDeletePermission } = require('../../methods/database_logs')
+const Permission = require('../../models/Permission')
 
 // @route   POST api/yetki/yetki-ekle
 // @desc    Update permission (perm: "add-permission")
@@ -13,33 +13,26 @@ const { LogAddPermission, LogUpdatePermission, LogDeletePermission } = require('
 router.post('/yetki-ekle', async (req, res) => {
     const { name, color, permission_set } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "add-permission")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
-
-    const newPerm = {
-        name: name,
-        color: color,
-        permission_set: permission_set,
-        slug: standartSlugify(name)
-    }
-    newPerm.permission_set = JSON.stringify(newPerm.permission_set)
-    const keys = Object.keys(newPerm)
-    const values = Object.values(newPerm)
-
     try {
-        const result = await mariadb(`INSERT INTO permission (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
+        const result = await Permission.create({
+            name: name,
+            color: color,
+            permission_set: permission_set,
+            slug: standartSlugify(name)
+        })
 
         LogAddPermission({
             process_type: 'add-permission',
             username: username,
-            permission_id: result.insertId
+            permission_id: result.id
         })
 
         return res.status(200).json({ 'success': 'success' })
@@ -55,25 +48,20 @@ router.post('/yetki-ekle', async (req, res) => {
 router.post('/yetki-guncelle', async (req, res) => {
     const { id, name, color, permission_set } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "update-permission")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
-    const updatedPerm = {
-        name: name,
-        color: color,
-        permission_set: permission_set
-    }
-    updatedPerm.permission_set = JSON.stringify(updatedPerm.permission_set)
-    const keys = Object.keys(updatedPerm)
-    const values = Object.values(updatedPerm)
     try {
-        await mariadb(`UPDATE permission SET ${keys.map((key, index) => `${key} = '${values[index]}'`)} WHERE id='${id}'`)
+        await Permission.update({
+            name: name,
+            color: color,
+            permission_set: JSON.stringify(updatedPerm.permission_set)
+        }, { where: { id: id } })
 
         LogUpdatePermission({
             process_type: 'update-permission',
@@ -95,23 +83,22 @@ router.post('/yetki-sil', async (req, res) => {
     let permission
     const { permission_id } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-permission")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
     try {
-        permission = await mariadb(`SELECT name FROM permission WHERE id='${permission_id}'`)
-        await mariadb(`DELETE FROM permission WHERE id=${permission_id}`)
+        permission = await Permission.findOne({ where: { id: permission_id } })
+        await Permission.destroy({ where: { id: permission_id } })
 
         LogDeletePermission({
             process_type: 'delete-permission',
             username: username,
-            permission_name: permission[0].name
+            permission_name: permission.name
         })
 
         return res.status(200).json({ 'success': 'success' })
@@ -125,17 +112,14 @@ router.post('/yetki-sil', async (req, res) => {
 // @desc    Get all permissions (perm: "update-permission")
 // @access  Private
 router.get('/yetki-liste', async (req, res) => {
-    let username, user_id, perms
     try {
-        const check_res = await check_permission(req.headers.authorization, "update-permission")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "update-permission")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
     try {
-        perms = await mariadb(`SELECT * FROM permission`)
+        const perms = await Permission.findAll()
         res.status(200).json(perms)
     } catch (err) {
         console.log(err)
@@ -147,19 +131,18 @@ router.get('/yetki-liste', async (req, res) => {
 // @desc    Get all permissions (perm: "add-permission")
 // @access  Private
 router.get('/:slug', async (req, res) => {
-    let username, user_id, perms
+    const { slug } = req.params
+
     try {
-        const check_res = await check_permission(req.headers.authorization, "add-permission")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "add-permission")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
     try {
-        perms = await mariadb(`SELECT * FROM permission WHERE slug='${req.params.slug}'`)
-        perms[0].permission_set = JSON.parse(perms[0].permission_set).join(',')
-        res.status(200).json(perms[0])
+        let perms = await Permission.findOne({ where: { slug: slug } })
+        perms.permission_set = perms.permission_set.join(',')
+        res.status(200).json(perms)
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })

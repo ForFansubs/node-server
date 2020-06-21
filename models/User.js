@@ -34,7 +34,7 @@ User.init({
         allowNull: false,
         defaultValue: Sequelize.NOW
     },
-    created_by: {
+    activated: {
         type: Sequelize.INTEGER,
         allowNull: false
     }

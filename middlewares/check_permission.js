@@ -1,7 +1,8 @@
 // Her türlü geliştirmeye açıktır.
-
-const mariadb = require('../config/maria')
 const jwt = require('jsonwebtoken');
+
+const User = require('../models/User')
+const Permission = require('../models/Permission')
 
 const keys = require('../config/keys');
 
@@ -18,19 +19,19 @@ async function check_permission(token, perm) {
     const user_id = decoded.id
     let sayac = 0
     try {
-        user = await mariadb(`SELECT permission_level FROM user WHERE id="${user_id}"`)
+        user = await User.findOne({ where: { id: user_id } })
     } catch (err) {
         console.log(err)
         throw err
     }
-    const permission_level = user[0].permission_level
+    const permission_level = user.permission_level
     try {
-        permission_result = await mariadb(`SELECT permission_set FROM permission WHERE slug="${permission_level}"`)
+        permission_result = await Permission.findOne({ where: { slug: permission_level } })
     } catch (err) {
         console.log(err)
         throw err
     }
-    const perm_list = JSON.parse(permission_result[0].permission_set)
+    const perm_list = permission_result.permission_set
     if (!perm_list || perm_list.length === 0) {
         throw "Yetkisiz kullanım!"
     }

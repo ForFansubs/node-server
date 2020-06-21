@@ -14,7 +14,7 @@ Permission.init({
         allowNull: false
     },
     permission_set: {
-        type: Sequelize.DATE,
+        type: Sequelize.JSON,
         allowNull: true,
         defaultValue: "[]"
     },

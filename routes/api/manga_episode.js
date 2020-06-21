@@ -2,49 +2,17 @@ const express = require('express')
 const router = express.Router()
 const fs = require('fs')
 const Path = require('path')
+const Sequelize = require('sequelize')
 const check_permission = require('../../middlewares/check_permission')
 const sendDiscordEmbed = require('../../methods/discord_embed')
-const mariadb = require('../../config/maria')
 const error_messages = require("../../config/error_messages")
+const MangaEpisode = require('../../models/MangaEpisode')
+
+const { clearMangaFolder, deleteMangaFolder, getPath } = require('../../methods/manga-episode')
 
 const { LogAddMangaEpisode, LogUpdateMangaEpisode, LogDeleteMangaEpisode } = require("../../methods/database_logs")
 
 const multer = require('multer');
-
-const getPath = (manga_slug, episode_number, filename) => Path.resolve(__dirname, `../../images/manga_episodes/${manga_slug}/${episode_number}${filename ? `/${filename}` : ""}`)
-
-async function clearMangaFolder(manga_slug, episode_number, pages) {
-    const existingPages = fs.readdirSync(getPath(manga_slug, episode_number))
-    for (const page of existingPages) {
-        if (!pages.find(p => p.filename === page)) {
-            const pagePath = getPath(manga_slug, episode_number, page)
-            fs.unlinkSync(pagePath, (err) => {
-                if (err) {
-                    return unlinkFileError(path, err)
-                }
-            })
-        }
-    }
-}
-
-async function deleteMangaFolder(manga_slug, episode_number, pages, options) {
-    if (!manga_slug || !episode_number || !pages) throw "Parametreler eksik."
-
-    const folderPath = getPath(manga_slug, episode_number)
-
-    if (!fs.existsSync(folderPath)) throw "Dosya bulunamadı."
-
-    for (const page of JSON.parse(pages)) {
-        const filepath = getPath(manga_slug, episode_number, page.filename)
-        fs.unlinkSync(filepath, (err) => {
-            if (err) {
-                return unlinkFileError(path, err)
-            }
-        })
-    }
-
-    fs.rmdirSync(folderPath)
-}
 
 const manga_storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -76,7 +44,6 @@ const upload = multer({
 // @access  Private
 router.post('/bolum-ekle', async (req, res) => {
     let username, user_id
-    const { manga_slug, episode_number } = req.body
 
     try {
         const check_res = await check_permission(req.headers.authorization, "add-manga-episode")
@@ -94,8 +61,9 @@ router.post('/bolum-ekle', async (req, res) => {
         let files = []
 
         try {
-            const episode = await mariadb(`SELECT * FROM manga_episode WHERE manga_id=${manga_id} AND episode_number="${episode_number}"`)
-            if (episode[0]) return res.status(500).json({ 'err': error_messages.manga_episode_exists })
+            const episode = await MangaEpisode.findOne({ raw: true, where: { manga_id: manga_id, episode_number: episode_number } })
+
+            if (episode) return res.status(500).json({ 'err': error_messages.manga_episode_exists })
         } catch (err) {
             return console.log(err)
         }
@@ -110,24 +78,20 @@ router.post('/bolum-ekle', async (req, res) => {
             })
         })
 
-        newEpisode = {
-            manga_id: manga_id ? manga_id : "",
-            credits: credits ? credits : "",
-            episode_name: episode_name ? episode_name : "",
-            episode_number: episode_number ? episode_number : "",
-            pages: JSON.stringify(files, ("\"", "'")),
-            created_by: user_id
-        }
-
-        const keys = Object.keys(newEpisode)
-        const values = Object.values(newEpisode)
         try {
-            const result = await mariadb(`INSERT INTO manga_episode (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
+            const result = await MangaEpisode.create({
+                manga_id: manga_id ? manga_id : "",
+                credits: credits ? credits : "",
+                episode_name: episode_name ? episode_name : "",
+                episode_number: episode_number ? episode_number : "",
+                pages: files,
+                created_by: user_id
+            })
 
             LogAddMangaEpisode({
                 process_type: 'add-manga-episode',
                 username: username,
-                manga_episode_id: result.insertId
+                manga_episode_id: result.id
             })
 
             sendDiscordEmbed({
@@ -150,32 +114,26 @@ router.post('/bolum-ekle', async (req, res) => {
 // @desc    Update manga episode (perm: "update-manga-episode")
 // @access  Private
 router.post('/bolum-guncelle', async (req, res) => {
-    let username, user_id
+    let username
     const { credits, episode_name, id } = req.body
 
     try {
         const check_res = await check_permission(req.headers.authorization, "update-manga-episode")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
-    const data = {
-        episode_name: episode_name,
-        credits: credits
-    }
-
-    const keys = Object.keys(data)
-    const values = Object.values(data)
-
     try {
-        await mariadb(`UPDATE manga_episode SET ${keys.map((key, index) => `${key} = "${values[index]}"`)} WHERE id="${id}"`)
+        await MangaEpisode.update({
+            episode_name: episode_name,
+            credits: credits
+        }, { where: { id: id } })
 
         LogUpdateMangaEpisode({
             process_type: 'update-manga-episode',
             username: username,
-            manga_episode_id: req.body.id
+            manga_episode_id: id
         })
 
         return res.status(200).json({ 'success': 'success' })
@@ -189,30 +147,43 @@ router.post('/bolum-guncelle', async (req, res) => {
 // @desc    Delete episode (perm: "delete-episode")
 // @access  Private
 router.post('/bolum-sil', async (req, res) => {
-    let episode
     const { episode_id } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-manga-episode")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
 
     try {
-        const manga_episode_data = await mariadb(
-            `SELECT *,
-            (SELECT slug FROM manga WHERE id=manga_episode.manga_id) as manga_slug,
-            (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name
-            FROM
-            manga_episode
-            WHERE
-            id=${episode_id}`
-        )
-        const { manga_id, manga_slug, manga_name, episode_number, pages } = manga_episode_data[0]
-        Promise.all([deleteMangaFolder(manga_slug, episode_number, pages), mariadb(`DELETE FROM manga_episode WHERE id=${episode_id}`)])
+        const { manga_name, manga_slug, episode_number, pages } = await MangaEpisode.findOne({
+            raw: true,
+            attributes: [
+                '*',
+                [
+                    Sequelize.literal(`(
+                    SELECT name
+                    FROM manga
+                    WHERE
+                        id = manga_episode.manga_id
+                )`),
+                    'manga_name'
+                ],
+                [
+                    Sequelize.literal(`(
+                    SELECT slug
+                    FROM manga
+                    WHERE
+                        id = manga_episode.manga_id
+                )`),
+                    'manga_slug'
+                ]
+            ], where: { id: episode_id }
+        })
+
+        Promise.all([deleteMangaFolder(manga_slug, episode_number, pages), MangaEpisode.destroy({ where: { id: episode_id } })])
 
         LogDeleteMangaEpisode({
             process_type: 'delete-manga-episode',
@@ -223,6 +194,7 @@ router.post('/bolum-sil', async (req, res) => {
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
+        console.log(err)
         return res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
     }
 })
@@ -235,21 +207,53 @@ router.get('/:slug/read', async (req, res) => {
     const { slug } = req.params
 
     try {
-        manga = await mariadb(`
-        SELECT 
-            episode_number,
-            episode_name,
-            credits,
-            pages,
-            (SELECT name FROM manga WHERE id = manga_episode.manga_id) as manga_name,
-            (SELECT cover_art FROM manga WHERE id = manga_episode.manga_id) as cover_art,
-            (SELECT name FROM user WHERE id = manga_episode.created_by) as created_by
-            FROM
-            manga_episode
-            WHERE
-            manga_id = (SELECT id FROM manga WHERE slug = '${slug}')
-            ORDER BY
-            ABS(manga_episode.episode_number)`)
+        manga = await MangaEpisode.findAll({
+            attributes: [
+                'episode_number',
+                'episode_name',
+                'credits',
+                'pages',
+                [
+                    Sequelize.literal(`(
+                        SELECT name
+                        FROM manga
+                        WHERE
+                            id = manga_episode.manga_id
+                    )`),
+                    'manga_name'
+                ],
+                [
+                    Sequelize.literal(`(
+                        SELECT cover_art
+                        FROM manga
+                        WHERE
+                            id = manga_episode.manga_id
+                    )`),
+                    'manga_cover'
+                ],
+                [
+                    Sequelize.literal(`(
+                        SELECT name
+                        FROM user
+                        WHERE
+                            id = manga_episode.created_by
+                    )`),
+                    'created_by'
+                ]
+            ],
+            order: [[Sequelize.fn('ABS', Sequelize.col('episode_number'))]],
+            where: {
+                manga_id: {
+                    [Sequelize.Op.eq]: Sequelize.literal(`(
+                        SELECT id
+                        FROM manga
+                        WHERE
+                        slug = "${slug}"
+                        )`)
+                }
+            }
+        })
+
         if (manga.length === 0) {
             return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
         } else {

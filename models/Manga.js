@@ -49,11 +49,11 @@ Manga.init({
     },
     reader_link: {
         type: Sequelize.CHAR,
-        allowNull: false
+        allowNull: true
     },
     download_link: {
         type: Sequelize.CHAR,
-        allowNull: false
+        allowNull: true
     },
     genres: {
         type: Sequelize.CHAR,

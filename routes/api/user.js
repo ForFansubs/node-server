@@ -7,9 +7,14 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const check_permission = require('../../middlewares/check_permission')
 const mariadb = require('../../config/maria')
+const Sequelize = require('sequelize')
+const sequelize = require('../../config/sequelize')
 const keys = require('../../config/keys')
 const error_messages = require("../../config/error_messages")
 const standartSlugify = require('standard-slugify')
+
+const User = require('../../models/User')
+const PendingUser = require('../../models/PendingUser')
 
 const { NODE_ENV } = process.env
 
@@ -25,13 +30,13 @@ router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) =
     let user
 
     try {
-        user = await mariadb(`SELECT name, email FROM user WHERE email='${email}' OR name='${name}'`)
+        user = await User.findOne({ where: { email: email, name: name }, raw: true })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ err: "Database bağlantısı kurulamıyor." })
     }
 
-    if (user[0]) {
+    if (user) {
         errors.username = "Kullanıcı adı veya email kullanılıyor."
         return res.status(400).json({
             ...errors,
@@ -45,22 +50,22 @@ router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) =
             r: 'pg', // Rating
             d: 'mm' // Default
         })
-        let newUser = {
-            slug: standartSlugify(name),
-            name: name,
-            email: email,
-            avatar,
-            password: password,
-            activated: 0,
-        }
+
+
         bcrypt.genSalt(10, (err, salt) => {
             bcrypt.hash(newUser.password, salt, async (err, p_hash) => {
                 let user_result, insert_result
                 if (err) return console.log(err);
-                newUser.password = p_hash;
-                const keys = Object.keys(newUser)
-                const values = Object.values(newUser)
+
                 try {
+                    user_result = await User.create({
+                        slug: standartSlugify(name),
+                        name: name,
+                        email: email,
+                        avatar,
+                        password: p_hash,
+                        activated: 0,
+                    })
                     user_result = await mariadb(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
                 } catch (err) {
                     console.log(err)
@@ -68,13 +73,16 @@ router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) =
                 }
                 const c_hash = SHA256(`${(new Date()).toString()} ${user_result.insertId}`)
                 try {
-                    insert_result = await mariadb(`INSERT INTO pending_user (user_id, hash_key) VALUES (${user_result.insertId}, "${c_hash}")`)
+                    insert_result = await PendingUser.create({
+                        user_id: user_result.id,
+                        hash_key: c_hash
+                    })
                 } catch (err) {
                     console.log(err)
                     try {
-                        mariadb(`DELETE FROM user WHERE id=${user_result.insertId}`)
+                        await User.destroy({ where: { id: user_result.id } })
                     } catch (err) {
-                        console.log(`${user_result.insertId} id'li kullanıcının hash'i oluşturulamadı. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
+                        console.log(`${user_result.id} id'li kullanıcının hash'i oluşturulamadı. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
                     }
                     return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
                 }
@@ -90,10 +98,10 @@ router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) =
                 } catch (err) {
                     console.log(err)
                     try {
-                        await mariadb(`DELETE FROM user WHERE id=${user_result.insertId}`)
-                        await mariadb(`DELETE FROM pending_user WHERE user_id=${user_result.insertId}`)
+                        await User.destroy({ where: { id: user_result.id } })
+                        await PendingUser.destroy({ where: { user_id: user_result.id } })
                     } catch (err) {
-                        console.log(`${user_result.insertId} id'li kullanıcının hash'i oluşturuldu, fakat mail yollayamadık. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
+                        console.log(`${user_result.id} id'li kullanıcının hash'i oluşturuldu, fakat mail yollayamadık. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
                     }
                     res.status(400).json({ 'err': 'Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin.' })
                 }
@@ -125,12 +133,12 @@ router.post('/kayit/admin', async (req, res) => {
         return res.status(400).json(errors)
     }
     try {
-        user = await mariadb(`SELECT name, email FROM user WHERE email='${email}' OR name='${name}'`)
+        user = await User.findOne({ where: { email: email, name: name }, raw: true })
     } catch (err) {
         console.log(err)
         return res.status(400).json({ err: "Database bağlantısı kurulamıyor." })
     }
-    if (user[0]) {
+    if (user) {
         errors.username = "Kullanıcı adı veya email kullanılıyor."
         return res.status(400).json({
             ...errors,
@@ -142,23 +150,22 @@ router.post('/kayit/admin', async (req, res) => {
             r: 'pg', // Rating
             d: 'mm' // Default
         })
-        let newUser = {
-            slug: standartSlugify(name),
-            name: name,
-            email: email,
-            avatar,
-            password: password,
-            activated: 1,
-        }
+
         bcrypt.genSalt(10, (err, salt) => {
             bcrypt.hash(newUser.password, salt, async (err, p_hash) => {
                 let result
                 if (err) throw err;
-                newUser.password = p_hash;
-                const keys = Object.keys(newUser)
-                const values = Object.values(newUser)
+
                 try {
-                    result = await mariadb(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
+                    result = await User.create({
+                        slug: standartSlugify(name),
+                        name: name,
+                        email: email,
+                        avatar,
+                        password: p_hash,
+                        activated: 1,
+                    })
+
                 } catch (err) {
                     console.log(err)
                     return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
@@ -167,7 +174,7 @@ router.post('/kayit/admin', async (req, res) => {
                 LogAddUser({
                     process_type: 'add-user',
                     username: username,
-                    user_id: result.insertId
+                    user_id: result.id
                 })
 
                 return res.status(200).json({ 'success': 'success' })
@@ -190,13 +197,13 @@ router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
 
     // Find user by email
     try {
-        user = await mariadb(`SELECT name, password, avatar, activated, id FROM user WHERE name='${name}'`)
+        user = await User.findOne({ raw: true, where: { name: name }, attributes: ['name', 'password', 'avatar', 'activated', 'id'] })
     } catch (err) {
         console.log(err)
     }
 
     // Check for user
-    if (!user[0]) {
+    if (!user) {
         errors.name = 'Kullanıcı bulunamadı'
         return res.status(404).json({
             ...errors
@@ -204,9 +211,9 @@ router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
     }
 
     // Check Password
-    bcrypt.compare(password, user[0].password).then(isMatch => {
+    bcrypt.compare(password, user.password).then(isMatch => {
         if (isMatch) {
-            if (!user[0].activated) {
+            if (!user.activated) {
                 errors.name = "Kullanıcı aktif edilmemiş"
 
                 return res.status(403).json({
@@ -216,9 +223,9 @@ router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
             }
             // User Matched
             const payload = {
-                id: user[0].id,
-                name: user[0].name,
-                avatar: user[0].avatar
+                id: user.id,
+                name: user.name,
+                avatar: LogAddUser.avatar
             }; // Create JWT Payload
             // Sign Token
             jwt.sign(
@@ -230,8 +237,8 @@ router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
                     res.json({
                         success: true,
                         token,
-                        username: user[0].name,
-                        avatar: user[0].avatar,
+                        username: user.name,
+                        avatar: user.avatar,
                         exp: NODE_ENV === "development" ? (Date.now() + 315360000000) : (Date.now() + 43200000)
                     })
                 }
@@ -262,22 +269,21 @@ router.post('/uye-guncelle', ValidateUserRegistration(), Validation, async (req,
     }
 
     const updatedUser = {
-        slug,
-        name,
-        permission_level,
-        avatar
+
     }
 
-    if (password) {
-        const getSalt = bcrypt.genSaltSync(10)
-        const getHash = bcrypt.hashSync(password, getSalt)
-        updatedUser.password = getHash;
-    }
 
-    const keys = Object.keys(updatedUser)
-    const values = Object.values(updatedUser)
     try {
-        await mariadb(`UPDATE user SET ${keys.map((key, index) => `${key} = '${values[index]}'`)} WHERE id='${id}'`)
+        await User.update({
+            slug,
+            name,
+            permission_level,
+            avatar
+        }, { where: { id: id } })
+
+        if (password) {
+            User.update({ password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)) }, { where: { id: id } })
+        }
 
         LogUpdateUser({
             process_type: 'update-user',
@@ -308,18 +314,18 @@ router.post('/uye-sil', async (req, res) => {
     }
 
     try {
-        user = await mariadb(`SELECT name FROM user WHERE id='${user_id_body}'`)
+        user = await User.findOne({ raw: true, where: { id: user_id_body } })
     } catch (err) {
         console.log(err)
     }
 
     try {
-        await mariadb(`DELETE FROM user WHERE id=${user_id_body}`)
+        await User.destroy({ where: user_id_body })
 
         LogDeleteUser({
             process_type: 'delete-user',
             username: username,
-            name: user[0].name
+            name: user.name
         })
 
         return res.status(200).json({ 'success': 'success' })
@@ -338,7 +344,7 @@ router.get('/adminpage', async (req, res) => {
         username = check_res.username
         user_id = check_res.user_id
     } catch (err) {
-        res.status(403).json({ 'err': err })
+        return res.status(403).json({ 'err': err })
     }
 
     if (!req.query.withprops)
@@ -347,11 +353,19 @@ router.get('/adminpage', async (req, res) => {
         })
     else {
         try {
-            count = await mariadb(`SELECT (SELECT COUNT(*) FROM anime) AS ANIME_COUNT, (SELECT COUNT(*) FROM manga) AS MANGA_COUNT, (SELECT COUNT(*) FROM episode) AS EPISODE_COUNT, (SELECT COUNT(*) FROM download_link) AS DOWNLOADLINK_COUNT, (SELECT COUNT(*) FROM watch_link) AS WATCHLINK_COUNT, (SELECT COUNT(*) FROM user) AS USER_COUNT, (SELECT permission_set FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_LIST, (SELECT name FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_NAME`)
+            [count] = await sequelize.query(`
+            SELECT (SELECT COUNT(*) FROM anime) AS ANIME_COUNT,
+            (SELECT COUNT(*) FROM manga) AS MANGA_COUNT,
+            (SELECT COUNT(*) FROM episode) AS EPISODE_COUNT,
+            (SELECT COUNT(*) FROM download_link) AS DOWNLOADLINK_COUNT,
+            (SELECT COUNT(*) FROM watch_link) AS WATCHLINK_COUNT,
+            (SELECT COUNT(*) FROM user) AS USER_COUNT,
+            (SELECT permission_set FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_LIST,
+            (SELECT name FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_NAME`, { type: Sequelize.QueryTypes.SELECT })
         } catch (err) {
             console.log(err)
         }
-        return res.status(200).json({ ...count[0] })
+        return res.status(200).json(count)
     }
 })
 
@@ -359,17 +373,24 @@ router.get('/adminpage', async (req, res) => {
 // @desc    Get all users (perm: "update-permission")
 // @access  Private
 router.get('/uye-liste', async (req, res) => {
-    let username, user_id, users
+    let users
     try {
-        const check_res = await check_permission(req.headers.authorization, "update-permission")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "update-permission")
     } catch (err) {
         res.status(403).json({ 'err': err })
     }
 
     try {
-        users = await mariadb(`SELECT id, slug, name, permission_level, avatar, email FROM user`)
+        users = await User.findAll({
+            attributes: [
+                'id',
+                'slug',
+                'name',
+                'permission_level',
+                'avatar',
+                'email'
+            ]
+        })
         res.status(200).json(users)
     } catch (err) {
         console.log(err)

@@ -1,8 +1,24 @@
-const mariadb = require('../config/maria')
 const { logFailError } = require('./console_logs')
+
+const Anime = require('../models/Anime')
+const Manga = require('../models/Manga')
+const Log = require('../models/Log')
+const Episode = require('../models/Episode')
+const DownloadLink = require('../models/DownloadLink')
+const Permission = require('../models/Permission')
+const User = require('../models/User')
 
 const cleanText = (text) => {
 	return text.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+}
+
+async function HandleDatabaseQuery(username, text, process_type) {
+	return await Log.create({
+		username: username,
+		text: text,
+		process_type: process_type,
+		process: "success"
+	})
 }
 
 async function LogAddAnime(props) {
@@ -12,10 +28,9 @@ async function LogAddAnime(props) {
 
 	try {
 		const { anime_id } = props
-		const anime = await mariadb(`SELECT name FROM anime WHERE id=${anime_id}`)
-		const { name } = anime[0]
+		const { name } = await Anime.findOne({ raw: true, where: { id: anime_id } })
 		const text = `${username} isimli kullanıcı ${name} isimli animeyi ekledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, anime_id, err)
 	}
@@ -27,10 +42,9 @@ async function LogUpdateAnime(props) {
 	const { username, anime_id } = props
 
 	try {
-		const anime = await mariadb(`SELECT name FROM anime WHERE id=${anime_id}`)
-		const { name } = anime[0]
+		const { name } = await Anime.findOne({ raw: true, where: { id: anime_id } })
 		const text = `${username} isimli kullanıcı ${name} isimli animeyi düzenledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, anime_id, err)
 	}
@@ -43,7 +57,7 @@ async function LogDeleteAnime(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animeyi sildi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, anime_name, err)
 	}
@@ -54,7 +68,7 @@ async function LogFeaturedAnime(props) {
 
 	try {
 		text = `${username} isimli kullanıcı öne çıkarılan animeleri değiştirdi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process, "", err)
 	}
@@ -66,10 +80,25 @@ async function LogAddEpisode(props) {
 	const { username, episode_id } = props
 
 	try {
-		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
-		const { name, episode_number, special_type } = anime[0]
-		const text = `${username} isimli kullanıcı ${name} isimli animeye ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} ekledi.`
-		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		const { anime_name, episode_number, special_type } = await Episode.findOne({
+			raw: true,
+			where: { id: episode_id },
+			attributes: [
+				'episode_number',
+				'special_type',
+				[
+					Sequelize.literal(`(
+                        SELECT name
+                        FROM anime
+                        WHERE
+                            id = episode.anime_id
+                    )`),
+					'anime_name'
+				]
+			]
+		})
+		const text = `${username} isimli kullanıcı ${anime_name} isimli animeye ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} ekledi.`
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -81,21 +110,37 @@ async function LogUpdateEpisode(props) {
 	const { username, episode_id, can_user_download, request } = props
 
 	try {
-		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
+		const { anime_name, episode_number, special_type } = await Episode.findOne({
+			raw: true,
+			where: { id: episode_id },
+			attributes: [
+				'episode_number',
+				'special_type',
+				[
+					Sequelize.literal(`(
+                        SELECT name
+                        FROM anime
+                        WHERE
+                            id = episode.anime_id
+                    )`),
+					'anime_name'
+				]
+			]
+		})
+
 		let text = ""
-		const { name, episode_number, special_type } = anime[0]
 
 		switch (request) {
 			case "update-visibility": {
 				can_user_download === 1
 					?
-					text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} görünür yaptı.`
+					text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} görünür yaptı.`
 					:
-					text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} görünmez yaptı.`
+					text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} görünmez yaptı.`
 				break
 			}
 			case "update-data": {
-				text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} güncelledi.`
+				text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} güncelledi.`
 				break
 			}
 			default: {
@@ -104,7 +149,7 @@ async function LogUpdateEpisode(props) {
 			}
 		}
 
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -116,10 +161,10 @@ async function LogDeleteEpisode(props) {
 	const { username, anime_id, episode_number, special_type } = props
 
 	try {
-		const anime = await mariadb(`SELECT name FROM anime WHERE id=${anime_id}`)
-		const { name } = anime[0]
+		const { name } = await Anime.findOne({ raw: true, where: { id: anime_id } })
+
 		const text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} sildi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, anime_id, err)
 	}
@@ -131,10 +176,42 @@ async function LogAddDownloadLink(props) {
 	const { username, download_link_id } = props
 
 	try {
-		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type, dl.type FROM anime as an INNER JOIN download_link as dl INNER JOIN episode as ep ON dl.episode_id = ep.id AND ep.anime_id = an.id WHERE dl.id="${download_link_id}"`)
-		const { name, episode_number, special_type, type } = anime[0]
-		const text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümüne` : `${episode_number}. bölümüne`} ${type.toUpperCase()} indirme linkini ekledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		const { anime_name, episode_number, special_type, type } = await DownloadLink.findOne({
+			where: { id: download_link_id },
+			attributes: [
+				'type',
+				[
+					Sequelize.literal(`(
+                        SELECT episode_number
+                        FROM episode
+                        WHERE
+                            id = download_link.episode_id
+                    )`),
+					'episode_number'
+				],
+				[
+					Sequelize.literal(`(
+                        SELECT special_type
+                        FROM episode
+                        WHERE
+                            id = download_link.episode_id
+                    )`),
+					'special_type'
+				],
+				[
+					Sequelize.literal(`(
+                        SELECT name
+                        FROM anime
+                        WHERE
+                            id = download_link.anime_id
+                    )`),
+					'anime_name'
+				]
+			]
+		})
+
+		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümüne` : `${episode_number}. bölümüne`} ${type.toUpperCase()} indirme linkini ekledi.`
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, download_link_id, err)
 	}
@@ -146,10 +223,26 @@ async function LogDeleteDownloadLink(props) {
 	const { username, episode_id, download_link_type } = props
 
 	try {
-		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
-		const { name, episode_number, special_type } = anime[0]
-		const text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümündeki` : `${episode_number}. bölümündeki`} ${download_link_type.toUpperCase()} indirme linkini sildi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		const { anime_name, episode_number, special_type } = await Episode.findOne({
+			raw: true,
+			where: { id: episode_id },
+			attributes: [
+				'episode_number',
+				'special_type',
+				[
+					Sequelize.literal(`(
+                        SELECT name
+                        FROM anime
+                        WHERE
+                            id = episode.anime_id
+                    )`),
+					'anime_name'
+				]
+			]
+		})
+
+		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümündeki` : `${episode_number}. bölümündeki`} ${download_link_type.toUpperCase()} indirme linkini sildi.`
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -161,10 +254,42 @@ async function LogAddWatchLink(props) {
 	const { username, watch_link_id } = props
 
 	try {
-		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type, wl.type FROM anime as an INNER JOIN watch_link as wl INNER JOIN episode as ep ON wl.episode_id = ep.id AND ep.anime_id = an.id WHERE wl.id="${watch_link_id}"`)
-		const { name, episode_number, special_type, type } = anime[0]
-		const text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümüne` : `${episode_number}. bölümüne`} ${type.toUpperCase()} izleme linkini ekledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		const { anime_name, episode_number, special_type, type } = await DownloadLink.findOne({
+			where: { id: watch_link_id },
+			attributes: [
+				'type',
+				[
+					Sequelize.literal(`(
+                        SELECT episode_number
+                        FROM episode
+                        WHERE
+                            id = watch_link.episode_id
+                    )`),
+					'episode_number'
+				],
+				[
+					Sequelize.literal(`(
+                        SELECT special_type
+                        FROM episode
+                        WHERE
+                            id = watch_link.episode_id
+                    )`),
+					'special_type'
+				],
+				[
+					Sequelize.literal(`(
+                        SELECT name
+                        FROM anime
+                        WHERE
+                            id = watch_link.anime_id
+                    )`),
+					'anime_name'
+				]
+			]
+		})
+
+		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümüne` : `${episode_number}. bölümüne`} ${type.toUpperCase()} izleme linkini ekledi.`
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, watch_link_id, err)
 	}
@@ -176,10 +301,26 @@ async function LogDeleteWatchLink(props) {
 	const { username, episode_id, watch_link_type } = props
 
 	try {
-		const anime = await mariadb(`SELECT an.name, ep.episode_number, ep.special_type FROM anime as an INNER JOIN episode as ep ON ep.anime_id = an.id WHERE ep.id="${episode_id}"`)
-		const { name, episode_number, special_type } = anime[0]
-		const text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümündeki` : `${episode_number}. bölümündeki`} ${watch_link_type.toUpperCase()} izleme linkini sildi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		const { anime_name, episode_number, special_type } = await Episode.findOne({
+			raw: true,
+			where: { id: episode_id },
+			attributes: [
+				'episode_number',
+				'special_type',
+				[
+					Sequelize.literal(`(
+                        SELECT name
+                        FROM anime
+                        WHERE
+                            id = episode.anime_id
+                    )`),
+					'anime_name'
+				]
+			]
+		})
+
+		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümündeki` : `${episode_number}. bölümündeki`} ${watch_link_type.toUpperCase()} izleme linkini sildi.`
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -191,10 +332,10 @@ async function LogAddManga(props) {
 	const { username, manga_id } = props
 
 	try {
-		const manga = await mariadb(`SELECT name FROM manga WHERE id=${manga_id}`)
-		const { name } = manga[0]
+		const { name } = Manga.findOne({ where: { id: manga_id } })
+
 		const text = `${username} isimli kullanıcı ${name} isimli mangayı ekledi.`
-		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, manga_id, err)
 	}
@@ -206,10 +347,10 @@ async function LogUpdateManga(props) {
 	const { username, manga_id } = props
 
 	try {
-		const manga = await mariadb(`SELECT name FROM manga WHERE id=${manga_id}`)
-		const { name } = manga[0]
+		const { name } = Manga.findOne({ where: { id: manga_id } })
+
 		const text = `${username} isimli kullanıcı ${name} isimli mangayı düzenledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, manga_id, err)
 	}
@@ -222,7 +363,7 @@ async function LogDeleteManga(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${manga_name} isimli mangayı sildi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, manga_name, err)
 	}
@@ -234,10 +375,33 @@ async function LogAddMangaEpisode(props) {
 	const { username, manga_episode_id } = props
 
 	try {
-		const manga = await mariadb(`SELECT id, episode_number, (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name FROM manga_episode WHERE id=${manga_episode_id}`)
-		const { episode_number, manga_name } = manga[0]
+		const { manga_name, episode_number } = await MangaEpisode.findOne({
+			raw: true,
+			attributes: [
+				'*',
+				[
+					Sequelize.literal(`(
+                    SELECT name
+                    FROM manga
+                    WHERE
+                        id = manga_episode.manga_id
+                )`),
+					'manga_name'
+				],
+				[
+					Sequelize.literal(`(
+                    SELECT slug
+                    FROM manga
+                    WHERE
+                        id = manga_episode.manga_id
+                )`),
+					'manga_slug'
+				]
+			], where: { id: episode_id }
+		})
+
 		const text = `${username} isimli kullanıcı ${manga_name} isimli mangaya ${episode_number}. bölümü ekledi.`
-		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, manga_episode_id, err)
 	}
@@ -249,10 +413,33 @@ async function LogUpdateMangaEpisode(props) {
 	const { username, manga_episode_id } = props
 
 	try {
-		const manga = await mariadb(`SELECT id, episode_number, (SELECT name FROM manga WHERE id=manga_episode.manga_id) as manga_name FROM manga_episode WHERE id=${manga_episode_id}`)
-		const { episode_number, manga_name } = manga[0]
+		const { manga_name, episode_number } = await MangaEpisode.findOne({
+			raw: true,
+			attributes: [
+				'*',
+				[
+					Sequelize.literal(`(
+                    SELECT name
+                    FROM manga
+                    WHERE
+                        id = manga_episode.manga_id
+                )`),
+					'manga_name'
+				],
+				[
+					Sequelize.literal(`(
+                    SELECT slug
+                    FROM manga
+                    WHERE
+                        id = manga_episode.manga_id
+                )`),
+					'manga_slug'
+				]
+			], where: { id: episode_id }
+		})
+
 		const text = `${username} isimli kullanıcı ${manga_name} isimli manganın ${episode_number}. bölümünü güncelledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, manga_episode_id, err)
 	}
@@ -265,7 +452,7 @@ async function LogDeleteMangaEpisode(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${manga_name} isimli manganın ${episode_number}. bölümünü sildi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, manga_name, err)
 	}
@@ -277,10 +464,10 @@ async function LogAddPermission(props) {
 	const { username, permission_id } = props
 
 	try {
-		const permission = await mariadb(`SELECT name FROM permission WHERE id=${permission_id}`)
-		const { name } = permission[0]
+		const { name } = await Permission.findOne({ raw: true, where: { id: permission_id } })
+
 		const text = `${username} isimli kullanıcı ${name} isimli yetkiyi ekledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, permission_id, err)
 	}
@@ -292,10 +479,10 @@ async function LogUpdatePermission(props) {
 	const { username, permission_id } = props
 
 	try {
-		const permission = await mariadb(`SELECT name FROM permission WHERE id=${permission_id}`)
-		const { name } = permission[0]
+		const { name } = await Permission.findOne({ raw: true, where: { id: permission_id } })
+
 		const text = `${username} isimli kullanıcı ${name} isimli yetkiyi güncelledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, permission_id, err)
 	}
@@ -308,7 +495,7 @@ async function LogDeletePermission(props) {
 
 	text = `${username} isimli kullanıcı ${permission_name} isimli yetkiyi sildi.`
 	try {
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, permission_name, err)
 	}
@@ -320,10 +507,10 @@ async function LogAddUser(props) {
 	const { username, user_id } = props
 
 	try {
-		const user = await mariadb(`SELECT name FROM user WHERE id=${user_id}`)
-		const { name } = user[0]
+		const { name } = await User.findOne({ raw: true, where: { id: user_id } })
+
 		const text = `${username} isimli kullanıcı ${name} isimli üyeyi ekledi.`
-		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, user_id, err)
 	}
@@ -335,10 +522,10 @@ async function LogUpdateUser(props) {
 	const { username, user_id } = props
 
 	try {
-		const user = await mariadb(`SELECT name FROM user WHERE id=${user_id}`)
-		const { name } = user[0]
+		const { name } = await User.findOne({ raw: true, where: { id: user_id } })
+
 		const text = `${username} isimli kullanıcı ${name} isimli kullanıcıyı güncelledi.`
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, user_id, err)
 	}
@@ -351,7 +538,7 @@ async function LogDeleteUser(props) {
 
 	text = `${username} isimli kullanıcı ${name} isimli üyeyi sildi.`
 	try {
-		await mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, name, err)
 	}
@@ -364,7 +551,7 @@ async function LogAddMotd(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${motd_id} idli duyuruyu ekledi.`
-		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, motd_id, err)
 	}
@@ -377,7 +564,7 @@ async function LogUpdateMotd(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${motd_id} idli duyurunun görünürlüğünü değiştirdi.`
-		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, motd_id, err)
 	}
@@ -390,7 +577,7 @@ async function LogDeleteMotd(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${motd_id} idli duyuruyu sildi.`
-		mariadb(`INSERT INTO log (user, text, process_type, process) VALUES ("${username}", "${cleanText(text)}", "${process_type}", "success")`)
+		await HandleDatabaseQuery(username, cleanText(text), process_type)
 	} catch (err) {
 		logFailError(process_type, motd_id, err)
 	}
