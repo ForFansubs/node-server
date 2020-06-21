@@ -209,6 +209,7 @@ router.get('/:slug/read', async (req, res) => {
     try {
         manga = await MangaEpisode.findAll({
             attributes: [
+                'id',
                 'episode_number',
                 'episode_name',
                 'credits',
