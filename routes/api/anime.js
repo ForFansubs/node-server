@@ -174,11 +174,8 @@ router.post('/anime-guncelle', async (req, res) => {
     }
 
     //Önden gelen dataları variablelara kaydet.
-    const { name, header, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, pv } = req.body
+    const { name, header, synopsis, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, pv } = req.body
     let { slug } = anime
-
-    //Konudaki özel karakterleri Javascripte uygun dönüştür.
-    const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
 
     //Eğer içeriğin türü değiştiyse, slug'ı ona göre değiştir.
     if (version !== anime.version) {
