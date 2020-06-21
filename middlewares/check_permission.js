@@ -19,14 +19,14 @@ async function check_permission(token, perm) {
     const user_id = decoded.id
     let sayac = 0
     try {
-        user = await User.findOne({ where: { id: user_id } })
+        user = await User.findOne({ raw: true, where: { id: user_id } })
     } catch (err) {
         console.log(err)
         throw err
     }
     const permission_level = user.permission_level
     try {
-        permission_result = await Permission.findOne({ where: { slug: permission_level } })
+        permission_result = await Permission.findOne({ raw: true, where: { slug: permission_level } })
     } catch (err) {
         console.log(err)
         throw err
@@ -48,7 +48,7 @@ async function check_permission(token, perm) {
         })
         return {
             is_permitted: result,
-            username: decoded.username,
+            username: decoded.name,
             user_id: decoded.id
         }
     }

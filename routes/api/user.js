@@ -225,7 +225,7 @@ router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
             const payload = {
                 id: user.id,
                 name: user.name,
-                avatar: LogAddUser.avatar
+                avatar: user.avatar
             }; // Create JWT Payload
             // Sign Token
             jwt.sign(
@@ -338,11 +338,10 @@ router.post('/uye-sil', async (req, res) => {
 // @desc    Return to see if user can see the page or not (perm: "see-admin-page")
 // @access  Private
 router.get('/adminpage', async (req, res) => {
-    let username, user_id, count
+    let username, count
     try {
         const check_res = await check_permission(req.headers.authorization, "see-admin-page")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
