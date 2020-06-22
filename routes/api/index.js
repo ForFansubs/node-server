@@ -130,7 +130,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 12,
+                limit: 24,
                 order: [['id', 'DESC']]
             }),
             Manga.findAll({
@@ -153,7 +153,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 12,
+                limit: 24,
                 order: [['id', 'DESC']]
             }),
             Episode.findAll({
