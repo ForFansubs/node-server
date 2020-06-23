@@ -6,6 +6,7 @@ const Path = require('path')
 const fs = require('fs')
 const { promisify } = require('util')
 const package = require('./package.json')
+const { generateSitemap } = require('./config/sitemap-generator')
 
 const app = express()
 
@@ -59,13 +60,17 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 // Use Routes
-///ADSENSE STUFF
+///ads txt
 app.get('/ads.txt', (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'config', 'ads.txt'))
 })
-///Robots.txt
+///robots.txt
 app.get('/robots.txt', (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'config', 'robots.txt'))
+})
+///sitemap.xml
+app.get('/sitemap.xml', (req, res) => {
+    res.sendFile(Path.resolve(__dirname, 'config', 'sitemap.xml'))
 })
 ///ACTUAL API
 app.use('/api/', index)
@@ -135,7 +140,17 @@ async function initializeServer() {
         await sequelize.authenticate()
         console.info('✔️ Database bağlantısı başarılı.')
     } catch (err) {
-        return console.error('❌ Database bağlantısı başarısız oldu:', err);
+        return console.error('❌ Database bağlantısı başarısız oldu:', err)
+    }
+
+    // Generate sitemap everyday
+    try {
+        await generateSitemap()
+        setInterval(async () => {
+            await generateSitemap()
+        }, 8640000)
+    } catch (err) {
+        console.log(err)
     }
 
     const port = process.env.PORT || 5000;
