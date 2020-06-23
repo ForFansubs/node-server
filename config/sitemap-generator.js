@@ -83,7 +83,9 @@ const generateSitemap = async () => {
         manga_episode.map(({ manga_slug, episode_number }) => map[`/ceviriler/manga/${manga_slug}/oku/${episode_number}`] = ["get"])
 
         // Generate sitemap from map and route objects, save it to ./config/sitemap.xml path
+
         sitemap({
+            http: process.env.HOST_URL.match('https://') ? "https" : "http",
             url: process.env.HOST_URL.replace('http://', '').replace('https://', ''),
             map: map,
             route: route

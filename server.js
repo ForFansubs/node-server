@@ -143,8 +143,6 @@ async function initializeServer() {
         return console.error('❌ Database bağlantısı başarısız oldu:', err)
     }
 
-    // Generate sitemap everyday
-    console.log(process.env.NODE_APP_INSTANCE)
     try {
         if (process.env.NODE_APP_INSTANCE == 0 || process.env.NODE_APP_INSTANCE === undefined) {
             await generateSitemap()
