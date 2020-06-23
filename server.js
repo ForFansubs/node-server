@@ -148,7 +148,7 @@ async function initializeServer() {
             await generateSitemap()
             setInterval(async () => {
                 await generateSitemap()
-            }, 8640000)
+            }, 86400000)
         }
     } catch (err) {
         console.log(err)
