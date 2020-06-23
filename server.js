@@ -144,11 +144,14 @@ async function initializeServer() {
     }
 
     // Generate sitemap everyday
+    console.log(process.env.NODE_APP_INSTANCE)
     try {
-        await generateSitemap()
-        setInterval(async () => {
+        if (process.env.NODE_APP_INSTANCE == 0 || process.env.NODE_APP_INSTANCE === undefined) {
             await generateSitemap()
-        }, 8640000)
+            setInterval(async () => {
+                await generateSitemap()
+            }, 8640000)
+        }
     } catch (err) {
         console.log(err)
     }
