@@ -19,7 +19,8 @@ User.init({
     },
     permission_level: {
         type: Sequelize.CHAR(50),
-        allowNull: false
+        allowNull: true,
+        defaultValue: "kullanici"
     },
     avatar: {
         type: Sequelize.CHAR(100),

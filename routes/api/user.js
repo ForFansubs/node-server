@@ -20,12 +20,14 @@ const { NODE_ENV } = process.env
 
 const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
 const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../middlewares/validate')
+const console_logs = require('../../methods/console_logs')
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
 // @access  Public
 router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) => {
     const { name, email, password } = req.body
+    const errors = {}
 
     let user
 
@@ -53,7 +55,7 @@ router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) =
 
 
         bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(newUser.password, salt, async (err, p_hash) => {
+            bcrypt.hash(password, salt, async (err, p_hash) => {
                 let user_result, insert_result
                 if (err) return console.log(err);
 
@@ -66,12 +68,13 @@ router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) =
                         password: p_hash,
                         activated: 0,
                     })
-                    user_result = await mariadb(`INSERT INTO user (${keys.join(', ')}) VALUES (${values.map(value => `'${value}'`).join(',')})`)
                 } catch (err) {
                     console.log(err)
                     return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
                 }
-                const c_hash = SHA256(`${(new Date()).toString()} ${user_result.insertId}`)
+                const c_hash = SHA256(`${(new Date()).toString()} ${user_result.insertId}`).toString()
+
+                console.log(c_hash)
                 try {
                     insert_result = await PendingUser.create({
                         user_id: user_result.id,
@@ -90,7 +93,7 @@ router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) =
                     to: email,
                     subject: `${process.env.SITE_NAME} Mail Onaylama - no-reply`,
                     text: "",
-                    html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/512.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle"> Sitemize hoş geldin ${name}. Kaydını tamamlamak için lütfen aşağıdaki butona bas. (Bu link 10 dakika sonra geçersiz olacaktır.) </p><a class="buton" href="${process.env.HOST_URL}/kayit-tamamla/${c_hash}" > Kaydı tamamla </a> </div></div></body></html>`
+                    html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/512.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle"> Sitemize hoş geldin ${name}. Kaydını tamamlamak için lütfen aşağıdaki butona bas. (Bu link 10 dakika sonra geçersiz olacaktır.) </p><a class="buton" href="${process.env.HOST_URL}/kullanici/kayit-tamamla/${c_hash}" > Kaydı tamamla </a> </div></div></body></html>`
                 }
                 try {
                     await sendMail(payload)
@@ -294,6 +297,7 @@ router.post('/uye-guncelle', ValidateUserRegistration(), Validation, async (req,
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
+        return res.status(500).json({ 'err': error_messages.database_error })
     }
 })
 
@@ -330,7 +334,83 @@ router.post('/uye-sil', async (req, res) => {
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
-        res.status(400).json({ 'err': 'Silme sırasında bir şeyler yanlış gitti.' })
+        return res.status(500).json({ 'err': error_messages.database_error })
+    }
+})
+
+// @route   POST api/kullanici/kayit-tamamla
+// @desc    Activate user on correct hash
+// @access  Public
+router.post('/kayit-tamamla', async (req, res) => {
+    let { hash } = req.body
+
+    try {
+        const { hash_key, user_id, created_time } = await PendingUser.findOne({ raw: true, where: { hash_key: hash } })
+
+        if (!user_id || !hash_key || !created_time) {
+            return res.status(404).json({ 'err': "Kullanıcı kaydı bulunamadı!" })
+        }
+
+        if ((new Date()).valueOf() - 600000 > created_time.valueOf()) {
+            return res.status(200).json({ success: "refresh" })
+        }
+
+        await User.update({ activated: 1 }, { where: { id: user_id } })
+        await PendingUser.destroy({ where: { hash_key: hash_key } })
+
+        return res.status(200).json({ success: "success" })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ 'err': error_messages.database_error })
+    }
+})
+
+// @route   POST api/kullanici/kayit-tamamla
+// @desc    Refresh user hash with old hash
+// @access  Public
+router.post('/kayit-tamamla/yenile', async (req, res) => {
+    let { old_hash } = req.body
+
+    try {
+        const { hash_key, user_id, created_time, email, username } = await PendingUser.findOne({
+            raw: true, where: { hash_key: old_hash },
+            attributes: [
+                '*',
+                [
+                    Sequelize.literal(`(SELECT email FROM user WHERE id=pending_user.user_id)`),
+                    'email'
+                ],
+                [
+                    Sequelize.literal(`(SELECT name FROM user WHERE id=pending_user.user_id)`),
+                    'username'
+                ]
+            ]
+        })
+
+        if (!user_id || !hash_key || !created_time) {
+            return res.status(404).json({ 'err': "Kullanıcı kaydı bulunamadı!" })
+        }
+
+        const hash = SHA256(`${(new Date()).toString()} ${user_id}`).toString()
+
+        await PendingUser.destroy({ where: { hash_key: hash_key } })
+
+        insert_result = await PendingUser.create({
+            user_id: user_id,
+            hash_key: hash
+        })
+
+        await sendMail({
+            to: email,
+            subject: `${process.env.SITE_NAME} Mail Onaylama - no-reply`,
+            text: "",
+            html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/512.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle">Sitemize hoş geldin ${username}.  Kaydını tamamlamak için lütfen aşağıdaki butona bas. </p><a class="buton" href="${process.env.HOST_URL}/kullanici/kayit-tamamla/${hash}" > Kaydı tamamla </a> </div></div></body></html>`
+        })
+
+        return res.status(200).json({ success: "success" })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ 'err': error_messages.database_error })
     }
 })
 

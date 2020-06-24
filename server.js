@@ -21,7 +21,6 @@ const images = require('./routes/api/images')
 const administrative = require('./routes/api/administrative')
 const permission = require('./routes/api/permission')
 const motd = require('./routes/api/motd')
-const activateUser = require('./routes/kayit-tamamla/index')
 const sequelize = require('./config/sequelize')
 
 // Pre-render middleware
@@ -83,7 +82,6 @@ app.use('/api/resimler', images)
 app.use('/api/sistem', administrative)
 app.use('/api/manga-bolum', mangaEpisode)
 app.use('/api/motd', motd)
-app.use('/kayit-tamamla', activateUser)
 
 app.use('/admin', express.static(__dirname + '/admin/'));
 app.use(express.static(__dirname + '/client/'));
@@ -95,7 +93,9 @@ app.get('*', (req, res) => {
 })
 
 async function initializeServer() {
-    process.stdout.write('\033c');
+    if (process.env.NODE_ENV === "production") {
+        process.stdout.write('\033c');
+    }
 
     const animeFolder = Path.resolve(__dirname, './images/anime')
     const mangaFolder = Path.resolve(__dirname, './images/manga')

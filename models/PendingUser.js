@@ -11,7 +11,8 @@ PendingUser.init({
     },
     hash_key: {
         type: Sequelize.TEXT,
-        allowNull: false
+        allowNull: false,
+        primaryKey: true
     },
     created_time: {
         type: Sequelize.DATE,
