@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
 const passport = require('passport')
+const helmet = require('helmet')
 const Path = require('path')
 const fs = require('fs')
 const { promisify } = require('util')
@@ -18,7 +19,6 @@ const mangaEpisode = require('./routes/api/manga_episode')
 const episode = require('./routes/api/episode')
 const user = require('./routes/api/user')
 const images = require('./routes/api/images')
-const administrative = require('./routes/api/administrative')
 const permission = require('./routes/api/permission')
 const motd = require('./routes/api/motd')
 const sequelize = require('./config/sequelize')
@@ -58,6 +58,14 @@ require('./config/passport')(passport)
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
+// Helmet JS middleware
+app.use(helmet())
+
+// Set behind proxy
+if (process.env.REVERSE_PROXY) {
+    app.set('trust proxy', 1)
+}
+
 // Use Routes
 ///ads txt
 app.get('/ads.txt', (req, res) => {
@@ -79,7 +87,6 @@ app.use('/api/bolum', episode)
 app.use('/api/kullanici', user)
 app.use('/api/yetki', permission)
 app.use('/api/resimler', images)
-app.use('/api/sistem', administrative)
 app.use('/api/manga-bolum', mangaEpisode)
 app.use('/api/motd', motd)
 
@@ -162,6 +169,9 @@ async function initializeServer() {
         console.info(`ℹ️ URL:`, "\x1b[33m", `                 ${process.env.HOST_URL}`)
         console.info(`ℹ️ Port:`, "\x1b[33m", `                ${process.env.PORT}`)
         console.info(`ℹ️ Database:`, "\x1b[33m", `            ${process.env.DB_NAME}`)
+        if (process.env.NODE_APP_INSTANCE !== undefined) {
+            console.info(`ℹ️ PM2 Cluster ID:`, "\x1b[33m", `      ${process.env.NODE_APP_INSTANCE == 0 ? `${process.env.NODE_APP_INSTANCE} (master)` : process.env.NODE_APP_INSTANCE}`)
+        }
         console.info('\x1b[32m%s\x1b[0m', "---------------AUTHOR---------------")
         console.info(`ℹ️ Service Author:`, "\x1b[35m", `      ${package.author}`)
         console.info(`ℹ️ Service Version:`, "\x1b[35m", `     ${package.version}`)

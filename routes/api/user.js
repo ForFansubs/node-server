@@ -206,7 +206,7 @@ router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
     }
 
     // Check for user
-    if (!user) {
+    if (!user.name) {
         errors.name = 'Kullanıcı bulunamadı'
         return res.status(404).json({
             ...errors
@@ -250,7 +250,7 @@ router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
             errors.password = 'Şifre yanlış';
             return res.status(404).json({
                 ...errors,
-                'err': 'Kullanıcı bulunamadı'
+                'err': 'Kullanıcı adınız ya da şifreniz yanlış.'
             })
         }
     })

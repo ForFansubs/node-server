@@ -91,7 +91,7 @@ const generateSitemap = async () => {
             route: route
         }).XMLtoFile('./config/sitemap.xml')
 
-        console.info(`✔️ Sitemap oluşturuldu. ${new Date().getHours() + ":" + new Date().getMinutes()}`)
+        console.info(`✔️ Sitemap oluşturuldu. ${new Date().getHours() + ":" + (new Date().getMinutes() < 9 ? `0${new Date().getMinutes()}` : new Date().getMinutes())}`)
     } catch (err) {
         console.log(err)
         console.error('❌ Sitemap oluşturulurken bir sorunla kaşılaştık.')

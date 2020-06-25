@@ -10,10 +10,6 @@ const WatchLink = require('../models/WatchLink')
 const Permission = require('../models/Permission')
 const User = require('../models/User')
 
-const cleanText = (text) => {
-	return text.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-}
-
 async function HandleDatabaseQuery(username, text, process_type) {
 	return await Log.create({
 		user: username,
@@ -32,7 +28,7 @@ async function LogAddAnime(props) {
 		const { anime_id } = props
 		const { name } = await Anime.findOne({ raw: true, where: { id: anime_id } })
 		const text = `${username} isimli kullanıcı ${name} isimli animeyi ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, anime_id, err)
 	}
@@ -46,7 +42,7 @@ async function LogUpdateAnime(props) {
 	try {
 		const { name } = await Anime.findOne({ raw: true, where: { id: anime_id } })
 		const text = `${username} isimli kullanıcı ${name} isimli animeyi düzenledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, anime_id, err)
 	}
@@ -59,7 +55,7 @@ async function LogDeleteAnime(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animeyi sildi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, anime_name, err)
 	}
@@ -70,7 +66,7 @@ async function LogFeaturedAnime(props) {
 
 	try {
 		text = `${username} isimli kullanıcı öne çıkarılan animeleri değiştirdi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process, "", err)
 	}
@@ -100,7 +96,7 @@ async function LogAddEpisode(props) {
 			]
 		})
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animeye ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -151,7 +147,7 @@ async function LogUpdateEpisode(props) {
 			}
 		}
 
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -166,7 +162,7 @@ async function LogDeleteEpisode(props) {
 		const { name } = await Anime.findOne({ raw: true, where: { id: anime_id } })
 
 		const text = `${username} isimli kullanıcı ${name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümünü` : `${episode_number}. bölümünü`} sildi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, anime_id, err)
 	}
@@ -213,7 +209,7 @@ async function LogAddDownloadLink(props) {
 		})
 
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümüne` : `${episode_number}. bölümüne`} ${type.toUpperCase()} indirme linkini ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, download_link_id, err)
 	}
@@ -244,7 +240,7 @@ async function LogDeleteDownloadLink(props) {
 		})
 
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümündeki` : `${episode_number}. bölümündeki`} ${download_link_type.toUpperCase()} indirme linkini sildi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -291,7 +287,7 @@ async function LogAddWatchLink(props) {
 		})
 
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümüne` : `${episode_number}. bölümüne`} ${type.toUpperCase()} izleme linkini ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, watch_link_id, err)
 	}
@@ -322,7 +318,7 @@ async function LogDeleteWatchLink(props) {
 		})
 
 		const text = `${username} isimli kullanıcı ${anime_name} isimli animenin ${special_type ? `${special_type.toUpperCase()} ${episode_number} bölümündeki` : `${episode_number}. bölümündeki`} ${watch_link_type.toUpperCase()} izleme linkini sildi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, episode_id, err)
 	}
@@ -337,7 +333,7 @@ async function LogAddManga(props) {
 		const { name } = Manga.findOne({ where: { id: manga_id } })
 
 		const text = `${username} isimli kullanıcı ${name} isimli mangayı ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, manga_id, err)
 	}
@@ -352,7 +348,7 @@ async function LogUpdateManga(props) {
 		const { name } = Manga.findOne({ where: { id: manga_id } })
 
 		const text = `${username} isimli kullanıcı ${name} isimli mangayı düzenledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, manga_id, err)
 	}
@@ -365,7 +361,7 @@ async function LogDeleteManga(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${manga_name} isimli mangayı sildi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, manga_name, err)
 	}
@@ -403,7 +399,7 @@ async function LogAddMangaEpisode(props) {
 		})
 
 		const text = `${username} isimli kullanıcı ${manga_name} isimli mangaya ${episode_number}. bölümü ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, manga_episode_id, err)
 	}
@@ -441,7 +437,7 @@ async function LogUpdateMangaEpisode(props) {
 		})
 
 		const text = `${username} isimli kullanıcı ${manga_name} isimli manganın ${episode_number}. bölümünü güncelledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, manga_episode_id, err)
 	}
@@ -454,7 +450,7 @@ async function LogDeleteMangaEpisode(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${manga_name} isimli manganın ${episode_number}. bölümünü sildi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, manga_name, err)
 	}
@@ -469,7 +465,7 @@ async function LogAddPermission(props) {
 		const { name } = await Permission.findOne({ raw: true, where: { id: permission_id } })
 
 		const text = `${username} isimli kullanıcı ${name} isimli yetkiyi ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, permission_id, err)
 	}
@@ -484,7 +480,7 @@ async function LogUpdatePermission(props) {
 		const { name } = await Permission.findOne({ raw: true, where: { id: permission_id } })
 
 		const text = `${username} isimli kullanıcı ${name} isimli yetkiyi güncelledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, permission_id, err)
 	}
@@ -497,7 +493,7 @@ async function LogDeletePermission(props) {
 
 	text = `${username} isimli kullanıcı ${permission_name} isimli yetkiyi sildi.`
 	try {
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, permission_name, err)
 	}
@@ -512,7 +508,7 @@ async function LogAddUser(props) {
 		const { name } = await User.findOne({ raw: true, where: { id: user_id } })
 
 		const text = `${username} isimli kullanıcı ${name} isimli üyeyi ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, user_id, err)
 	}
@@ -527,7 +523,7 @@ async function LogUpdateUser(props) {
 		const { name } = await User.findOne({ raw: true, where: { id: user_id } })
 
 		const text = `${username} isimli kullanıcı ${name} isimli kullanıcıyı güncelledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, user_id, err)
 	}
@@ -540,7 +536,7 @@ async function LogDeleteUser(props) {
 
 	text = `${username} isimli kullanıcı ${name} isimli üyeyi sildi.`
 	try {
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, name, err)
 	}
@@ -553,7 +549,7 @@ async function LogAddMotd(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${motd_id} idli duyuruyu ekledi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, motd_id, err)
 	}
@@ -566,7 +562,7 @@ async function LogUpdateMotd(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${motd_id} idli duyurunun görünürlüğünü değiştirdi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, motd_id, err)
 	}
@@ -579,7 +575,7 @@ async function LogDeleteMotd(props) {
 
 	try {
 		const text = `${username} isimli kullanıcı ${motd_id} idli duyuruyu sildi.`
-		await HandleDatabaseQuery(username, cleanText(text), process_type)
+		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process_type, motd_id, err)
 	}
