@@ -60,7 +60,7 @@ router.post('/yetki-guncelle', async (req, res) => {
         await Permission.update({
             name: name,
             color: color,
-            permission_set: JSON.stringify(updatedPerm.permission_set)
+            permission_set: permission_set
         }, { where: { id: id } })
 
         LogUpdatePermission({
