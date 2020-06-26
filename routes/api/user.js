@@ -20,12 +20,13 @@ const { NODE_ENV } = process.env
 
 const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
 const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../middlewares/validate')
+const { UserLoginLimiter, UserRegisterLimiter } = require('../../middlewares/rate-limiter')
 const console_logs = require('../../methods/console_logs')
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
 // @access  Public
-router.post('/kayit', ValidateUserRegistration(), Validation, async (req, res) => {
+router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validation, async (req, res) => {
     const { name, email, password } = req.body
     const errors = {}
 
@@ -189,7 +190,7 @@ router.post('/kayit/admin', async (req, res) => {
 // @route   GET api/kullanici/login
 // @desc    Login User / Returning JWT Token
 // @access  Public
-router.post('/giris', ValidateUserLogin(), Validation, async (req, res) => {
+router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (req, res) => {
     let user
 
     // Genel kontrollerden sonra farklı hata çıkarsa
