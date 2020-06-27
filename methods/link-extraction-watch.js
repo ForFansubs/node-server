@@ -12,7 +12,7 @@ const watchLinkExtract = link => {
         else if (extract.src.match("sendvid.com")) extract.type = 'sendvid'
         else if (link.match("oload.life")) extract.type = 'openload'
         else if (extract.src.match("video.sibnet.ru")) extract.type = 'sibnet'
-        else if (extract.src.match("drive.google.com")) extract.type = 'gdrive'
+        else if (extract.src.match("drive\.google\.com")) extract.type = 'gdrive'
         else if (extract.src.match("ok.ru")) extract.type = 'ok.ru'
         else if (link.match("dailymotion.com") || link.match("dai.ly")) extract.type = 'dailymotion'
         else if (extract.src.match("my.mail.ru")) extract.type = 'mail.ru'
@@ -26,7 +26,7 @@ const watchLinkExtract = link => {
         else if (link.match("streamango.com")) extract.type = 'streamango'
         else if (link.match("userscloud.com")) extract.type = 'userscloud'
         else if (link.match("yourupload.com")) extract.type = 'yourupload'
-        else if (link.match("www.fembed.com")) extract.type = 'fembed'
+        else if (link.match("www\.fembed\.com")) extract.type = 'fembed'
         else if (link.match("www.rutube.ru")) extract.type = 'rutube'
         else if (link.match("vidfast.co")) extract.type = 'vidfast'
         else if (link.match("vidia.tv")) extract.type = 'vidia'
@@ -51,7 +51,7 @@ const watchLinkExtract = link => {
         extract.type = 'sibnet'
         return extract
     }
-    else if (link.match("drive.google.com")) {
+    else if (link.match("drive\.google\.com")) {
         extract.src = link.replace('view', 'preview')
         extract.type = 'gdrive'
         return extract
@@ -155,7 +155,7 @@ const watchLinkExtract = link => {
         extract.type = 'yourupload'
         return extract
     }
-    else if (link.match("www.fembed.com")) {
+    else if (link.match("www\.fembed\.com")) {
         const videoId = link.split('/')[4]
         extract.src = `//www.fembed.com/v/${videoId}`
         extract.type = 'fembed'
@@ -195,12 +195,6 @@ const watchLinkExtract = link => {
         const videoId = link.split('/')[3].replace('.html', '').replace("embed-", '')
         extract.src = `https://clipwatching.com/embed-${videoId}.html`
         extract.type = 'clipwatching'
-        return extract
-    }
-    else if (link.match("jetload.net")) {
-        const videoId = link.split('/')[4]
-        extract.src = `https://jetload.net/e/${videoId}`
-        extract.type = 'jetload'
         return extract
     }
     else if (link.match("jetload.net")) {

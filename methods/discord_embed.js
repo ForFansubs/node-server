@@ -1,9 +1,9 @@
 // Discord Embed dosyası
 // Mesajlar içerisinde kullanılan cover_art linkleri,
 // database içerisinde kayıtlı linklerden çekiliyor.
-
-const mariadb = require('../config/maria')
 const axios = require('axios')
+const Manga = require('../models/Manga')
+const Anime = require('../models/Anime')
 
 const episodeWebhook = process.env.DISCORD_EPISODE_WH
 const animeWebhook = process.env.DISCORD_ANIME_WH
@@ -38,8 +38,7 @@ const sendDiscordEmbed = async (props) => {
             const { manga_id, credits, episode_name, episode_number } = props
 
             try {
-                const manga = await mariadb(`SELECT name, cover_art, slug,id FROM manga WHERE id=${manga_id}`)
-                const { name, cover_art, slug } = manga[0]
+                const { name, cover_art, slug } = await Manga.findOne({ raw: true, where: { id: manga_id } })
                 const timestamp = new Date()
                 const title = `${name} | ${episode_number}. Bölüm`
                 const newEpisodeEmbed = {
@@ -85,8 +84,7 @@ const sendDiscordEmbed = async (props) => {
             const { anime_id, credits, episode_number, special_type } = props
 
             try {
-                const anime = await mariadb(`SELECT name, cover_art, slug,id FROM anime WHERE id=${anime_id}`)
-                const { name, cover_art, slug } = anime[0]
+                const { name, cover_art, slug } = await Anime.findOne({ raw: true, where: { id: anime_id } })
                 const timestamp = new Date()
                 const title = `${name} | ${special_type ? episode_number !== null ? special_type.toUpperCase() + " " + episode_number : special_type.toUpperCase() : episode_number + ". Bölüm"}`
                 const newEpisodeEmbed = {
@@ -131,8 +129,7 @@ const sendDiscordEmbed = async (props) => {
             const { anime_id } = props
 
             try {
-                const anime = await mariadb(`SELECT * FROM anime WHERE id=${anime_id}`)
-                let { name, cover_art, slug, synopsis, translators, encoders, mal_link } = anime[0]
+                const { name, cover_art, slug, synopsis, translators, encoders, mal_link } = await Anime.findOne({ raw: true, where: { id: anime_id } })
                 synopsis = `${synopsis.replace(/(["])/g, "'")}`
                 translators = translators.split(',').map(translator => `${translator}\n`).join('')
                 encoders = encoders.split(',').map(encoder => `${encoder}\n`).join('')
@@ -202,8 +199,7 @@ const sendDiscordEmbed = async (props) => {
             const { manga_id } = props
 
             try {
-                const manga = await mariadb(`SELECT * FROM manga WHERE id=${manga_id}`)
-                let { name, cover_art, slug, id, synopsis, translators, editors, mal_link } = manga[0]
+                const { name, cover_art, slug, synopsis, translators, editors, mal_link } = await Manga.findOne({ raw: true, where: { id: manga_id } })
                 synopsis = `${synopsis.replace(/(["])/g, "'")}`
                 translators = translators.split(',').map(translator => `${translator}\n`).join('')
                 editors = editors.split(',').map(editor => `${editor}\n`).join('')

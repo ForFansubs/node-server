@@ -28,4 +28,18 @@ var VariousImageLimiter = new RateLimit({
         "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
 });
 
-module.exports = { UserLoginLimiter, UserRegisterLimiter, MangaEpisodeImageLimiter, VariousImageLimiter }
+var CrawlerFileLimiter = new RateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minutes
+    max: 5, // start blocking after 1000 requests
+    message:
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
+});
+
+var IndexRequestsLimiter = new RateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minutes
+    max: 60, // start blocking after 1000 requests
+    message:
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
+});
+
+module.exports = { UserLoginLimiter, UserRegisterLimiter, MangaEpisodeImageLimiter, VariousImageLimiter, CrawlerFileLimiter, IndexRequestsLimiter }

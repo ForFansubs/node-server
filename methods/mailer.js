@@ -27,7 +27,7 @@ async function sendMail(payload) {
         to,
         subject,
         text,
-        html
+        html // lgtm [js/xss]
     }
 
     let info = await transporter.sendMail(mailOptions)

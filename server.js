@@ -22,13 +22,13 @@ const images = require('./routes/api/images')
 const permission = require('./routes/api/permission')
 const motd = require('./routes/api/motd')
 const sequelize = require('./config/sequelize')
+const { CrawlerFileLimiter, IndexRequestsLimiter } = require('./middlewares/rate-limiter')
 
 // Pre-render middleware
 if (process.env.USE_NEW_SEO_METHOD === "true") {
     const redis = require("redis")
     const prerender = require('prerender-node')
     const redisClient = redis.createClient({ ...JSON.parse(process.env.REDIS_OPTIONS) })
-    const cacheableStatusCodes = { 200: true, 302: true, 404: true };
 
     prerender.set('beforeRender', function (req, done) {
         redisClient.get(req.url, done);
@@ -68,15 +68,15 @@ if (process.env.REVERSE_PROXY) {
 
 // Use Routes
 ///ads txt
-app.get('/ads.txt', (req, res) => {
+app.get('/ads.txt', CrawlerFileLimiter, (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'config', 'ads.txt'))
 })
 ///robots.txt
-app.get('/robots.txt', (req, res) => {
+app.get('/robots.txt', CrawlerFileLimiter, (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'config', 'robots.txt'))
 })
 ///sitemap.xml
-app.get('/sitemap.xml', (req, res) => {
+app.get('/sitemap.xml', CrawlerFileLimiter, (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'config', 'sitemap.xml'))
 })
 ///ACTUAL API
@@ -92,10 +92,10 @@ app.use('/api/motd', motd)
 
 app.use('/admin', express.static(__dirname + '/admin/'));
 app.use(express.static(__dirname + '/client/'));
-app.get('/admin/*', (req, res) => {
+app.get('/admin/*', IndexRequestsLimiter, (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'admin', 'index.html'))
 })
-app.get('*', (req, res) => {
+app.get('*', IndexRequestsLimiter, (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'client', 'index.html'))
 })
 
