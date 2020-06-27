@@ -8,4 +8,18 @@ const pool = mariadb.createPool({
     connectionLimit: process.env.DB_CONNECTION_LIMIT
 })
 
-module.exports = pool
+async function getPool(query) {
+    let conn;
+    let rows
+    try {
+        conn = await pool.getConnection()
+        rows = await conn.query(query)
+        return rows
+    } catch (err) {
+        throw err
+    } finally {
+        if (conn) conn.release()
+    }
+}
+
+module.exports = getPool

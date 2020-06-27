@@ -2,7 +2,12 @@ require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
 const passport = require('passport')
-const path = require('path')
+const helmet = require('helmet')
+const Path = require('path')
+const fs = require('fs')
+const { promisify } = require('util')
+const package = require('./package.json')
+const { generateSitemap } = require('./config/sitemap-generator')
 
 const app = express()
 
@@ -10,14 +15,13 @@ const app = express()
 const index = require('./routes/api/index')
 const anime = require('./routes/api/anime')
 const manga = require('./routes/api/manga')
+const mangaEpisode = require('./routes/api/manga_episode')
 const episode = require('./routes/api/episode')
 const user = require('./routes/api/user')
 const images = require('./routes/api/images')
-const administrative = require('./routes/api/administrative')
 const permission = require('./routes/api/permission')
-const opgAnime = require('./routes/opg/anime')
-const opgManga = require('./routes/opg/manga')
-const activateUser = require('./routes/kayit-tamamla/index')
+const motd = require('./routes/api/motd')
+const sequelize = require('./config/sequelize')
 
 // Pre-render middleware
 if (process.env.USE_NEW_SEO_METHOD === "true") {
@@ -54,14 +58,26 @@ require('./config/passport')(passport)
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
+// Helmet JS middleware
+app.use(helmet())
+
+// Set behind proxy
+if (process.env.REVERSE_PROXY) {
+    app.set('trust proxy', 1)
+}
+
 // Use Routes
-///ADSENSE STUFF
+///ads txt
 app.get('/ads.txt', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'config', 'ads.txt'))
+    res.sendFile(Path.resolve(__dirname, 'config', 'ads.txt'))
 })
-///Robots.txt
+///robots.txt
 app.get('/robots.txt', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'config', 'robots.txt'))
+    res.sendFile(Path.resolve(__dirname, 'config', 'robots.txt'))
+})
+///sitemap.xml
+app.get('/sitemap.xml', (req, res) => {
+    res.sendFile(Path.resolve(__dirname, 'config', 'sitemap.xml'))
 })
 ///ACTUAL API
 app.use('/api/', index)
@@ -71,19 +87,97 @@ app.use('/api/bolum', episode)
 app.use('/api/kullanici', user)
 app.use('/api/yetki', permission)
 app.use('/api/resimler', images)
-app.use('/api/sistem', administrative)
-app.use('/opg/anime', opgAnime)
-app.use('/opg/manga', opgManga)
-app.use('/kayit-tamamla', activateUser)
+app.use('/api/manga-bolum', mangaEpisode)
+app.use('/api/motd', motd)
 
 app.use('/admin', express.static(__dirname + '/admin/'));
 app.use(express.static(__dirname + '/client/'));
 app.get('/admin/*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'admin', 'index.html'))
+    res.sendFile(Path.resolve(__dirname, 'admin', 'index.html'))
 })
 app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'index.html'))
+    res.sendFile(Path.resolve(__dirname, 'client', 'index.html'))
 })
 
-const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`Port ${port} üzerinden istekler bekleniyor...`));
+async function initializeServer() {
+    if (process.env.NODE_ENV === "production") {
+        process.stdout.write('\033c');
+    }
+
+    const animeFolder = Path.resolve(__dirname, './images/anime')
+    const mangaFolder = Path.resolve(__dirname, './images/manga')
+    const mangaEpisodeFolder = Path.resolve(__dirname, './images/manga_episodes')
+    const clientFolder = Path.resolve(__dirname, './client')
+    const adminFolder = Path.resolve(__dirname, './admin')
+
+    console.log("ℹ️ Dosyalar kontrol ediliyor...")
+
+    if (fs.existsSync(animeFolder))
+        console.info('✔️ Anime resim dosyası mevcut.')
+    else {
+        return console.error(`❌ Anime resim dosyalarını saklamak için gereken dosya bulunamadı. Lütfen ${animeFolder} yolunu oluşturun.`)
+    }
+
+
+    if (fs.existsSync(mangaFolder))
+        console.info('✔️ Manga resim dosyası mevcut.')
+    else {
+        return console.error(`❌ Manga resim dosyalarını saklamak için gereken dosya bulunamadı. Lütfen ${mangaFolder} yolunu oluşturun.`)
+    }
+
+    if (fs.existsSync(mangaEpisodeFolder))
+        console.info('✔️ Manga bölümleri için dosya mevcut.')
+    else {
+        return console.error(`❌ Manga bölümlerini saklamak için gereken dosya bulunamadı. Lütfen ${mangaEpisodeFolder} yolunu oluşturun.`)
+    }
+
+    if (fs.existsSync(clientFolder))
+        console.info('✔️ Client dosyası mevcut.')
+    else {
+        return console.error(`❌ Kullanıcılara gönderilecek client dosyası bulunamadı. Lütfen ${clientFolder} yolunu oluşturun ve https://forfansubs.github.io/docs/yukleme-talimatlari/ adresindeki talimatları yerine getirdiğinizden emin olun.`)
+    }
+
+    if (fs.existsSync(adminFolder))
+        console.info('✔️ Admin dosyası mevcut.')
+    else {
+        return console.error(`❌ Kullanıcılara gönderilecek admin dosyası bulunamadı. Lütfen ${adminFolder} yolunu oluşturun ve https://forfansubs.github.io/docs/yukleme-talimatlari/ adresindeki talimatları yerine getirdiğinizden emin olun.`)
+    }
+
+    try {
+        await sequelize.authenticate()
+        console.info('✔️ Database bağlantısı başarılı.')
+    } catch (err) {
+        return console.error('❌ Database bağlantısı başarısız oldu:', err)
+    }
+
+    try {
+        if (process.env.NODE_APP_INSTANCE == 0 || process.env.NODE_APP_INSTANCE === undefined) {
+            await generateSitemap()
+            setInterval(async () => {
+                await generateSitemap()
+            }, 86400000)
+        }
+    } catch (err) {
+        console.log(err)
+    }
+
+    const port = process.env.PORT || 5000;
+    app.listen(port, () => {
+        console.info('\x1b[32m%s\x1b[0m', "----------------INFO----------------")
+        console.info(`ℹ️ NODE_ENV:`, "\x1b[33m", `            ${process.env.NODE_ENV}`)
+        console.info(`ℹ️ Service Name:`, "\x1b[33m", `        ${process.env.SITE_NAME}`)
+        console.info(`ℹ️ URL:`, "\x1b[33m", `                 ${process.env.HOST_URL}`)
+        console.info(`ℹ️ Port:`, "\x1b[33m", `                ${process.env.PORT}`)
+        console.info(`ℹ️ Database:`, "\x1b[33m", `            ${process.env.DB_NAME}`)
+        if (process.env.NODE_APP_INSTANCE !== undefined) {
+            console.info(`ℹ️ PM2 Cluster ID:`, "\x1b[33m", `      ${process.env.NODE_APP_INSTANCE == 0 ? `${process.env.NODE_APP_INSTANCE} (master)` : process.env.NODE_APP_INSTANCE}`)
+        }
+        console.info('\x1b[32m%s\x1b[0m', "---------------AUTHOR---------------")
+        console.info(`ℹ️ Service Author:`, "\x1b[35m", `      ${package.author}`)
+        console.info(`ℹ️ Service Version:`, "\x1b[35m", `     ${package.version}`)
+        console.info(`ℹ️ Service Release Name:`, "\x1b[35m", `${package["release-name"]}`)
+        console.info('\x1b[32m%s\x1b[0m', "------------------------------------")
+    });
+}
+
+initializeServer()

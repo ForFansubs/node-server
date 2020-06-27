@@ -5,7 +5,7 @@
 # dependencies
 /client
 /admin
-/images/*
+/images/*/*
 .vscode/
 
 # misc
@@ -17,6 +17,6 @@ run-service-dev.bat
 ecosystem.config.js
 npm-debug\.log
 
-*.jar
 yarn.lock
 package-lock.json
+/config/sitemap.xml

@@ -1,34 +1,60 @@
-const mariadb = require('./maria')
+// Discord Embed dosyası
+// Mesajlar içerisinde kullanılan cover_art linkleri,
+// database içerisinde kayıtlı linklerden çekiliyor.
+
+const mariadb = require('../config/maria')
 const axios = require('axios')
 
-const episodeId = process.env.DISCORD_EPISODE_WH
-const animeId = process.env.DISCORD_ANIME_WH
-const mangaId = process.env.DISCORD_MANGA_WH
-const logoLink = `${process.env.HOST_URL}/logo.png`
+const episodeWebhook = process.env.DISCORD_EPISODE_WH
+const animeWebhook = process.env.DISCORD_ANIME_WH
+const mangaWebhook = process.env.DISCORD_MANGA_WH
+const mangaEpisodeWebhook = process.env.DISCORD_MANGA_EPISODE_WH
+const hostURL = process.env.HOST_URL
+const logoLink = `${hostURL}/logo.png`
 
-const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
-    // if (process.env.NODE_ENV !== 'production') return
+const episodeLinkParser = (episodenumber, specialtype) => {
+    if (specialtype && specialtype !== "toplu") {
+        return {
+            slug: `/izle/${specialtype}${episodenumber}`
+        }
+    }
+    else if (specialtype && specialtype === "toplu") {
+        return {
+            slug: ""
+        }
+    }
+    else return {
+        slug: `/izle/bolum${episodenumber}`
+    }
+}
+
+const sendDiscordEmbed = async (props) => {
+    const { type } = props
+
     switch (type) {
-        case 'episode':
-            if (!episodeId) return
-            mariadb.query(`SELECT name, cover_art, slug,id FROM anime WHERE id=${prop1}`).then(anime => {
-                const { name, cover_art, slug, id } = anime[0]
+        case 'manga-episode': {
+            if (!mangaEpisodeWebhook) return
+
+            const { manga_id, credits, episode_name, episode_number } = props
+
+            try {
+                const manga = await mariadb(`SELECT name, cover_art, slug,id FROM manga WHERE id=${manga_id}`)
+                const { name, cover_art, slug } = manga[0]
                 const timestamp = new Date()
-                const title = `${name} | ${prop3 ? prop4 !== null ? prop3.toUpperCase() + " " + prop4 : prop3.toUpperCase() : prop4 + ". Bölüm"}`
+                const title = `${name} | ${episode_number}. Bölüm`
                 const newEpisodeEmbed = {
-                    username: "Yeni Bölüm Habercisi",
+                    username: "Yeni Manga Bölümü Habercisi",
                     content: process.env.DISCORD_MENTION_ID ? `<@&${process.env.DISCORD_MENTION_ID}>` : "",
                     embeds: [{
                         title,
+                        description: episode_name,
                         fields: [{
                             name: `Emektarlar`,
-                            value: `${prop2 ? prop2 : "Belirtilmemiş."}`
+                            value: `${credits ? credits : "Belirtilmemiş."}`
                         }],
-                        url: prop3 === 'toplu' ? `${prop6}/ceviriler/anime/${slug}` : `${prop6}/ceviriler/anime/${slug}/izle/bolum${prop4}`,
+                        url: `${hostURL}/ceviriler/manga/${slug}/oku/${episode_number}`,
                         color: 1161213,
-                        footer: {
-                            text: `Eklenme tarihi: ${timestamp.getDate() < 10 ? "0" + timestamp.getDate() : timestamp.getDate()}.${timestamp.getMonth() + 1 < 10 ? `0${timestamp.getMonth() + 1}` : `${timestamp.getMonth() + 1}`}.${timestamp.getFullYear()} - ${timestamp.getHours() < 10 ? "0" + timestamp.getHours() : timestamp.getHours()}:${timestamp.getMinutes() < 10 ? "0" + timestamp.getMinutes() : timestamp.getMinutes()}`
-                        },
+                        timestamp,
                         thumbnail: {
                             url: `${cover_art}`
                         },
@@ -39,19 +65,74 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                         }
                     }]
                 }
-                axios.post(episodeId, newEpisodeEmbed)
+                axios.post(mangaEpisodeWebhook, newEpisodeEmbed)
                     .then(_ => {
                         return true
                     })
                     .catch(err => {
+                        console.log(err)
                         return false
                     })
-            })
+            } catch (err) {
+                console.log(err)
+            }
             break;
-        case 'anime':
-            if (!animeId) return
-            mariadb.query(`SELECT * FROM anime WHERE id=${prop1}`).then(anime => {
-                let { name, cover_art, slug, id, synopsis, translators, encoders, mal_link } = anime[0]
+        }
+
+        case 'episode': {
+            if (!episodeWebhook) return
+
+            const { anime_id, credits, episode_number, special_type } = props
+
+            try {
+                const anime = await mariadb(`SELECT name, cover_art, slug,id FROM anime WHERE id=${anime_id}`)
+                const { name, cover_art, slug } = anime[0]
+                const timestamp = new Date()
+                const title = `${name} | ${special_type ? episode_number !== null ? special_type.toUpperCase() + " " + episode_number : special_type.toUpperCase() : episode_number + ". Bölüm"}`
+                const newEpisodeEmbed = {
+                    username: "Yeni Bölüm Habercisi",
+                    content: process.env.DISCORD_MENTION_ID ? `<@&${process.env.DISCORD_MENTION_ID}>` : "",
+                    embeds: [{
+                        title,
+                        fields: [{
+                            name: `Emektarlar`,
+                            value: `${credits ? credits : "Belirtilmemiş."}`
+                        }],
+                        url: `${hostURL}/ceviriler/anime/${slug}${episodeLinkParser(episode_number, special_type).slug}`,
+                        color: 1161213,
+                        timestamp,
+                        thumbnail: {
+                            url: `${cover_art}`
+                        },
+                        author: {
+                            name: process.env.SITE_NAME,
+                            url: process.env.HOST_URL,
+                            icon_url: logoLink
+                        }
+                    }]
+                }
+                axios.post(episodeWebhook, newEpisodeEmbed)
+                    .then(_ => {
+                        return true
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return false
+                    })
+            } catch (err) {
+                console.log(err)
+            }
+            break;
+        }
+
+        case 'anime': {
+            if (!animeWebhook) return
+
+            const { anime_id } = props
+
+            try {
+                const anime = await mariadb(`SELECT * FROM anime WHERE id=${anime_id}`)
+                let { name, cover_art, slug, synopsis, translators, encoders, mal_link } = anime[0]
                 synopsis = `${synopsis.replace(/(["])/g, "'")}`
                 translators = translators.split(',').map(translator => `${translator}\n`).join('')
                 encoders = encoders.split(',').map(encoder => `${encoder}\n`).join('')
@@ -84,15 +165,13 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                             },
                             {
                                 name: `Konu Link`,
-                                value: `[${process.env.SITE_NAME}](${prop2}/ceviriler/anime/${slug})`,
+                                value: `[${process.env.SITE_NAME}](${hostURL}/ceviriler/anime/${slug})`,
                                 "inline": true
                             }
                         ],
-                        url: `${prop2}/ceviriler/anime/${slug}`,
+                        url: `${hostURL}/ceviriler/anime/${slug}`,
                         color: 1161213,
-                        footer: {
-                            text: `Eklenme tarihi: ${timestamp.getDate() < 10 ? "0" + timestamp.getDate() : timestamp.getDate()}.${timestamp.getMonth() + 1 < 10 ? `0${timestamp.getMonth() + 1}` : `${timestamp.getMonth() + 1}`}.${timestamp.getFullYear()} - ${timestamp.getHours() < 10 ? "0" + timestamp.getHours() : timestamp.getHours()}:${timestamp.getMinutes() < 10 ? "0" + timestamp.getMinutes() : timestamp.getMinutes()}`
-                        },
+                        timestamp,
                         thumbnail: {
                             url: `${cover_art}`
                         },
@@ -103,18 +182,27 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                         }
                     }]
                 }
-                axios.post(animeId, newAnimeEmbed)
+                axios.post(animeWebhook, newAnimeEmbed)
                     .then(_ => {
                         return true
                     })
                     .catch(err => {
+                        console.log(err)
                         return false
                     })
-            })
+            } catch (err) {
+                console.log(err)
+            }
             break;
-        case 'manga':
-            if (!mangaId) return
-            mariadb.query(`SELECT * FROM manga WHERE id=${prop1}`).then(manga => {
+        }
+
+        case 'manga': {
+            if (!mangaWebhook) return
+
+            const { manga_id } = props
+
+            try {
+                const manga = await mariadb(`SELECT * FROM manga WHERE id=${manga_id}`)
                 let { name, cover_art, slug, id, synopsis, translators, editors, mal_link } = manga[0]
                 synopsis = `${synopsis.replace(/(["])/g, "'")}`
                 translators = translators.split(',').map(translator => `${translator}\n`).join('')
@@ -148,15 +236,13 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                             },
                             {
                                 name: `Konu Link`,
-                                value: `[${process.env.SITE_NAME}](${prop2}/ceviriler/manga/${slug})`,
+                                value: `[${process.env.SITE_NAME}](${hostURL}/ceviriler/manga/${slug})`,
                                 "inline": true
                             }
                         ],
-                        url: `${prop2}/ceviriler/manga/${slug}`,
+                        url: `${hostURL}/ceviriler/manga/${slug}`,
                         color: 1161213,
-                        footer: {
-                            text: `Eklenme tarihi: ${timestamp.getDate() < 10 ? "0" + timestamp.getDate() : timestamp.getDate()}.${timestamp.getMonth() + 1 < 10 ? `0${timestamp.getMonth() + 1}` : `${timestamp.getMonth() + 1}`}.${timestamp.getFullYear()} - ${timestamp.getHours() < 10 ? "0" + timestamp.getHours() : timestamp.getHours()}:${timestamp.getMinutes() < 10 ? "0" + timestamp.getMinutes() : timestamp.getMinutes()}`
-                        },
+                        timestamp,
                         thumbnail: {
                             url: `${cover_art}`
                         },
@@ -167,15 +253,19 @@ const sendDiscordEmbed = (type, prop1, prop2, prop3, prop4, prop5, prop6) => {
                         }
                     }]
                 }
-                axios.post(mangaId, newMangaEmbed)
+                axios.post(mangaWebhook, newMangaEmbed)
                     .then(_ => {
                         return true
                     })
                     .catch(err => {
+                        console.log(err)
                         return false
                     })
-            })
+            } catch (err) {
+                console.log(err)
+            }
             break;
+        }
         default:
             return false
     }
