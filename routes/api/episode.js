@@ -10,16 +10,18 @@ const error_messages = require("../../config/error_messages")
 const supported_sites = require("../../config/supported_sites")
 
 const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, LogDeleteDownloadLink, LogAddWatchLink, LogDeleteWatchLink } = require("../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
 const Episode = require('../../models/Episode')
 const WatchLink = require('../../models/WatchLink')
 const DownloadLink = require('../../models/DownloadLink')
 
+
 // @route   GET api/bolum/:slug/watch
 // @desc    View episodes
 // @access  Public
-router.get('/:slug/watch', async (req, res) => {
+router.get('/:slug/watch', GeneralAPIRequestsLimiter, async (req, res) => {
     let eps
     const { slug } = req.params
 
@@ -84,7 +86,7 @@ router.get('/:slug/watch', async (req, res) => {
 // @route   GET api/bolum/izleme-linkleri/
 // @desc    View watch links
 // @access  Public
-router.post('/izleme-linkleri', async (req, res) => {
+router.post('/izleme-linkleri', GeneralAPIRequestsLimiter, async (req, res) => {
     let eps
     const { slug } = req.body
     let [special_type, episode_number] = req.body.episode_data.split('-')
@@ -182,8 +184,7 @@ router.post('/bolum-ekle', async (req, res) => {
 
     if (anime) res.status(400).json({ 'err': 'Bu bölüm zaten ekli.' })
     else {
-        req.body.episode_number ? null : episode_number = null
-        if (!req.body.episode_number && special_type === '') res.status(400).json({ 'err': 'Bölüm numarası veya tür seçmelisiniz.' })
+        if (!episode_number && special_type === '') res.status(400).json({ 'err': 'Bölüm numarası veya tür seçmelisiniz.' })
 
         try {
             const result = await Episode.create({
@@ -221,11 +222,10 @@ router.post('/bolum-ekle', async (req, res) => {
 // @desc    Update episode (perm: "update-episode")
 // @access  Private
 router.post('/bolum-duzenle', async (req, res) => {
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "update-episode")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -280,11 +280,10 @@ router.post('/bolum-duzenle', async (req, res) => {
 router.post('/bolum-sil', async (req, res) => {
     const { episode_id } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-episode")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -361,7 +360,6 @@ router.post('/indirme-linki-ekle', async (req, res) => {
 // @desc    İndirme linki sil (perm: "delete-download-link")
 // @access  Private
 router.post('/indirme-linki-sil', async (req, res) => {
-    let downloadlink
     const { episode_id, downloadlink_id } = req.body
 
     let username
@@ -373,7 +371,7 @@ router.post('/indirme-linki-sil', async (req, res) => {
     }
 
     try {
-        download_link = await DownloadLink.findOne({ where: { id: downloadlink_id } })
+        const download_link = await DownloadLink.findOne({ where: { id: downloadlink_id } })
         await DownloadLink.destroy({ where: { id: downloadlink_id } })
 
         LogDeleteDownloadLink({
@@ -444,11 +442,10 @@ router.post('/izleme-linki-ekle', async (req, res) => {
 router.post('/izleme-linki-sil', async (req, res) => {
     const { episode_id, watchlink_id } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-watch-link")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -476,11 +473,8 @@ router.post('/izleme-linki-sil', async (req, res) => {
 // @desc    İndirme linkleri listesi
 // @access  Private
 router.get('/download-link-list', async (req, res) => {
-    let username, user_id
     try {
-        const check_res = await check_permission(req.headers.authorization, "add-download-link")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "add-download-link")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -492,11 +486,8 @@ router.get('/download-link-list', async (req, res) => {
 // @desc    İzleme linkleri listesi
 // @access  Private
 router.get('/watch-link-list', async (req, res) => {
-    let username, user_id
     try {
-        const check_res = await check_permission(req.headers.authorization, "add-watch-link")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "add-watch-link")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -508,11 +499,11 @@ router.get('/watch-link-list', async (req, res) => {
 // @route   GET api/bolum/info/:animeid
 // @desc    View episodes
 // @access  Public
-router.get('/info/:anime_id', async (req, res) => {
+router.get('/info/:anime_id', GeneralAPIRequestsLimiter, async (req, res) => {
     const { anime_id } = req.params
 
     try {
-        eps = await Episode.findAll({ where: { anime_id: anime_id }, order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]] })
+        const eps = await Episode.findAll({ where: { anime_id: anime_id }, order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]] })
 
         return res.status(200).json(eps)
     } catch (err) {
@@ -524,7 +515,7 @@ router.get('/info/:anime_id', async (req, res) => {
 // @route   POST api/bolum/download-links/:animeslug
 // @desc    View download links
 // @access  Public
-router.post('/download-links/:anime_slug', async (req, res) => {
+router.post('/download-links/:anime_slug', GeneralAPIRequestsLimiter, async (req, res) => {
     const { anime_slug } = req.params
     const { episode_id } = req.body
 

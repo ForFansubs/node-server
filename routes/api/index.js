@@ -2,7 +2,6 @@ const package = require('../../package.json')
 const express = require('express')
 const router = express.Router()
 const check_permission = require('../../middlewares/check_permission')
-const jsdom = require("jsdom")
 const axios = require("axios")
 const genremap = require('../../config/maps/genremap')
 const standartSlugify = require('standard-slugify')
@@ -12,14 +11,7 @@ const Manga = require('../../models/Manga')
 const Episode = require('../../models/Episode')
 const MangaEpisode = require('../../models/MangaEpisode')
 const Sequelize = require('sequelize')
-
-jsdom.defaultDocumentFeatures = {
-    FetchExternalResources: ['script'],
-    ProcessExternalResources: ['script'],
-    MutationEvents: '2.0',
-    QuerySelector: false
-};
-const { JSDOM } = jsdom;
+const { IndexAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // @route   GET api/
 // @desc    Index route
@@ -48,11 +40,8 @@ router.get('/', async (req, res) => {
 // @desc    View logs (perm: "see-logs")
 // @access  Private
 router.get('/logs', async (req, res) => {
-    let username, user_id
     try {
-        const check_res = await check_permission(req.headers.authorization, "see-logs")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "see-logs")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -68,7 +57,7 @@ router.get('/logs', async (req, res) => {
 // @route   GET api/latest-batch-episodes
 // @desc    Get latest batch links
 // @access  Public
-router.get('/latest-batch-episodes', async (req, res) => {
+router.get('/latest-batch-episodes', IndexAPIRequestsLimiter, async (req, res) => {
     try {
         const episodes = await Episode.findAll({
             where: { episode_number: "0", special_type: "toplu" },

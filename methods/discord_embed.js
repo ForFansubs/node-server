@@ -129,7 +129,7 @@ const sendDiscordEmbed = async (props) => {
             const { anime_id } = props
 
             try {
-                const { name, cover_art, slug, synopsis, translators, encoders, mal_link } = await Anime.findOne({ raw: true, where: { id: anime_id } })
+                let { name, cover_art, slug, synopsis, translators, encoders, mal_link } = await Anime.findOne({ raw: true, where: { id: anime_id } })
                 synopsis = `${synopsis.replace(/(["])/g, "'")}`
                 translators = translators.split(',').map(translator => `${translator}\n`).join('')
                 encoders = encoders.split(',').map(encoder => `${encoder}\n`).join('')
@@ -199,7 +199,7 @@ const sendDiscordEmbed = async (props) => {
             const { manga_id } = props
 
             try {
-                const { name, cover_art, slug, synopsis, translators, editors, mal_link } = await Manga.findOne({ raw: true, where: { id: manga_id } })
+                let { name, cover_art, slug, synopsis, translators, editors, mal_link } = await Manga.findOne({ raw: true, where: { id: manga_id } })
                 synopsis = `${synopsis.replace(/(["])/g, "'")}`
                 translators = translators.split(',').map(translator => `${translator}\n`).join('')
                 editors = editors.split(',').map(editor => `${editor}\n`).join('')
