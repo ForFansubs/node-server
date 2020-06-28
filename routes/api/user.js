@@ -409,7 +409,7 @@ router.post('/kayit-tamamla/yenile', async (req, res) => {
 // @route   GET api/kullanici/adminpage
 // @desc    Return to see if user can see the page or not (perm: "see-admin-page")
 // @access  Private
-router.get('/adminpage', async (req, res) => {
+router.get('/adminpage', async (req, res) => { //lgtm [js/missing-rate-limiting]
     let username, count
     try {
         const check_res = await check_permission(req.headers.authorization, "see-admin-page")

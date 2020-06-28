@@ -7,6 +7,7 @@ const Path = require('path')
 const fs = require('fs')
 const package = require('./package.json')
 const { generateSitemap } = require('./config/sitemap-generator')
+const rateLimit = require("express-rate-limit");
 
 const app = express()
 
@@ -21,7 +22,6 @@ const images = require('./routes/api/images')
 const permission = require('./routes/api/permission')
 const motd = require('./routes/api/motd')
 const sequelize = require('./config/sequelize')
-const { CrawlerFileLimiter, IndexRequestsLimiter } = require('./middlewares/rate-limiter')
 
 // Pre-render middleware
 if (process.env.USE_NEW_SEO_METHOD === "true") {
@@ -64,6 +64,21 @@ app.use(helmet())
 if (process.env.REVERSE_PROXY) {
     app.set('trust proxy', 1)
 }
+
+// Rate-limiter middleware
+const CrawlerFileLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minutes
+    max: 5, // start blocking after 5 requests
+    message:
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
+});
+
+const IndexRequestsLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minutes
+    max: 60, // start blocking after 60 requests
+    message:
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
+});
 
 // Use Routes
 ///ads txt

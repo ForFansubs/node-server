@@ -3,7 +3,22 @@ const router = express.Router()
 const Path = require('path')
 const standartSlugify = require('standard-slugify')
 const sanitize = require("sanitize-filename")
-const { MangaEpisodeImageLimiter, VariousImageLimiter } = require('../../middlewares/rate-limiter')
+
+const rateLimit = require("express-rate-limit");
+
+const MangaEpisodeImageLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 1000, // start blocking after 1000 requests
+    message:
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
+});
+
+const VariousImageLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 500, // start blocking after 500 requests
+    message:
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
+});
 
 // @route   GET api/resimler/anime/:slug
 // @desc    Get anime images

@@ -14,34 +14,6 @@ const UserRegisterLimiter = rateLimit({
         "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 saat sonra tekrar deneyin."
 });
 
-const MangaEpisodeImageLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 1000, // start blocking after 1000 requests
-    message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
-});
-
-const VariousImageLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 500, // start blocking after 500 requests
-    message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
-});
-
-const CrawlerFileLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minutes
-    max: 5, // start blocking after 5 requests
-    message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
-});
-
-const IndexRequestsLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minutes
-    max: 60, // start blocking after 60 requests
-    message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
-});
-
 const GeneralAPIRequestsLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minutes
     max: 400, // start blocking after 1000 requests
@@ -56,4 +28,4 @@ const IndexAPIRequestsLimiter = rateLimit({
         "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
 });
 
-module.exports = { UserLoginLimiter, UserRegisterLimiter, MangaEpisodeImageLimiter, VariousImageLimiter, CrawlerFileLimiter, IndexRequestsLimiter, GeneralAPIRequestsLimiter, IndexAPIRequestsLimiter }
+module.exports = { UserLoginLimiter, UserRegisterLimiter, GeneralAPIRequestsLimiter, IndexAPIRequestsLimiter }
