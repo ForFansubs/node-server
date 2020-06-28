@@ -22,7 +22,6 @@ const images = require('./routes/api/images')
 const permission = require('./routes/api/permission')
 const motd = require('./routes/api/motd')
 const sequelize = require('./config/sequelize')
-const { IndexRequestsLimiter } = require('./middlewares/rate-limiter')
 
 // Pre-render middleware
 if (process.env.USE_NEW_SEO_METHOD === "true") {
