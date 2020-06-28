@@ -55,7 +55,7 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
 
         bcrypt.genSalt(10, (err, salt) => {
             bcrypt.hash(password, salt, async (err, p_hash) => {
-                let user_result, insert_result
+                let user_result
                 if (err) return console.log(err);
 
                 try {
@@ -387,7 +387,7 @@ router.post('/kayit-tamamla/yenile', async (req, res) => {
 
         await PendingUser.destroy({ where: { hash_key: hash_key } })
 
-        insert_result = await PendingUser.create({
+        await PendingUser.create({
             user_id: user_id,
             hash_key: hash
         })
