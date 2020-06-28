@@ -324,11 +324,10 @@ router.post('/anime-sil/', async (req, res) => {
 router.post('/update-featured-anime', async (req, res) => {
     const { data } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "featured-anime")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
