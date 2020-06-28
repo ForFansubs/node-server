@@ -11,9 +11,12 @@ const error_messages = require("../../config/error_messages")
 const { deleteMangaFolders } = require('../../methods/manga-episode')
 
 const { LogAddManga, LogUpdateManga, LogDeleteManga } = require("../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
+// Models
 const Manga = require('../../models/Manga')
 const MangaEpisode = require('../../models/MangaEpisode')
+
 
 // @route   GET api/manga/manga-ekle
 // @desc    Add manga (perm: "add-manga")
@@ -45,7 +48,7 @@ router.post('/manga-ekle', async (req, res) => {
 
         //Mal linkinin id'sini al, tekrardan buildle
         let mal_link_id = req.body.mal_link.split("/")[4]
-        mal_link = `https://myanimelist.net/manga/${mal_link_id}`
+        const mal_link = `https://myanimelist.net/manga/${mal_link_id}`
 
         //Türleri string olarak al ve mapten Türkçeye çevir
         let genres = req.body.genres
@@ -122,11 +125,10 @@ router.post('/manga-ekle', async (req, res) => {
 router.post('/manga-guncelle', async (req, res) => {
     const { id } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "update-manga")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -169,9 +171,6 @@ router.post('/manga-guncelle', async (req, res) => {
         downloadImage(header, "header", slug, "manga")
     }
 
-    const keys = Object.keys(updatedManga)
-    const values = Object.values(updatedManga)
-
     try {
         await Manga.update({
             synopsis,
@@ -206,11 +205,10 @@ router.post('/manga-sil/', async (req, res) => {
     let manga
     const { id } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-manga")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -258,7 +256,7 @@ router.post('/manga-sil/', async (req, res) => {
 // @route   GET api/manga/liste
 // @desc    Get all mangas
 // @access  Private
-router.get('/liste', async (req, res) => {
+router.get('/liste', GeneralAPIRequestsLimiter, async (req, res) => {
     let mangas
 
     try {
@@ -289,7 +287,7 @@ router.get('/liste', async (req, res) => {
 // @access  Private
 router.get('/admin-liste', async (req, res) => {
     try {
-        const check_res = await check_permission(req.headers.authorization, "see-admin-page")
+        await check_permission(req.headers.authorization, "see-admin-page")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -331,7 +329,7 @@ router.get('/:slug/admin-view', async (req, res) => {
 // @route   GET api/manga/:slug
 // @desc    View manga
 // @access  Public
-router.get('/:slug', async (req, res) => {
+router.get('/:slug', GeneralAPIRequestsLimiter, async (req, res) => {
     const { slug } = req.params
 
     try {

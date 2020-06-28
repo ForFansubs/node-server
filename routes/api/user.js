@@ -6,7 +6,6 @@ const gravatar = require('gravatar')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const check_permission = require('../../middlewares/check_permission')
-const mariadb = require('../../config/maria')
 const Sequelize = require('sequelize')
 const sequelize = require('../../config/sequelize')
 const keys = require('../../config/keys')
@@ -21,7 +20,6 @@ const { NODE_ENV } = process.env
 const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
 const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../middlewares/validate')
 const { UserLoginLimiter, UserRegisterLimiter } = require('../../middlewares/rate-limiter')
-const console_logs = require('../../methods/console_logs')
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
@@ -77,7 +75,7 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
 
                 console.log(c_hash)
                 try {
-                    insert_result = await PendingUser.create({
+                    await PendingUser.create({
                         user_id: user_result.id,
                         hash_key: c_hash
                     })
@@ -120,15 +118,13 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
 router.post('/kayit/admin', async (req, res) => {
     const { name, email, password } = req.body
 
-    let username, user_id
+    let username, user
     try {
         const check_res = await check_permission(req.headers.authorization, "add-user")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         res.status(403).json({ 'err': err })
     }
-
 
     // TODO: VALIDATE BODY
     const { errors, isValid } = {}
@@ -136,12 +132,14 @@ router.post('/kayit/admin', async (req, res) => {
     if (!isValid) {
         return res.status(400).json(errors)
     }
+
     try {
         user = await User.findOne({ where: { email: email, name: name }, raw: true })
     } catch (err) {
         console.log(err)
         return res.status(400).json({ err: "Database bağlantısı kurulamıyor." })
     }
+
     if (user) {
         errors.username = "Kullanıcı adı veya email kullanılıyor."
         return res.status(400).json({
@@ -156,7 +154,7 @@ router.post('/kayit/admin', async (req, res) => {
         })
 
         bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(newUser.password, salt, async (err, p_hash) => {
+            bcrypt.hash(password, salt, async (err, p_hash) => {
                 let result
                 if (err) throw err;
 
@@ -263,19 +261,13 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
 router.post('/uye-guncelle', ValidateUserRegistration(), Validation, async (req, res) => {
     const { id, slug, name, password, permission_level, avatar } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "update-user")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         res.status(403).json({ 'err': err })
     }
-
-    const updatedUser = {
-
-    }
-
 
     try {
         await User.update({
@@ -309,11 +301,10 @@ router.post('/uye-sil', async (req, res) => {
     let user
     const user_id_body = req.body.user_id
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-user")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         res.status(403).json({ 'err': err })
     }

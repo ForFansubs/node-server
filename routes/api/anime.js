@@ -13,11 +13,14 @@ const status_map = require("../../config/maps/statusmap")
 const error_messages = require("../../config/error_messages")
 
 const { LogAddAnime, LogUpdateAnime, LogDeleteAnime, LogFeaturedAnime } = require("../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+
 // Models
 const Anime = require('../../models/Anime')
 const Episode = require('../../models/Episode')
 const DownloadLink = require('../../models/DownloadLink')
 const WatchLink = require('../../models/WatchLink')
+
 
 String.prototype.mapReplace = function (map) {
     var regex = [];
@@ -67,7 +70,7 @@ router.post('/anime-ekle', async (req, res) => {
 
     //Mal linkinin id'sini al, tekrardan buildle
     let mal_link_id = req.body.mal_link.split("/")[4]
-    mal_link = `https://myanimelist.net/anime/${mal_link_id}`
+    const mal_link = `https://myanimelist.net/anime/${mal_link_id}`
 
     //Türleri string olarak al ve mapten Türkçeye çevir
     let genres = req.body.genres
@@ -258,11 +261,10 @@ router.post('/anime-sil/', async (req, res) => {
     let anime
     const { id } = req.body
 
-    let username, user_id
+    let username
     try {
         const check_res = await check_permission(req.headers.authorization, "delete-anime")
         username = check_res.username
-        user_id = check_res.user_id
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -363,11 +365,8 @@ router.post('/update-featured-anime', async (req, res) => {
 // @desc    Get featured-anime
 // @access  Public
 router.get('/admin-featured-anime', async (req, res) => {
-    let username, user_id, anime
     try {
-        const check_res = await check_permission(req.headers.authorization, "see-admin-page")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "see-admin-page")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -383,7 +382,7 @@ router.get('/admin-featured-anime', async (req, res) => {
 // @route   GET api/anime/liste
 // @desc    Get all animes
 // @access  Public
-router.get('/liste', async (req, res) => {
+router.get('/liste', GeneralAPIRequestsLimiter, async (req, res) => {
     let animes
 
     try {
@@ -403,11 +402,8 @@ router.get('/liste', async (req, res) => {
 // @desc    Get all animes with all data
 // @access  Public
 router.get('/admin-liste', async (req, res) => {
-    let username, user_id
     try {
-        const check_res = await check_permission(req.headers.authorization, "see-admin-page")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "see-admin-page")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -425,11 +421,9 @@ router.get('/admin-liste', async (req, res) => {
 // @desc    View anime
 // @access  Private
 router.get('/:slug/admin-view', async (req, res) => {
-    let username, user_id, anime, episodes
+    let anime, episodes
     try {
-        const check_res = await check_permission(req.headers.authorization, "update-anime")
-        username = check_res.username
-        user_id = check_res.user_id
+        await check_permission(req.headers.authorization, "update-anime")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
@@ -460,7 +454,7 @@ router.get('/:slug/admin-view', async (req, res) => {
 // @route   GET api/anime/:slug
 // @desc    View anime
 // @access  Public
-router.get('/:slug', async (req, res) => {
+router.get('/:slug', GeneralAPIRequestsLimiter, async (req, res) => {
     let anime, episodes
     try {
         anime = await Anime.findOne({

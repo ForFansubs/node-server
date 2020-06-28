@@ -5,7 +5,6 @@ const passport = require('passport')
 const helmet = require('helmet')
 const Path = require('path')
 const fs = require('fs')
-const { promisify } = require('util')
 const package = require('./package.json')
 const { generateSitemap } = require('./config/sitemap-generator')
 

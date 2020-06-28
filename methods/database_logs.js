@@ -65,7 +65,7 @@ async function LogFeaturedAnime(props) {
 	const { process_type, username } = props
 
 	try {
-		text = `${username} isimli kullanıcı öne çıkarılan animeleri değiştirdi.`
+		const text = `${username} isimli kullanıcı öne çıkarılan animeleri değiştirdi.`
 		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
 		logFailError(process, "", err)
@@ -252,7 +252,7 @@ async function LogAddWatchLink(props) {
 	const { username, watch_link_id } = props
 
 	try {
-		const { anime_name, episode_number, special_type, type } = await DownloadLink.findOne({
+		const { anime_name, episode_number, special_type, type } = await WatchLink.findOne({
 			where: { id: watch_link_id },
 			attributes: [
 				'type',
@@ -491,7 +491,7 @@ async function LogDeletePermission(props) {
 
 	const { username, permission_name } = props
 
-	text = `${username} isimli kullanıcı ${permission_name} isimli yetkiyi sildi.`
+	const text = `${username} isimli kullanıcı ${permission_name} isimli yetkiyi sildi.`
 	try {
 		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {
@@ -534,7 +534,7 @@ async function LogDeleteUser(props) {
 
 	const { username, name } = props
 
-	text = `${username} isimli kullanıcı ${name} isimli üyeyi sildi.`
+	const text = `${username} isimli kullanıcı ${name} isimli üyeyi sildi.`
 	try {
 		await HandleDatabaseQuery(username, text, process_type)
 	} catch (err) {

@@ -9,10 +9,11 @@ const error_messages = require("../../config/error_messages")
 const MangaEpisode = require('../../models/MangaEpisode')
 
 const { clearMangaFolder, deleteMangaFolder, getPath } = require('../../methods/manga-episode')
-
 const { LogAddMangaEpisode, LogUpdateMangaEpisode, LogDeleteMangaEpisode } = require("../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 const multer = require('multer');
+
 
 const manga_storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -202,7 +203,7 @@ router.post('/bolum-sil', async (req, res) => {
 // @route   GET api/manga-bolum/:slug/read
 // @desc    Get image paths and other stuff for reading page
 // @access  Public
-router.get('/:slug/read', async (req, res) => {
+router.get('/:slug/read', GeneralAPIRequestsLimiter, async (req, res) => {
     let manga
     const { slug } = req.params
 
