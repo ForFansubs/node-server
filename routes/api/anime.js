@@ -422,7 +422,7 @@ router.get('/admin-liste', async (req, res) => {
 router.get('/:slug/admin-view', async (req, res) => {
     let anime, episodes
     try {
-        await check_permission(req.headers.authorization, "update-anime")
+        await check_permission(req.headers.authorization, "see-anime")
     } catch (err) {
         return res.status(403).json({ 'err': err })
     }
