@@ -1,6 +1,8 @@
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
+const checkCustoms = require('./custom/link-extraction-watch')
+
 const watchLinkExtract = link => {
     let extract = {}
     if (link.match(/iframe/)) {
@@ -36,7 +38,7 @@ const watchLinkExtract = link => {
         else if (link.match(/jetload\.net/)) extract.type = 'jetload'
         else if (link.match(/fastplay\.to/)) extract.type = 'fastplay'
         else if (link.match(/streamwire\.net/)) extract.type = 'streamwire'
-        else return false
+        else return checkCustoms(link)
         return extract
     }
     else if (link.match(/oload\.life/)) {
@@ -221,7 +223,7 @@ const watchLinkExtract = link => {
         return extract
     }
     else {
-        return false
+        return checkCustoms(link)
     }
 }
 

@@ -1,3 +1,5 @@
+const checkCustoms = require('./custom/link-extraction-download')
+
 const downloadLinkExtract = link => {
     let extract = { link }
     if (link.match(/mega\.nz/)) {
@@ -34,7 +36,7 @@ const downloadLinkExtract = link => {
         extract.type = "download.ru"
     }
     else {
-        return false
+        return checkCustoms(link)
     }
     return extract
 }
