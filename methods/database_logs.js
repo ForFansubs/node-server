@@ -1,5 +1,6 @@
 const { logFailError } = require('./console_logs')
 
+const Sequelize = require('sequelize')
 const Anime = require('../models/Anime')
 const Manga = require('../models/Manga')
 const Log = require('../models/Log')

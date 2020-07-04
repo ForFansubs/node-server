@@ -59,7 +59,7 @@ router.post('/anime-ekle', async (req, res) => {
     if (anime) return res.status(400).json({ 'err': 'Bu anime zaten ekli.' })
 
     //Yoksa değerleri variable'lara eşitle.
-    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, pv, name, synopsis } = req.body
+    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, pv, name, synopsis, episode_count } = req.body
 
     //Slug'ı yukardaki fonksiyonla oluştur.
     const slug = version === 'bd' ? standartSlugify(name) + "-bd" : standartSlugify(name)
