@@ -312,6 +312,12 @@ router.get('/:slug/admin-view', async (req, res) => {
     const { slug } = req.params
 
     try {
+        await check_permission(req.headers.authorization, "see-manga")
+    } catch (err) {
+        return res.status(403).json({ 'err': err })
+    }
+
+    try {
         let manga = await Manga.findOne({ where: { slug: slug } })
         const episodes = await MangaEpisode.findAll({ where: { manga_id: manga.id } })
         if (!manga) {
