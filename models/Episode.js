@@ -1,6 +1,7 @@
 const Sequelize = require("sequelize");
 const Model = Sequelize.Model;
-const sequelize = require('../config/sequelize')
+const sequelize = require('../config/sequelize');
+const Anime = require("./Anime");
 
 class Episode extends Model { }
 
@@ -41,6 +42,15 @@ Episode.init({
     timestamps: false,
     sequelize,
     modelName: "episode"
+})
+
+Episode.belongsTo(Anime, {
+    foreignKey: "anime_id",
+    as: "anime"
+})
+Anime.hasMany(Episode, {
+    foreignKey: "anime_id",
+    as: "episodes"
 })
 
 module.exports = Episode

@@ -407,7 +407,12 @@ router.get('/admin-liste', async (req, res) => {
     }
 
     try {
-        const animes = await Anime.findAll({ order: ['name'] })
+        const animes = await Anime.findAll({
+            order: ['name'],
+            include: [
+                "episodes"
+            ]
+        })
         res.status(200).json(animes)
     } catch (err) {
         console.log(err)
