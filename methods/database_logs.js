@@ -176,6 +176,7 @@ async function LogAddDownloadLink(props) {
 
 	try {
 		const { anime_name, episode_number, special_type, type } = await DownloadLink.findOne({
+			raw: true,
 			where: { id: download_link_id },
 			attributes: [
 				'type',
@@ -254,6 +255,7 @@ async function LogAddWatchLink(props) {
 
 	try {
 		const { anime_name, episode_number, special_type, type } = await WatchLink.findOne({
+			raw: true,
 			where: { id: watch_link_id },
 			attributes: [
 				'type',
