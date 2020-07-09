@@ -258,7 +258,7 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
 // @route   POST api/kullanici/uye-guncelle
 // @desc    Update user (perm: "update-user")
 // @access  Private
-router.post('/uye-guncelle', ValidateUserRegistration(), Validation, async (req, res) => {
+router.post('/uye-guncelle', Validation, async (req, res) => {
     const { id, slug, name, password, permission_level, avatar } = req.body
 
     let username
