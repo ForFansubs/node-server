@@ -316,7 +316,7 @@ router.post('/uye-sil', async (req, res) => {
     }
 
     try {
-        await User.destroy({ where: user_id_body })
+        await User.destroy({ where: { id: user_id_body } })
 
         LogDeleteUser({
             process_type: 'delete-user',
