@@ -133,13 +133,22 @@ router.post('/manga-guncelle', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
 
-    const { name, cover_art, download_link, reader_link, release_date, translators, editors, genres, authors, header, logo, mal_link } = req.body
-    const synopsis = req.body.synopsis.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
+    //Güncellenecek mangayı database'te bul
+    try {
+        manga = await Manga.findOne({ raw: true, where: { id: id } })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ 'err': error_messages.database_error })
+    }
+
+    const { name, cover_art, synopsis, download_link, reader_link, release_date, translators, editors, genres, authors, header, logo, mal_link } = req.body
+    const { slug } = manga
 
     //Cover_art'ı diske indir
     try {
         await downloadImage(cover_art, "cover", slug, "manga")
     } catch (err) {
+        console.log(err)
         return res.status(500).json({ "err": "Coverart güncellenirken bir sorun oluştu." })
     }
 
@@ -163,12 +172,12 @@ router.post('/manga-guncelle', async (req, res) => {
 
     //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
     if (header === "-") {
-        deleteImage(slug, "manga", "header")
+        await deleteImage(slug, "manga", "header")
     }
 
     //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
     if (header && header !== "-") {
-        downloadImage(header, "header", slug, "manga")
+        await downloadImage(header, "header", slug, "manga")
     }
 
     try {
@@ -194,6 +203,7 @@ router.post('/manga-guncelle', async (req, res) => {
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
+        console.log(err)
         return res.status(404).json({ 'err': 'Güncellemede bir sorun oluştu.' })
     }
 })
@@ -294,11 +304,7 @@ router.get('/admin-liste', async (req, res) => {
 
     try {
         const mangas = await Manga.findAll({ order: ['name'] })
-        const mangaList = mangas.map(manga => {
-            manga.genres = manga.genres.split(',')
-            return manga
-        })
-        res.status(200).json(mangaList)
+        res.status(200).json(mangas)
     } catch (err) {
         console.log(err)
         return res.status(500).json({ 'err': error_messages.database_error })
