@@ -125,7 +125,7 @@ router.post('/manga-ekle', async (req, res) => {
 router.post('/manga-guncelle', async (req, res) => {
     const { id } = req.body
 
-    let username
+    let username, manga
     try {
         const check_res = await check_permission(req.headers.authorization, "update-manga")
         username = check_res.username
