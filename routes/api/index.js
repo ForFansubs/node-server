@@ -283,9 +283,12 @@ router.get('/header-getir', (req, res) => {
     const { name } = req.body
     axios.get(`https://kitsu.io/api/edge/${type ? type : "anime"}?filter[slug]=` + standartSlugify(name))
         .then(resp => {
-            if (resp.data.data[0] && resp.data.data[0].attributes.coverImage.original)
-                res.status(200).json({ header: resp.data.data[0].attributes.coverImage.original, cover_art: resp.data.data[0].attributes.posterImage.original })
-            else res.status(404)
+            const { data } = resp.data
+
+            if (data.length === 0) res.status(404).send()
+            if (data[0] && data[0].attributes.coverImage.original)
+                res.status(200).json({ header: data[0].attributes.coverImage.original, cover_art: data[0].attributes.posterImage.original })
+            else res.status(404).send()
         })
         .catch(err => {
             console.log(err)
