@@ -188,7 +188,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 12,
+                limit: 13,
                 order: [['created_time', 'DESC']],
                 where: { special_type: { [Sequelize.Op.ne]: "toplu" } }
             }),
@@ -234,7 +234,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 12,
+                limit: 15,
                 order: [['created_time', 'DESC']],
             })])
 

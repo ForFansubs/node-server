@@ -7,17 +7,17 @@ const sanitize = require("sanitize-filename")
 const rateLimit = require("express-rate-limit");
 
 const MangaEpisodeImageLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
+    windowMs: 3 * 60 * 1000, // 5 minutes
     max: 1000, // start blocking after 1000 requests
     message:
         "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
 });
 
 const VariousImageLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
+    windowMs: 3 * 60 * 1000, // 3 minutes
     max: 500, // start blocking after 500 requests
     message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 3 dakika sonra tekrar deneyin."
 });
 
 // @route   GET api/resimler/anime/:slug
