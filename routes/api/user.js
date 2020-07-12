@@ -28,20 +28,22 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
     const { name, email, password } = req.body
     const errors = {}
 
-    let user
+    let user_check, email_check
 
     try {
-        user = await User.findOne({ where: { email: email, name: name }, raw: true })
+        user_check = await User.findOne({ where: { name: name }, raw: true })
+        email_check = await User.findOne({ where: { email: email }, raw: true })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ err: "Database bağlantısı kurulamıyor." })
     }
 
-    if (user) {
-        errors.username = "Kullanıcı adı veya email kullanılıyor."
+    if (user_check || email_check) {
+        if (user_check) errors.username = "Kullanıcı adı kullanılıyor."
+        if (email_check) errors.email = "Mail adresi kullanılıyor."
         return res.status(400).json({
             ...errors,
-            'err': 'Kullanıcı adı veya email kullanılıyor'
+            'err': 'Kullanıcı adı ya da mail adresi kullanılıyor'
         })
     }
 
