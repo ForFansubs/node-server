@@ -8,10 +8,10 @@ const UserLoginLimiter = rateLimit({
 });
 
 const UserRegisterLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 60 minutes
-    max: 1, // start blocking after 1 requests
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 3, // start blocking after 3 requests
     message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 saat sonra tekrar deneyin."
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 15 dakika sonra tekrar deneyin."
 });
 
 const GeneralAPIRequestsLimiter = rateLimit({
