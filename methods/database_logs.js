@@ -398,7 +398,7 @@ async function LogAddMangaEpisode(props) {
                 )`),
 					'manga_slug'
 				]
-			], where: { id: episode_id }
+			], where: { id: manga_episode_id }
 		})
 
 		const text = `${username} isimli kullanıcı ${manga_name} isimli mangaya ${episode_number}. bölümü ekledi.`
@@ -436,7 +436,7 @@ async function LogUpdateMangaEpisode(props) {
                 )`),
 					'manga_slug'
 				]
-			], where: { id: episode_id }
+			], where: { id: manga_episode_id }
 		})
 
 		const text = `${username} isimli kullanıcı ${manga_name} isimli manganın ${episode_number}. bölümünü güncelledi.`
