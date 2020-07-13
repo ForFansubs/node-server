@@ -1,8 +1,8 @@
 {
   "name": "forfansubsback",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "release-name": "Hello Alone",
-  "description": "",
+  "description": "Back-end Node service for ForFansubs",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
