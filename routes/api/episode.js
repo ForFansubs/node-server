@@ -320,40 +320,61 @@ router.post('/indirme-linki-ekle', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
 
-    const { link, type } = downloadLinkExtract(req.body.link)
-    if (!type) return res.status(400).json({ 'err': 'Link tanımlanamadı.' })
+    let links = req.body.link.split('\n')
+    let link_errors = {}
 
-    try {
-        anime = await DownloadLink.findOne({ where: { link: link } })
+    for (linkTemp of links) {
+        if (linkTemp === "") continue
 
-        if (anime) return res.status(400).json({ 'err': 'Bu link zaten ekli.' })
-    } catch (err) {
-        console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        const { link, type } = downloadLinkExtract(linkTemp)
+        if (!type) {
+            link_errors[linkTemp] = "Link tanımlanamadı."
+            continue
+        }
+
+        try {
+            anime = await DownloadLink.findOne({ raw: true, where: { link: link } })
+
+            if (anime) {
+                link_errors[linkTemp] = "Bu link zaten ekli."
+                continue
+            }
+        } catch (err) {
+            console.log(err)
+            link_errors[linkTemp] = error_messages.database_error
+            continue
+        }
+
+        const { anime_id, episode_id } = req.body
+        if (!Validator.isURL(link)) {
+            link_errors[linkTemp] = "Bu bir link değil."
+            continue
+        }
+
+        try {
+            const result = await DownloadLink.create({
+                anime_id,
+                episode_id,
+                type: type,
+                link: link,
+                created_by: user_id
+            })
+
+            LogAddDownloadLink({
+                process_type: 'add-download-link',
+                username: username,
+                download_link_id: result.id
+            })
+        } catch (err) {
+            link_errors[linkTemp] = error_messages.database_error
+            continue
+        }
     }
 
-    const { anime_id, episode_id } = req.body
-    if (!Validator.isURL(link)) return res.status(400).json({ 'err': 'Link doğru değil' })
-
-    try {
-        const result = await DownloadLink.create({
-            anime_id,
-            episode_id,
-            type: type,
-            link: link,
-            created_by: user_id
-        })
-
-        LogAddDownloadLink({
-            process_type: 'add-download-link',
-            username: username,
-            download_link_id: result.id
-        })
-
-        return res.status(200).json({ 'success': 'success' })
-    } catch (err) {
-        return res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
-    }
+    return res.status(200).json({
+        'success': 'success',
+        'errors': link_errors
+    })
 })
 
 // @route   POST api/bolum/indirme-linki-sil
@@ -389,7 +410,7 @@ router.post('/indirme-linki-sil', async (req, res) => {
 })
 
 // @route   POST api/bolum/izleme-linki-ekle
-// @desc    Yeni bölüm indirme linki ekle (perm: "add-watch-link")
+// @desc    Yeni bölüm izleme linki ekle (perm: "add-watch-link")
 // @access  Private
 router.post('/izleme-linki-ekle', async (req, res) => {
     let username, user_id, anime
@@ -401,39 +422,62 @@ router.post('/izleme-linki-ekle', async (req, res) => {
         return res.status(403).json({ 'err': err })
     }
 
-    const { anime_id, episode_id, link } = req.body
+    const links = req.body.link.split("\n")
+    let link_errors = {}
 
-    const { type, src } = watchLinkExtract(link)
-    if (!type) return res.status(400).json({ 'err': 'Link tanımlanamadı.' })
+    for (linkTemp of links) {
+        if (linkTemp === "") continue
 
-    try {
-        anime = await WatchLink.findOne({ where: { link: src } })
+        const { type, src } = watchLinkExtract(linkTemp)
+        if (!type) {
+            link_errors[linkTemp] = "Link tanımlanamadı."
+            continue
+        }
 
-        if (anime) return res.status(400).json({ 'err': 'Bu link zaten ekli.' })
-    } catch (err) {
-        console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        try {
+            anime = await WatchLink.findOne({ where: { link: src }, raw: true })
+
+            if (anime) {
+                link_errors[linkTemp] = "Bu link zaten ekli."
+                continue
+            }
+        } catch (err) {
+            console.log(err)
+            link_errors[linkTemp] = error_messages.database_error
+            continue
+        }
+
+        const { anime_id, episode_id } = req.body
+        if (!Validator.isURL(linkTemp)) {
+            link_errors[linkTemp] = "Bu bir link değil."
+            continue
+        }
+
+        try {
+            const result = await WatchLink.create({
+                anime_id,
+                episode_id,
+                type: type,
+                link: src,
+                created_by: user_id
+            })
+
+            LogAddWatchLink({
+                process_type: 'add-watch-link',
+                username: username,
+                watch_link_id: result.id
+            })
+        } catch (err) {
+            console.log(err)
+            link_errors[`${linkTemp}`] = error_messages.database_error
+            continue
+        }
     }
 
-    try {
-        const result = await WatchLink.create({
-            anime_id,
-            episode_id,
-            type: type,
-            link: src,
-            created_by: user_id
-        })
-
-        LogAddWatchLink({
-            process_type: 'add-watch-link',
-            username: username,
-            watch_link_id: result.id
-        })
-
-        return res.status(200).json({ 'success': 'success' })
-    } catch (err) {
-        console.log(err)
-    }
+    return res.status(200).json({
+        'success': 'success',
+        'errors': link_errors
+    })
 })
 
 // @route   POST /episode/izleme-linki-sil

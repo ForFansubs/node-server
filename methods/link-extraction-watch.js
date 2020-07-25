@@ -107,7 +107,7 @@ const watchLinkExtract = link => {
         return extract
     }
     else if (link.match(/mega\.nz/)) {
-        extract.src = link.replace('https://mega.nz/#', '//mega.nz/embed#')
+        extract.src = link.replace('https://mega.nz/file/', '//mega.nz/embed/')
         extract.type = 'mega'
         return extract
     }
