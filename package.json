@@ -1,7 +1,7 @@
 {
   "name": "forfansubsback",
-  "version": "3.2.3",
-  "release-name": "Hello Alone",
+  "version": "3.3.0",
+  "release-name": "Diamond no Jundo",
   "description": "Back-end Node service for ForFansubs",
   "main": "server.js",
   "scripts": {
