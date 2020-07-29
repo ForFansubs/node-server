@@ -323,7 +323,7 @@ router.post('/indirme-linki-ekle', async (req, res) => {
     let links = req.body.link.split('\n')
     let link_errors = {}
 
-    for (linkTemp of links) {
+    for (const linkTemp of links) {
         if (linkTemp === "") continue
 
         const { link, type } = downloadLinkExtract(linkTemp)
@@ -425,7 +425,7 @@ router.post('/izleme-linki-ekle', async (req, res) => {
     const links = req.body.link.split("\n")
     let link_errors = {}
 
-    for (linkTemp of links) {
+    for (const linkTemp of links) {
         if (linkTemp === "") continue
 
         const { type, src } = watchLinkExtract(linkTemp)
