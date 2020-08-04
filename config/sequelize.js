@@ -15,8 +15,8 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
         console.log(" ")
     },
     pool: {
-        max: 50,
-        min: 20,
+        max: Number(process.env.DB_CONNECTION_MAX),
+        min: Number(process.env.DB_CONNECTION_MIN),
         acquire: 30000,
         idle: 10000
     }
