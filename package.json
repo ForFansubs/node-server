@@ -1,7 +1,7 @@
 {
   "name": "forfansubsback",
-  "version": "3.3.0",
-  "release-name": "Diamond no Jundo",
+  "version": "3.4.0",
+  "release-name": "v4soon™",
   "description": "Back-end Node service for ForFansubs",
   "main": "server.js",
   "scripts": {
