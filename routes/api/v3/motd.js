@@ -1,11 +1,11 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../middlewares/check_permission')
-const error_messages = require('../../config/error_messages')
-const { LogAddMotd, LogUpdateMotd, LogDeleteMotd } = require('../../methods/database_logs')
-const Motd = require('../../models/Motd')
-const sequelize = require('../../config/sequelize')
-const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+const check_permission = require('../../../middlewares/check_permission')
+const error_messages = require('../../../config/error_messages')
+const { LogAddMotd, LogUpdateMotd, LogDeleteMotd } = require('../../../methods/database_logs')
+const Motd = require('../../../models/Motd')
+const sequelize = require('../../../config/sequelize')
+const { GeneralAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
 
 // @route   GET api/motd/motd-ekle
 // @desc    Add motd (add-motd)

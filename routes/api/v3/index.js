@@ -1,17 +1,16 @@
-const package = require('../../package.json')
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../middlewares/check_permission')
+const check_permission = require('../../../middlewares/check_permission')
 const axios = require("axios")
-const genremap = require('../../config/maps/genremap')
+const genremap = require('../../../config/maps/genremap')
 const standartSlugify = require('standard-slugify')
-const Log = require('../../models/Log')
-const Anime = require('../../models/Anime')
-const Manga = require('../../models/Manga')
-const Episode = require('../../models/Episode')
-const MangaEpisode = require('../../models/MangaEpisode')
+const Log = require('../../../models/Log')
+const Anime = require('../../../models/Anime')
+const Manga = require('../../../models/Manga')
+const Episode = require('../../../models/Episode')
+const MangaEpisode = require('../../../models/MangaEpisode')
 const Sequelize = require('sequelize')
-const { IndexAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+const { IndexAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
 
 // @route   GET api/
 // @desc    Index route
@@ -28,8 +27,8 @@ router.get('/', async (req, res) => {
     const response = {
         author: 'aybertocarlos',
         contact: 'aybertocarlos@gmail.com',
-        version: package.version,
-        "release-name": package["release-name"],
+        version: "v3.4.0",
+        "release-name": "v4soon™",
         status: 'OK',
         admin
     }

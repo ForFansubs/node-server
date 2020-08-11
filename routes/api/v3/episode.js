@@ -1,21 +1,21 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../middlewares/check_permission')
-const downloadLinkExtract = require('../../methods/link-extraction-download')
-const watchLinkExtract = require('../../methods/link-extraction-watch')
-const sendDiscordEmbed = require('../../methods/discord_embed')
+const check_permission = require('../../../middlewares/check_permission')
+const downloadLinkExtract = require('../../../methods/link-extraction-download')
+const watchLinkExtract = require('../../../methods/link-extraction-watch')
+const sendDiscordEmbed = require('../../../methods/discord_embed')
 const Sequelize = require('sequelize')
 const Validator = require('validator')
-const error_messages = require("../../config/error_messages")
-const supported_sites = require("../../config/supported_sites")
+const error_messages = require("../../../config/error_messages")
+const supported_sites = require("../../../config/supported_sites")
 
-const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, LogDeleteDownloadLink, LogAddWatchLink, LogDeleteWatchLink } = require("../../methods/database_logs")
-const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, LogDeleteDownloadLink, LogAddWatchLink, LogDeleteWatchLink } = require("../../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
 
 // Models
-const Episode = require('../../models/Episode')
-const WatchLink = require('../../models/WatchLink')
-const DownloadLink = require('../../models/DownloadLink')
+const Episode = require('../../../models/Episode')
+const WatchLink = require('../../../models/WatchLink')
+const DownloadLink = require('../../../models/DownloadLink')
 
 
 // @route   GET api/bolum/:slug/watch
@@ -46,6 +46,7 @@ router.get('/:slug/watch', GeneralAPIRequestsLimiter, async (req, res) => {
                 'episode_number',
                 'special_type',
                 'credits',
+                'created_time',
                 [
                     Sequelize.literal(`(
                         SELECT name
@@ -547,7 +548,13 @@ router.get('/info/:anime_id', GeneralAPIRequestsLimiter, async (req, res) => {
     const { anime_id } = req.params
 
     try {
-        const eps = await Episode.findAll({ where: { anime_id: anime_id }, order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]] })
+        const eps = await Episode.findAll(
+            {
+                where: { anime_id: anime_id },
+                order: [['special_type'],
+                [Sequelize.fn('ABS', Sequelize.col('episode_number'))]]
+            }
+        )
 
         return res.status(200).json(eps)
     } catch (err) {

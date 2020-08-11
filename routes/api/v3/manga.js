@@ -1,21 +1,21 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../middlewares/check_permission')
-const sendDiscordEmbed = require('../../methods/discord_embed')
-const downloadImage = require('../../methods/download_image')
-const deleteImage = require('../../methods/delete_image')
+const check_permission = require('../../../middlewares/check_permission')
+const sendDiscordEmbed = require('../../../methods/discord_embed')
+const downloadImage = require('../../../methods/download_image')
+const deleteImage = require('../../../methods/delete_image')
 const Sequelize = require("sequelize");
 const standartSlugify = require('standard-slugify')
-const genre_map = require("../../config/maps/genremap")
-const error_messages = require("../../config/error_messages")
-const { deleteMangaFolders } = require('../../methods/manga-episode')
+const genre_map = require("../../../config/maps/genremap")
+const error_messages = require("../../../config/error_messages")
+const { deleteMangaFolders } = require('../../../methods/manga-episode')
 
-const { LogAddManga, LogUpdateManga, LogDeleteManga } = require("../../methods/database_logs")
-const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+const { LogAddManga, LogUpdateManga, LogDeleteManga } = require("../../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
 
 // Models
-const Manga = require('../../models/Manga')
-const MangaEpisode = require('../../models/MangaEpisode')
+const Manga = require('../../../models/Manga')
+const MangaEpisode = require('../../../models/MangaEpisode')
 
 
 // @route   GET api/manga/manga-ekle

@@ -1,26 +1,25 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../middlewares/check_permission')
-const sendDiscordEmbed = require('../../methods/discord_embed')
-const downloadImage = require('../../methods/download_image')
-const renameImage = require('../../methods/rename_image')
-const deleteImage = require('../../methods/delete_image')
+const check_permission = require('../../../middlewares/check_permission')
+const sendDiscordEmbed = require('../../../methods/discord_embed')
+const downloadImage = require('../../../methods/download_image')
+const renameImage = require('../../../methods/rename_image')
+const deleteImage = require('../../../methods/delete_image')
 const Sequelize = require("sequelize");
 const standartSlugify = require('standard-slugify')
-const genre_map = require("../../config/maps/genremap")
-const season_map = require("../../config/maps/seasonmap")
-const status_map = require("../../config/maps/statusmap")
-const error_messages = require("../../config/error_messages")
+const genre_map = require("../../../config/maps/genremap")
+const season_map = require("../../../config/maps/seasonmap")
+const status_map = require("../../../config/maps/statusmap")
+const error_messages = require("../../../config/error_messages")
 
-const { LogAddAnime, LogUpdateAnime, LogDeleteAnime, LogFeaturedAnime } = require("../../methods/database_logs")
-const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+const { LogAddAnime, LogUpdateAnime, LogDeleteAnime, LogFeaturedAnime } = require("../../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
 
 // Models
-const Anime = require('../../models/Anime')
-const Episode = require('../../models/Episode')
-const DownloadLink = require('../../models/DownloadLink')
-const WatchLink = require('../../models/WatchLink')
-
+const Anime = require('../../../models/Anime')
+const Episode = require('../../../models/Episode')
+const DownloadLink = require('../../../models/DownloadLink')
+const WatchLink = require('../../../models/WatchLink')
 
 String.prototype.mapReplace = function (map) {
     var regex = [];

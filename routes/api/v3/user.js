@@ -1,25 +1,25 @@
-const sendMail = require('../../methods/mailer').sendMail
+const sendMail = require('../../../methods/mailer').sendMail
 const SHA256 = require("crypto-js/sha256")
 const express = require('express')
 const router = express.Router()
 const gravatar = require('gravatar')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const check_permission = require('../../middlewares/check_permission')
+const check_permission = require('../../../middlewares/check_permission')
 const Sequelize = require('sequelize')
-const sequelize = require('../../config/sequelize')
-const keys = require('../../config/keys')
-const error_messages = require("../../config/error_messages")
+const sequelize = require('../../../config/sequelize')
+const keys = require('../../../config/keys')
+const error_messages = require("../../../config/error_messages")
 const standartSlugify = require('standard-slugify')
 
-const User = require('../../models/User')
-const PendingUser = require('../../models/PendingUser')
+const User = require('../../../models/User')
+const PendingUser = require('../../../models/PendingUser')
 
 const { NODE_ENV } = process.env
 
-const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
-const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../middlewares/validate')
-const { UserLoginLimiter, UserRegisterLimiter } = require('../../middlewares/rate-limiter')
+const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../../methods/database_logs')
+const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../../middlewares/validate')
+const { UserLoginLimiter, UserRegisterLimiter } = require('../../../middlewares/rate-limiter')
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
