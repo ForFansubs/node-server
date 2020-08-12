@@ -1,17 +1,17 @@
 const rateLimit = require("express-rate-limit");
 
 const UserLoginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 1 * 60 * 1000, // 1 minutes
     max: 5, // start blocking after 5 requests
     message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 15 dakika sonra tekrar deneyin."
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
 });
 
 const UserRegisterLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 3, // start blocking after 3 requests
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 15, // start blocking after 3 requests
     message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 15 dakika sonra tekrar deneyin."
+        "Bu IP üzerinden çok fazla istek geldi. Lütfen 10 dakika sonra tekrar deneyin."
 });
 
 const GeneralAPIRequestsLimiter = rateLimit({

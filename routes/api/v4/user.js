@@ -125,14 +125,8 @@ router.post('/kayit/admin', async (req, res) => {
         const check_res = await check_permission(req.headers.authorization, "add-user")
         username = check_res.username
     } catch (err) {
+        console.log(err)
         res.status(403).json({ 'err': err })
-    }
-
-    // TODO: VALIDATE BODY
-    const { errors, isValid } = {}
-    // Check Validation
-    if (!isValid) {
-        return res.status(400).json(errors)
     }
 
     try {
@@ -339,11 +333,11 @@ router.post('/kayit-tamamla', async (req, res) => {
     let { hash } = req.body
 
     try {
-        const { hash_key, user_id, created_time } = await PendingUser.findOne({ raw: true, where: { hash_key: hash } })
+        const pending_user = await PendingUser.findOne({ raw: true, where: { hash_key: hash } })
 
-        if (!user_id || !hash_key || !created_time) {
-            return res.status(404).json({ 'err': "Kullanıcı kaydı bulunamadı!" })
-        }
+        if (!pending_user.hash_key) return res.status(404).json({ 'err': "Kullanıcı kaydı bulunamadı!" })
+
+        const { hash_key, user_id, created_time } = pending_user
 
         if ((new Date()).valueOf() - 600000 > created_time.valueOf()) {
             return res.status(200).json({ success: "refresh" })
