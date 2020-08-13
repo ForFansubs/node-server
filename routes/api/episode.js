@@ -323,8 +323,11 @@ router.post('/indirme-linki-ekle', async (req, res) => {
     let links = req.body.link.split('\n')
     let link_errors = {}
 
-    for (const linkTemp of links) {
+    for (let linkTemp of links) {
         if (linkTemp === "") continue
+
+        // Delete all spaces from link
+        linkTemp = linkTemp.replace(/\040/g, "")
 
         const { link, type } = downloadLinkExtract(linkTemp)
         if (!type) {
@@ -346,6 +349,7 @@ router.post('/indirme-linki-ekle', async (req, res) => {
         }
 
         const { anime_id, episode_id } = req.body
+
         if (!Validator.isURL(link)) {
             link_errors[linkTemp] = "Bu bir link değil."
             continue
@@ -425,8 +429,11 @@ router.post('/izleme-linki-ekle', async (req, res) => {
     const links = req.body.link.split("\n")
     let link_errors = {}
 
-    for (const linkTemp of links) {
+    for (let linkTemp of links) {
         if (linkTemp === "") continue
+
+        // Delete all spaces from link
+        linkTemp = linkTemp.replace(/\040/g, "")
 
         const { type, src } = watchLinkExtract(linkTemp)
         if (!type) {
