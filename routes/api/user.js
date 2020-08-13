@@ -128,13 +128,6 @@ router.post('/kayit/admin', async (req, res) => {
         res.status(403).json({ 'err': err })
     }
 
-    // TODO: VALIDATE BODY
-    const { errors, isValid } = {}
-    // Check Validation
-    if (!isValid) {
-        return res.status(400).json(errors)
-    }
-
     try {
         user = await User.findOne({ where: { email: email, name: name }, raw: true })
     } catch (err) {
