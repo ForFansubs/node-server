@@ -1,7 +1,6 @@
 require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
-const passport = require('passport')
 const helmet = require('helmet')
 const Path = require('path')
 const fs = require('fs')
@@ -54,20 +53,19 @@ if (process.env.USE_NEW_SEO_METHOD === "true") {
     }
 }
 
-// Passport middleware
-app.use(passport.initialize())
+// Express middleware
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*")
     res.header("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin, Accept, Authorization, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers")
     res.header("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, OPTIONS")
     next()
 })
-
-// Passport Config
-require('./config/passport')(passport)
-
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+app.use(function (req, res, next) {
+    res.setHeader('Content-Language', 'tr, en')
+    next()
+})
 
 // Helmet JS middleware
 app.use(helmet())
