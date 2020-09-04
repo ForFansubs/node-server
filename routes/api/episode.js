@@ -1,21 +1,21 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../../middlewares/check_permission')
-const downloadLinkExtract = require('../../../methods/link-extraction-download')
-const watchLinkExtract = require('../../../methods/link-extraction-watch')
-const sendDiscordEmbed = require('../../../methods/discord_embed')
+const check_permission = require('../../middlewares/check_permission')
+const downloadLinkExtract = require('../../methods/link-extraction-download')
+const watchLinkExtract = require('../../methods/link-extraction-watch')
+const sendDiscordEmbed = require('../../methods/discord_embed')
 const Sequelize = require('sequelize')
 const Validator = require('validator')
-const error_messages = require("../../../config/error_messages")
-const supported_sites = require("../../../config/supported_sites")
+const error_messages = require("../../config/error_messages")
+const supported_sites = require("../../config/supported_sites")
 
-const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, LogDeleteDownloadLink, LogAddWatchLink, LogDeleteWatchLink } = require("../../../methods/database_logs")
-const { GeneralAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
+const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, LogDeleteDownloadLink, LogAddWatchLink, LogDeleteWatchLink } = require("../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
-const Episode = require('../../../models/Episode')
-const WatchLink = require('../../../models/WatchLink')
-const DownloadLink = require('../../../models/DownloadLink')
+const Episode = require('../../db/models/Episode')
+const WatchLink = require('../../db/models/WatchLink')
+const DownloadLink = require('../../db/models/DownloadLink')
 
 
 // @route   GET api/bolum/:slug/watch

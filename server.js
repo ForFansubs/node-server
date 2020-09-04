@@ -11,26 +11,15 @@ const rateLimit = require("express-rate-limit");
 const app = express()
 
 // Define Routes
-// v3
-const index_v3 = require('./routes/api/v3/index')
-const anime_v3 = require('./routes/api/v3/anime')
-const manga_v3 = require('./routes/api/v3/manga')
-const mangaEpisode_v3 = require('./routes/api/v3/manga_episode')
-const episode_v3 = require('./routes/api/v3/episode')
-const user_v3 = require('./routes/api/v3/user')
-const images_v3 = require('./routes/api/v3/images')
-const permission_v3 = require('./routes/api/v3/permission')
-const motd_v3 = require('./routes/api/v3/motd')
-// v4
-const index_v4 = require('./routes/api/v4/index')
-const anime_v4 = require('./routes/api/v4/anime')
-const manga_v4 = require('./routes/api/v4/manga')
-const mangaEpisode_v4 = require('./routes/api/v4/manga_episode')
-const episode_v4 = require('./routes/api/v4/episode')
-const user_v4 = require('./routes/api/v4/user')
-const images_v4 = require('./routes/api/v4/images')
-const permission_v4 = require('./routes/api/v4/permission')
-const motd_v4 = require('./routes/api/v4/motd')
+const index = require('./routes/api/index')
+const anime = require('./routes/api/anime')
+const manga = require('./routes/api/manga')
+const mangaEpisode = require('./routes/api/manga_episode')
+const episode = require('./routes/api/episode')
+const user = require('./routes/api/user')
+const images = require('./routes/api/images')
+const permission = require('./routes/api/permission')
+const motd = require('./routes/api/motd')
 
 const sequelize = require('./config/sequelize')
 
@@ -104,26 +93,15 @@ app.get('/sitemap.xml', CrawlerFileLimiter, (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'config', 'sitemap.xml'))
 })
 ///ACTUAL API
-//Fallback old v3
-app.use('/api/', index_v3)
-app.use('/api/anime', anime_v3)
-app.use('/api/manga', manga_v3)
-app.use('/api/bolum', episode_v3)
-app.use('/api/kullanici', user_v3)
-app.use('/api/yetki', permission_v3)
-app.use('/api/resimler', images_v3)
-app.use('/api/manga-bolum', mangaEpisode_v3)
-app.use('/api/motd', motd_v3)
-//v4
-app.use('/api/v4/', index_v4)
-app.use('/api/v4/anime', anime_v4)
-app.use('/api/v4/manga', manga_v4)
-app.use('/api/v4/bolum', episode_v4)
-app.use('/api/v4/kullanici', user_v4)
-app.use('/api/v4/yetki', permission_v4)
-app.use('/api/v4/resimler', images_v4)
-app.use('/api/v4/manga-bolum', mangaEpisode_v4)
-app.use('/api/v4/motd', motd_v4)
+app.use('/api/', index)
+app.use('/api/anime', anime)
+app.use('/api/manga', manga)
+app.use('/api/bolum', episode)
+app.use('/api/kullanici', user)
+app.use('/api/yetki', permission)
+app.use('/api/resimler', images)
+app.use('/api/manga-bolum', mangaEpisode)
+app.use('/api/motd', motd)
 
 app.use('/admin', express.static(__dirname + '/admin/'));
 app.use(express.static(__dirname + '/client/'));

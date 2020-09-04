@@ -1,31 +1,30 @@
 const Sequelize = require("sequelize");
 const Model = Sequelize.Model;
-const sequelize = require('../config/sequelize')
+const sequelize = require('../../config/sequelize')
 
-class Episode extends Model { }
+class MangaEpisode extends Model { }
 
-Episode.init({
-    anime_id: {
+MangaEpisode.init({
+    manga_id: {
         type: Sequelize.INTEGER,
         allowNull: false
     },
     episode_number: {
-        type: Sequelize.CHAR,
+        type: Sequelize.STRING(50),
         allowNull: true,
         defaultValue: "0"
     },
-    special_type: {
-        type: Sequelize.CHAR,
+    episode_name: {
+        type: Sequelize.STRING(255),
         allowNull: true
     },
     credits: {
         type: Sequelize.CHAR,
         allowNull: true
     },
-    can_user_download: {
-        type: Sequelize.TINYINT,
-        allowNull: true,
-        defaultValue: 1
+    pages: {
+        type: Sequelize.JSON,
+        allowNull: false
     },
     created_time: {
         type: Sequelize.DATE,
@@ -40,7 +39,7 @@ Episode.init({
     freezeTableName: true,
     timestamps: false,
     sequelize,
-    modelName: "episode"
+    modelName: "manga_episode"
 })
 
-module.exports = Episode
+module.exports = MangaEpisode

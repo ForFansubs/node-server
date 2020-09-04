@@ -1,8 +1,8 @@
 // Her türlü geliştirmeye açıktır.
 const jwt = require('jsonwebtoken');
 
-const User = require('../models/User')
-const Permission = require('../models/Permission')
+const User = require('../db/models/User')
+const Permission = require('../db/models/Permission')
 
 const keys = require('../config/keys');
 

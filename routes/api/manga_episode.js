@@ -3,14 +3,14 @@ const router = express.Router()
 const fs = require('fs')
 const Path = require('path')
 const Sequelize = require('sequelize')
-const check_permission = require('../../../middlewares/check_permission')
-const sendDiscordEmbed = require('../../../methods/discord_embed')
-const error_messages = require("../../../config/error_messages")
-const MangaEpisode = require('../../../models/MangaEpisode')
+const check_permission = require('../../middlewares/check_permission')
+const sendDiscordEmbed = require('../../methods/discord_embed')
+const error_messages = require("../../config/error_messages")
+const MangaEpisode = require('../../db/models/MangaEpisode')
 
-const { clearMangaFolder, deleteMangaFolder, getPath } = require('../../../methods/manga-episode')
-const { LogAddMangaEpisode, LogUpdateMangaEpisode, LogDeleteMangaEpisode } = require("../../../methods/database_logs")
-const { GeneralAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
+const { clearMangaFolder, deleteMangaFolder, getPath } = require('../../methods/manga-episode')
+const { LogAddMangaEpisode, LogUpdateMangaEpisode, LogDeleteMangaEpisode } = require("../../methods/database_logs")
+const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 const multer = require('multer');
 

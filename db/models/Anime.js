@@ -1,6 +1,6 @@
 const Sequelize = require("sequelize");
 const Model = Sequelize.Model;
-const sequelize = require('../config/sequelize')
+const sequelize = require('../../config/sequelize')
 
 class Anime extends Model { }
 

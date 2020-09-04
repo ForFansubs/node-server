@@ -1,11 +1,11 @@
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../../middlewares/check_permission')
-const error_messages = require("../../../config/error_messages")
+const check_permission = require('../../middlewares/check_permission')
+const error_messages = require("../../config/error_messages")
 const standartSlugify = require('standard-slugify')
 
-const { LogAddPermission, LogUpdatePermission, LogDeletePermission } = require('../../../methods/database_logs')
-const Permission = require('../../../models/Permission')
+const { LogAddPermission, LogUpdatePermission, LogDeletePermission } = require('../../methods/database_logs')
+const Permission = require('../../db/models/Permission')
 
 // @route   POST api/yetki/yetki-ekle
 // @desc    Update permission (perm: "add-permission")

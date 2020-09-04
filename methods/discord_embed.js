@@ -2,8 +2,8 @@
 // Mesajlar içerisinde kullanılan cover_art linkleri,
 // database içerisinde kayıtlı linklerden çekiliyor.
 const axios = require('axios')
-const Manga = require('../models/Manga')
-const Anime = require('../models/Anime')
+const Manga = require('../db/models/Manga')
+const Anime = require('../db/models/Anime')
 
 const episodeWebhook = process.env.DISCORD_EPISODE_WH
 const animeWebhook = process.env.DISCORD_ANIME_WH

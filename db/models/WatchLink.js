@@ -1,29 +1,24 @@
 const Sequelize = require("sequelize");
 const Model = Sequelize.Model;
-const sequelize = require('../config/sequelize')
+const sequelize = require('../../config/sequelize')
 
-class MangaEpisode extends Model { }
+class WatchLink extends Model { }
 
-MangaEpisode.init({
-    manga_id: {
+WatchLink.init({
+    anime_id: {
         type: Sequelize.INTEGER,
         allowNull: false
     },
-    episode_number: {
-        type: Sequelize.STRING(50),
-        allowNull: true,
-        defaultValue: "0"
+    episode_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false
     },
-    episode_name: {
-        type: Sequelize.STRING(255),
-        allowNull: true
-    },
-    credits: {
+    type: {
         type: Sequelize.CHAR,
-        allowNull: true
+        allowNull: false
     },
-    pages: {
-        type: Sequelize.JSON,
+    link: {
+        type: Sequelize.CHAR,
         allowNull: false
     },
     created_time: {
@@ -39,7 +34,7 @@ MangaEpisode.init({
     freezeTableName: true,
     timestamps: false,
     sequelize,
-    modelName: "manga_episode"
+    modelName: "watch_link"
 })
 
-module.exports = MangaEpisode
+module.exports = WatchLink

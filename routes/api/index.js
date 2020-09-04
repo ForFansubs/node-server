@@ -1,16 +1,17 @@
+const package = require('../../package.json')
 const express = require('express')
 const router = express.Router()
-const check_permission = require('../../../middlewares/check_permission')
+const check_permission = require('../../middlewares/check_permission')
 const axios = require("axios")
-const genremap = require('../../../config/maps/genremap')
+const genremap = require('../../config/maps/genremap')
 const standartSlugify = require('standard-slugify')
-const Log = require('../../../models/Log')
-const Anime = require('../../../models/Anime')
-const Manga = require('../../../models/Manga')
-const Episode = require('../../../models/Episode')
-const MangaEpisode = require('../../../models/MangaEpisode')
+const Log = require('../../db/models/Log')
+const Anime = require('../../db/models/Anime')
+const Manga = require('../../db/models/Manga')
+const Episode = require('../../db/models/Episode')
+const MangaEpisode = require('../../db/models/MangaEpisode')
 const Sequelize = require('sequelize')
-const { IndexAPIRequestsLimiter } = require('../../../middlewares/rate-limiter')
+const { IndexAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // @route   GET api/
 // @desc    Index route
@@ -27,8 +28,8 @@ router.get('/', async (req, res) => {
     const response = {
         author: 'aybertocarlos',
         contact: 'aybertocarlos@gmail.com',
-        version: "v3.4.0",
-        "release-name": "v4soon™",
+        version: package.version,
+        "release-name": package["release-name"],
         status: 'OK',
         admin
     }
@@ -187,7 +188,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 13,
+                limit: 18,
                 order: [['created_time', 'DESC']],
                 where: { special_type: { [Sequelize.Op.ne]: "toplu" } }
             }),
@@ -233,7 +234,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 13,
+                limit: 18,
                 order: [['created_time', 'DESC']],
             })])
 
