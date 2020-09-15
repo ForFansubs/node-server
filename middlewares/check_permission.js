@@ -1,8 +1,7 @@
 // Her türlü geliştirmeye açıktır.
 const jwt = require('jsonwebtoken');
 
-const User = require('../db/models/User')
-const Permission = require('../db/models/Permission')
+const { User, Permission } = require('../config/sequelize')
 
 const keys = require('../config/keys');
 

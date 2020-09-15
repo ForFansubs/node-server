@@ -1,40 +1,39 @@
-const Sequelize = require("sequelize");
-const Model = Sequelize.Model;
-const sequelize = require('../../config/sequelize')
-
-class WatchLink extends Model { }
-
-WatchLink.init({
-    anime_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    episode_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    type: {
-        type: Sequelize.CHAR,
-        allowNull: false
-    },
-    link: {
-        type: Sequelize.CHAR,
-        allowNull: false
-    },
-    created_time: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW
-    },
-    created_by: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    }
-}, {
-    freezeTableName: true,
-    timestamps: false,
-    sequelize,
-    modelName: "watch_link"
-})
-
-module.exports = WatchLink
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+    const WatchLink = sequelize.define('watch_link', {
+        anime_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        episode_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        type: {
+            type: DataTypes.CHAR,
+            allowNull: false
+        },
+        link: {
+            type: DataTypes.CHAR,
+            allowNull: false
+        },
+        created_time: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW
+        },
+        created_by: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        }
+    }, {
+        freezeTableName: true,
+        timestamps: false,
+        sequelize,
+        modelName: "watch_link"
+    })
+    WatchLink.associate = function (models) {
+        // associations can be defined here
+    };
+    return WatchLink;
+};

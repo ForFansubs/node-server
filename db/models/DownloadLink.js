@@ -1,40 +1,39 @@
-const Sequelize = require("sequelize");
-const Model = Sequelize.Model;
-const sequelize = require('../../config/sequelize')
-
-class DownloadLink extends Model { }
-
-DownloadLink.init({
-    anime_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    episode_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    type: {
-        type: Sequelize.CHAR,
-        allowNull: false
-    },
-    link: {
-        type: Sequelize.CHAR,
-        allowNull: false
-    },
-    created_time: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW
-    },
-    created_by: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    }
-}, {
-    freezeTableName: true,
-    timestamps: false,
-    sequelize,
-    modelName: "download_link"
-})
-
-module.exports = DownloadLink
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+    const DownloadLink = sequelize.define('download_link', {
+        anime_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        episode_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        type: {
+            type: DataTypes.CHAR,
+            allowNull: false
+        },
+        link: {
+            type: DataTypes.CHAR,
+            allowNull: false
+        },
+        created_time: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW
+        },
+        created_by: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        }
+    }, {
+        freezeTableName: true,
+        timestamps: false,
+        sequelize,
+        modelName: "download_link"
+    });
+    DownloadLink.associate = function (models) {
+        // associations can be defined here
+    };
+    return DownloadLink;
+};

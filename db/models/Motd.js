@@ -1,47 +1,46 @@
-const Sequelize = require("sequelize");
-const Model = Sequelize.Model;
-const sequelize = require('../../config/sequelize')
-
-class Motd extends Model { }
-
-Motd.init({
-    is_active: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    can_user_dismiss: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    title: {
-        type: Sequelize.TEXT,
-        allowNull: true
-    },
-    subtitle: {
-        type: Sequelize.TEXT,
-        allowNull: false
-    },
-    content_type: {
-        type: Sequelize.CHAR,
-        allowNull: true
-    },
-    content_id: {
-        type: Sequelize.INTEGER,
-        allowNull: true
-    },
-    created_by: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    created_time: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
-    }
-}, {
-    freezeTableName: true,
-    timestamps: false,
-    sequelize,
-    modelName: "motd"
-})
-
-module.exports = Motd
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+    const Motd = sequelize.define('motd', {
+        is_active: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        can_user_dismiss: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        title: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        subtitle: {
+            type: DataTypes.TEXT,
+            allowNull: false
+        },
+        content_type: {
+            type: DataTypes.CHAR,
+            allowNull: true
+        },
+        content_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        created_by: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        created_time: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW
+        }
+    }, {
+        freezeTableName: true,
+        timestamps: false,
+        sequelize,
+        modelName: "motd"
+    });
+    Motd.associate = function (models) {
+        // associations can be defined here
+    };
+    return Motd;
+};

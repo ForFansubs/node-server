@@ -5,7 +5,6 @@ const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const renameImage = require('../../methods/rename_image')
 const deleteImage = require('../../methods/delete_image')
-const Sequelize = require("sequelize");
 const standartSlugify = require('standard-slugify')
 const genre_map = require("../../config/maps/genremap")
 const season_map = require("../../config/maps/seasonmap")
@@ -16,10 +15,7 @@ const { LogAddAnime, LogUpdateAnime, LogDeleteAnime, LogFeaturedAnime } = requir
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
-const Anime = require('../../db/models/Anime')
-const Episode = require('../../db/models/Episode')
-const DownloadLink = require('../../db/models/DownloadLink')
-const WatchLink = require('../../db/models/WatchLink')
+const { Sequelize, Anime, Episode, User } = require("../../config/sequelize")
 
 String.prototype.mapReplace = function (map) {
     var regex = [];
@@ -94,7 +90,7 @@ router.post('/anime-ekle', async (req, res) => {
             encoders,
             series_status,
             trans_status,
-            release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
+            release_date,
             created_by: user_id,
             episode_count,
             studios,
@@ -174,9 +170,29 @@ router.post('/anime-guncelle', async (req, res) => {
         return res.status(500).json({ 'err': error_messages.database_error })
     }
 
-    //Önden gelen dataları variablelara kaydet.
-    const { name, header, synopsis, cover_art, logo, release_date, mal_link, premiered, translators, encoders, genres, studios, episode_count, series_status, version, trans_status, pv } = req.body
+    const {
+        name,
+        header,
+        synopsis,
+        cover_art,
+        logo,
+        release_date,
+        mal_link,
+        premiered,
+        translators,
+        encoders,
+        studios,
+        episode_count,
+        series_status,
+        version,
+        trans_status,
+        pv
+    } = req.body
     let { slug } = anime
+
+    //Türleri string olarak al ve mapten Türkçeye çevir
+    let genres = req.body.genres
+    genres = genres.mapReplace(genre_map)
 
     //Eğer içeriğin türü değiştiyse, slug'ı ona göre değiştir.
     if (version !== anime.version) {
@@ -201,7 +217,7 @@ router.post('/anime-guncelle', async (req, res) => {
             encoders,
             series_status,
             trans_status,
-            release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
+            release_date,
             created_by: user_id,
             episode_count,
             studios,
@@ -272,20 +288,7 @@ router.post('/anime-sil/', async (req, res) => {
     if (!anime) return res.status(500).json({ 'err': error_messages.database_error })
 
     try {
-        await Promise.all(
-            [
-                Anime.destroy({ where: { id: id } })
-            ],
-            [
-                Episode.destroy({ where: { anime_id: id } })
-            ],
-            [
-                DownloadLink.destroy({ where: { anime_id: id } })
-            ],
-            [
-                WatchLink.destroy({ where: { anime_id: id } })
-            ]
-        )
+        await Anime.destroy({ where: { id: id } })
         //Animeyle bağlantılı resimleri diskte varsa sil.
         try {
             await deleteImage(anime.slug, "anime", "header")
@@ -418,7 +421,7 @@ router.get('/admin-liste', async (req, res) => {
 // @desc    View anime
 // @access  Private
 router.get('/:slug/admin-view', async (req, res) => {
-    let anime, episodes
+    let anime
     try {
         await check_permission(req.headers.authorization, "see-anime")
     } catch (err) {
@@ -426,7 +429,16 @@ router.get('/:slug/admin-view', async (req, res) => {
     }
 
     try {
-        anime = await Anime.findOne({ where: { slug: req.params.slug } })
+        anime = await Anime.findOne({
+            where: {
+                slug: req.params.slug
+            },
+            include: [{
+                model: Episode,
+                as: "episodes",
+                order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]]
+            }]
+        })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ err: error_messages.database_error })
@@ -437,8 +449,6 @@ router.get('/:slug/admin-view', async (req, res) => {
     } else {
         //Anime bulunduysa bölümlerini çek.
         try {
-            episodes = await Episode.findAll({ where: { anime_id: anime.id }, order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]] })
-            anime.dataValues.episodes = episodes
             res.status(200).json(anime)
         } catch (err) {
             console.log(err)
@@ -452,7 +462,7 @@ router.get('/:slug/admin-view', async (req, res) => {
 // @desc    View anime
 // @access  Public
 router.get('/:slug', GeneralAPIRequestsLimiter, async (req, res) => {
-    let anime, episodes
+    let anime
     try {
         anime = await Anime.findOne({
             where: { slug: req.params.slug },
@@ -473,15 +483,22 @@ router.get('/:slug', GeneralAPIRequestsLimiter, async (req, res) => {
                 'premiered',
                 'trans_status',
                 'series_status',
-                [
-                    Sequelize.literal(`(
-                        SELECT name
-                        FROM user
-                        WHERE
-                            id = anime.created_by
-                    )`),
-                    'created_by'
-                ]
+                'pv'
+            ],
+            include: [
+                {
+                    model: Episode,
+                    as: "episodes",
+                    where: { can_user_download: 1 },
+                    order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]],
+                    required: false
+                },
+                {
+                    model: User,
+                    as: "createdBy",
+                    attributes: ['name'],
+                    required: false
+                }
             ]
         })
     } catch (err) {
@@ -494,8 +511,6 @@ router.get('/:slug', GeneralAPIRequestsLimiter, async (req, res) => {
     } else {
         //Anime bulunduysa bölümlerini çek.
         try {
-            episodes = await Episode.findAll({ where: { anime_id: anime.id, can_user_download: 1 }, order: [['special_type'], [Sequelize.fn('ABS', Sequelize.col('episode_number'))]] })
-            anime.dataValues.episodes = episodes
             res.status(200).json(anime)
         } catch (err) {
             console.log(err)

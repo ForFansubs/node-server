@@ -6,20 +6,18 @@ const gravatar = require('gravatar')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const check_permission = require('../../middlewares/check_permission')
-const Sequelize = require('sequelize')
-const sequelize = require('../../config/sequelize')
 const keys = require('../../config/keys')
 const error_messages = require("../../config/error_messages")
 const standartSlugify = require('standard-slugify')
-
-const User = require('../../db/models/User')
-const PendingUser = require('../../db/models/PendingUser')
 
 const { NODE_ENV } = process.env
 
 const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
 const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../middlewares/validate')
 const { UserLoginLimiter, UserRegisterLimiter } = require('../../middlewares/rate-limiter')
+
+// Models
+const { Sequelize, sequelize, User, PendingUser } = require("../../config/sequelize")
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
@@ -201,7 +199,7 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
     }
 
     // Check for user
-    if (!user.name) {
+    if (!user) {
         errors.name = 'Kullanıcı bulunamadı'
         return res.status(404).json({
             ...errors

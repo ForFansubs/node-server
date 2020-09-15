@@ -3,9 +3,10 @@ const router = express.Router()
 const check_permission = require('../../middlewares/check_permission')
 const error_messages = require('../../config/error_messages')
 const { LogAddMotd, LogUpdateMotd, LogDeleteMotd } = require('../../methods/database_logs')
-const Motd = require('../../db/models/Motd')
-const sequelize = require('../../config/sequelize')
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+
+// Models
+const { Sequelize, Motd } = require("../../config/sequelize")
 
 // @route   GET api/motd/motd-ekle
 // @desc    Add motd (add-motd)
@@ -170,7 +171,7 @@ router.get('/', GeneralAPIRequestsLimiter, async (req, res) => {
                     'subtitle',
                     'can_user_dismiss',
                     [
-                        sequelize.literal(`(
+                        Sequelize.literal(`(
                             SELECT name
                             FROM user
                             WHERE

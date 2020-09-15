@@ -5,13 +5,9 @@ const check_permission = require('../../middlewares/check_permission')
 const axios = require("axios")
 const genremap = require('../../config/maps/genremap')
 const standartSlugify = require('standard-slugify')
-const Log = require('../../db/models/Log')
-const Anime = require('../../db/models/Anime')
-const Manga = require('../../db/models/Manga')
-const Episode = require('../../db/models/Episode')
-const MangaEpisode = require('../../db/models/MangaEpisode')
-const Sequelize = require('sequelize')
 const { IndexAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+
+const { Sequelize, Anime, Manga, Episode, MangaEpisode, Log } = require("../../config/sequelize")
 
 // @route   GET api/
 // @desc    Index route

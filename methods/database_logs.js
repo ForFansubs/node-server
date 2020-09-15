@@ -1,15 +1,8 @@
 const { logFailError } = require('./console_logs')
 
 const Sequelize = require('sequelize')
-const Anime = require('../db/models/Anime')
-const Manga = require('../db/models/Manga')
-const Log = require('../db/models/Log')
-const Episode = require('../db/models/Episode')
-const MangaEpisode = require('../db/models/MangaEpisode')
-const DownloadLink = require('../db/models/DownloadLink')
-const WatchLink = require('../db/models/WatchLink')
-const Permission = require('../db/models/Permission')
-const User = require('../db/models/User')
+
+const { Anime, Manga, Log, Episode, MangaEpisode, DownloadLink, WatchLink, Permission, User } = require('../config/sequelize')
 
 async function HandleDatabaseQuery(username, text, process_type) {
 	return await Log.create({

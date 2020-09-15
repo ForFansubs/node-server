@@ -4,7 +4,6 @@ const check_permission = require('../../middlewares/check_permission')
 const sendDiscordEmbed = require('../../methods/discord_embed')
 const downloadImage = require('../../methods/download_image')
 const deleteImage = require('../../methods/delete_image')
-const Sequelize = require("sequelize");
 const standartSlugify = require('standard-slugify')
 const genre_map = require("../../config/maps/genremap")
 const error_messages = require("../../config/error_messages")
@@ -14,8 +13,7 @@ const { LogAddManga, LogUpdateManga, LogDeleteManga } = require("../../methods/d
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
-const Manga = require('../../db/models/Manga')
-const MangaEpisode = require('../../db/models/MangaEpisode')
+const { Sequelize, Manga, MangaEpisode } = require("../../config/sequelize")
 
 
 // @route   GET api/manga/manga-ekle

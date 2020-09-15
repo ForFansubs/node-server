@@ -20,8 +20,9 @@ const user = require('./routes/api/user')
 const images = require('./routes/api/images')
 const permission = require('./routes/api/permission')
 const motd = require('./routes/api/motd')
+const calendar = require('./routes/api/calendar')
 
-const sequelize = require('./config/sequelize')
+const { sequelize } = require('./config/sequelize')
 
 // Pre-render middleware
 if (process.env.USE_NEW_SEO_METHOD === "true") {
@@ -57,7 +58,9 @@ app.use(function (req, res, next) {
 })
 
 // Helmet JS middleware
-app.use(helmet())
+app.use(helmet({
+    contentSecurityPolicy: false
+}))
 
 // Set behind proxy
 if (process.env.REVERSE_PROXY) {
@@ -102,6 +105,10 @@ app.use('/api/yetki', permission)
 app.use('/api/resimler', images)
 app.use('/api/manga-bolum', mangaEpisode)
 app.use('/api/motd', motd)
+app.use('/api/takvim', calendar)
+app.get('/api/*', (req, res) => {
+    res.status(400).json({ message: "Invalid request." })
+})
 
 app.use('/admin', express.static(__dirname + '/admin/'));
 app.use(express.static(__dirname + '/client/'));

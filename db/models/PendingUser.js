@@ -1,29 +1,28 @@
-const Sequelize = require("sequelize");
-const Model = Sequelize.Model;
-const sequelize = require('../../config/sequelize')
-
-class PendingUser extends Model { }
-
-PendingUser.init({
-    user_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    hash_key: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-        primaryKey: true
-    },
-    created_time: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW
-    }
-}, {
-    freezeTableName: true,
-    timestamps: false,
-    sequelize,
-    modelName: "pending_user"
-})
-
-module.exports = PendingUser
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+    const PendingUser = sequelize.define('pending_user', {
+        user_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        hash_key: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+            primaryKey: true
+        },
+        created_time: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW
+        }
+    }, {
+        freezeTableName: true,
+        timestamps: false,
+        sequelize,
+        modelName: "pending_user"
+    })
+    PendingUser.associate = function (models) {
+        // associations can be defined here
+    };
+    return PendingUser;
+};

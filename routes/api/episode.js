@@ -4,7 +4,6 @@ const check_permission = require('../../middlewares/check_permission')
 const downloadLinkExtract = require('../../methods/link-extraction-download')
 const watchLinkExtract = require('../../methods/link-extraction-watch')
 const sendDiscordEmbed = require('../../methods/discord_embed')
-const Sequelize = require('sequelize')
 const Validator = require('validator')
 const error_messages = require("../../config/error_messages")
 const supported_sites = require("../../config/supported_sites")
@@ -13,9 +12,7 @@ const { LogAddEpisode, LogUpdateEpisode, LogDeleteEpisode, LogAddDownloadLink, L
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
-const Episode = require('../../db/models/Episode')
-const WatchLink = require('../../db/models/WatchLink')
-const DownloadLink = require('../../db/models/DownloadLink')
+const { Sequelize, Episode, DownloadLink, WatchLink } = require("../../config/sequelize")
 
 
 // @route   GET api/bolum/:slug/watch
@@ -165,7 +162,7 @@ router.post('/indirme-linkleri/admin-view', async (req, res) => {
 // @desc    Add episode (perm: "add-episode")
 // @access  Private
 router.post('/bolum-ekle', async (req, res) => {
-    const { episode_number, anime_id, special_type, credits } = req.body
+    const { episode_number, anime_id, special_type, credits, can_user_download } = req.body
 
     let username, user_id, anime
     try {
@@ -193,7 +190,8 @@ router.post('/bolum-ekle', async (req, res) => {
                 episode_number,
                 credits,
                 created_by: user_id,
-                special_type
+                special_type,
+                can_user_download: can_user_download ? can_user_download : 1
             })
 
             LogAddEpisode({
@@ -202,13 +200,15 @@ router.post('/bolum-ekle', async (req, res) => {
                 episode_id: result.id
             })
 
-            sendDiscordEmbed({
-                type: "episode",
-                anime_id,
-                credits,
-                special_type,
-                episode_number
-            })
+            if (req.body.sendDiscordEmbed) {
+                sendDiscordEmbed({
+                    type: "episode",
+                    anime_id,
+                    credits,
+                    special_type,
+                    episode_number
+                })
+            }
 
             return res.status(200).json({ 'success': 'success' })
         } catch (err) {
