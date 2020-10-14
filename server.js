@@ -127,8 +127,10 @@ async function initializeServer() {
     const animeFolder = Path.resolve(__dirname, './images/anime')
     const mangaFolder = Path.resolve(__dirname, './images/manga')
     const mangaEpisodeFolder = Path.resolve(__dirname, './images/manga_episodes')
+    const metadataFolder = Path.resolve(__dirname, './images/metadata')
     const clientFolder = Path.resolve(__dirname, './client')
     const adminFolder = Path.resolve(__dirname, './admin')
+    const logoFile = Path.resolve(__dirname, './images/static/logo.png')
 
     console.log("ℹ️ Dosyalar kontrol ediliyor...")
 
@@ -151,6 +153,12 @@ async function initializeServer() {
         return console.error(`❌ Manga bölümlerini saklamak için gereken dosya bulunamadı. Lütfen ${mangaEpisodeFolder} yolunu oluşturun.`)
     }
 
+    if (fs.existsSync(metadataFolder))
+        console.info('✔️ Metadatada kullanılacak görseller için dosya mevcut.')
+    else {
+        return console.error(`❌ Metadatada kullanılacak görselleri saklamak için gereken dosya bulunamadı. Lütfen ${metadataFolder} yolunu oluşturun.`)
+    }
+
     if (fs.existsSync(clientFolder))
         console.info('✔️ Client dosyası mevcut.')
     else {
@@ -161,6 +169,12 @@ async function initializeServer() {
         console.info('✔️ Admin dosyası mevcut.')
     else {
         return console.error(`❌ Kullanıcılara gönderilecek admin dosyası bulunamadı. Lütfen ${adminFolder} yolunu oluşturun ve https://forfansubs.github.io/docs/yukleme-talimatlari/ adresindeki talimatları yerine getirdiğinizden emin olun.`)
+    }
+
+    if (fs.existsSync(logoFile))
+        console.info('✔️ Logo mevcut.')
+    else {
+        return console.error(`❌ Bazı fonksiyonlarda kullanılacak olan logo dosyası bulunamadı. Lütfen ${logoFile} dosyasının varlığından emin olun ve https://forfansubs.github.io/docs/yukleme-talimatlari/ adresindeki talimatları yerine getirdiğinizden emin olun.`)
     }
 
     try {

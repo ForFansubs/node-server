@@ -3,6 +3,7 @@ const router = express.Router()
 const Path = require('path')
 const standartSlugify = require('standard-slugify')
 const sanitize = require("sanitize-filename")
+const CreateMetacontentCanvas = require('../../methods/create_metadata_canvas')
 
 const rateLimit = require("express-rate-limit");
 
@@ -68,6 +69,25 @@ router.get('/manga/:slug/oku/:episode_number/:filename', MangaEpisodeImageLimite
     res.sendFile(path, (err) => {
         if (err) {
             res.status(404).end()
+        }
+    })
+})
+
+// @route   GET api/resimler/metadata/:type/:slug
+// @desc    Get manga episode images
+// @access  Public
+router.get('/metadata/:type/:slug', VariousImageLimiter, async (req, res) => {
+    const { slug, type } = req.params
+
+    const path = Path.resolve(__dirname, `../../images/metadata/${sanitize(type)}/${sanitize(slug)}`)
+    res.sendFile(path, async (err) => {
+        if (err) {
+            await CreateMetacontentCanvas({ slug, type })
+            res.sendFile(path, (err) => {
+                if (err) {
+                    res.status(404).end()
+                }
+            })
         }
     })
 })
