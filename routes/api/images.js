@@ -79,7 +79,7 @@ router.get('/manga/:slug/oku/:episode_number/:filename', MangaEpisodeImageLimite
 router.get('/metadata/:type/:slug', VariousImageLimiter, async (req, res) => {
     const { slug, type } = req.params
 
-    const path = Path.resolve(__dirname, `../../images/metadata/${sanitize(type)}/${sanitize(slug)}`)
+    const path = Path.resolve(__dirname, `../../images/metadata/${sanitize(type)}/${sanitize(slug)}.png`)
     res.sendFile(path, async (err) => {
         if (err) {
             await CreateMetacontentCanvas({ slug, type })
