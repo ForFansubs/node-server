@@ -4,7 +4,7 @@ const { createCanvas, registerFont, loadImage } = require("canvas")
 const { Anime, Manga } = require("../config/sequelize")
 
 const width = 1200
-const height = 600
+const height = 628
 
 registerFont(Path.resolve(__dirname, '..', 'assets', 'fonts', 'Poppins', 'Poppins-Bold.ttf'), { family: "Poppins" })
 registerFont(Path.resolve(__dirname, '..', 'assets', 'fonts', 'SourceSansPro', 'SourceSansPro-Bold.ttf'), { family: "Source Sans Pro" })
@@ -133,7 +133,7 @@ function roundRect(
     }
 }
 
-module.exports = async function CreateMetacontentCanvas({ type, slug }) {
+module.exports = async function CreateMetacontentCanvas({ type, slug, backgroundImage, coverArt }) {
     let content = null
 
     switch (type) {
@@ -160,12 +160,12 @@ module.exports = async function CreateMetacontentCanvas({ type, slug }) {
 
     let background = null
     try {
-        background = await loadImage(headerPath)
+        background = await loadImage(backgroundImage || headerPath)
     } catch (err) {
         try {
-            background = await loadImage(coverPath)
+            background = await loadImage(coverArt || coverPath)
         } catch (err) {
-            background = content.cover_art
+            background = await loadImage(content.cover_art)
             console.log(err)
         }
         console.log(err)
@@ -245,13 +245,14 @@ module.exports = async function CreateMetacontentCanvas({ type, slug }) {
     // Draw cover art
     let cover_art = null
     try {
-        cover_art = await loadImage(coverPath)
+        cover_art = await loadImage(coverArt || coverPath)
     } catch (err) {
+        cover_art = await loadImage(content.cover_art)
         console.log(err)
     }
     ctx.shadowBlur = 12;
     ctx.shadowColor = "rgba(0,0,0,.5)";
-    if (cover_art) drawImageProp(ctx, cover_art, width - 400, 130, 250, 350);
+    if (cover_art) drawImageProp(ctx, cover_art, width - 350, 130, 250, 350);
     // Draw logo
     let logo_image = null
     try {
@@ -267,7 +268,7 @@ module.exports = async function CreateMetacontentCanvas({ type, slug }) {
         width - textWidth - 20,
         height - 20
     );
-    const typeFolderPath = Path.resolve(__dirname, '../', 'images', 'metadata', type)
+    const typeFolderPath = Path.resolve(__dirname, 'output', type)
     if (!fs.existsSync(typeFolderPath)) fs.mkdirSync(typeFolderPath)
 
     const streamToFile = (path, stream) => {

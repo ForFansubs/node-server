@@ -8,6 +8,7 @@ const standartSlugify = require('standard-slugify')
 const genre_map = require("../../config/maps/genremap")
 const error_messages = require("../../config/error_messages")
 const { deleteMangaFolders } = require('../../methods/manga-episode')
+const CreateMetacontentCanvas = require('../../methods/create_metadata_canvas')
 
 const { LogAddManga, LogUpdateManga, LogDeleteManga } = require("../../methods/database_logs")
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
@@ -55,31 +56,6 @@ router.post('/manga-ekle', async (req, res) => {
         const slug = standartSlugify(name)
 
         try {
-            //Eğer logo linki verilmişse al ve diske kaydet
-            if (logo) {
-                try {
-                    await downloadImage(logo, "logo", slug, "manga")
-                } catch (err) {
-                    console.log(err)
-                }
-            }
-
-            //Cover_art'ı diske indir
-            try {
-                await downloadImage(cover_art, "cover", slug, "manga")
-            } catch (err) {
-                console.log(err)
-            }
-
-            //Header linki yollanmışsa alıp diske kaydet
-            if (header) {
-                try {
-                    await downloadImage(header, "header", slug, "manga")
-                } catch (err) {
-                    console.log(err)
-                }
-            }
-
             const result = await Manga.create({
                 synopsis,
                 name,
@@ -108,6 +84,38 @@ router.post('/manga-ekle', async (req, res) => {
                 type: "manga",
                 manga_id: result.id
             })
+
+            //Eğer logo linki verilmişse al ve diske kaydet
+            if (logo) {
+                try {
+                    await downloadImage(logo, "logo", slug, "manga")
+                } catch (err) {
+                    console.log(err)
+                }
+            }
+
+            //Cover_art'ı diske indir
+            try {
+                await downloadImage(cover_art, "cover", slug, "manga")
+            } catch (err) {
+                console.log(err)
+            }
+
+            //Header linki yollanmışsa alıp diske kaydet
+            if (header) {
+                try {
+                    await downloadImage(header, "header", slug, "manga")
+                } catch (err) {
+                    console.log(err)
+                }
+            }
+
+            //Metadata resmini oluştur
+            try {
+                await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
+            } catch (err) {
+                console.log(err)
+            }
 
             return res.status(200).json({ 'success': 'success' })
         } catch (err) {
@@ -171,11 +179,13 @@ router.post('/manga-guncelle', async (req, res) => {
     //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
     if (header === "-") {
         await deleteImage(slug, "manga", "header")
+        await CreateMetacontentCanvas({ type: "anime", slug, coverArt: cover_art })
     }
 
     //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
     if (header && header !== "-") {
         await downloadImage(header, "header", slug, "manga")
+        await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
     }
 
     try {

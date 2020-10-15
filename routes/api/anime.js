@@ -10,6 +10,7 @@ const genre_map = require("../../config/maps/genremap")
 const season_map = require("../../config/maps/seasonmap")
 const status_map = require("../../config/maps/statusmap")
 const error_messages = require("../../config/error_messages")
+const CreateMetacontentCanvas = require('../../methods/create_metadata_canvas')
 
 const { LogAddAnime, LogUpdateAnime, LogDeleteAnime, LogFeaturedAnime } = require("../../methods/database_logs")
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
@@ -139,6 +140,13 @@ router.post('/anime-ekle', async (req, res) => {
             }
         }
 
+        //Metadata resmini oluştur
+        try {
+            await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
+        } catch (err) {
+            console.log(err)
+        }
+
         res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
@@ -244,22 +252,24 @@ router.post('/anime-guncelle', async (req, res) => {
 
         //Eğer logo inputuna "-" konulmuşsa, diskteki logoyu sil
         if (logo === "-") {
-            deleteImage(slug, "anime", "logo")
+            await deleteImage(slug, "anime", "logo")
         }
 
         //Eğer logo linki verilmişse al ve diske kaydet
         if (logo && logo !== "-") {
-            downloadImage(logo, "logo", slug, "anime")
+            await downloadImage(logo, "logo", slug, "anime")
         }
 
         //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
         if (header === "-") {
-            deleteImage(slug, "anime", "header")
+            await deleteImage(slug, "anime", "header")
+            await CreateMetacontentCanvas({ type: "anime", slug, coverArt: cover_art })
         }
 
         //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
         if (header && header !== "-") {
-            downloadImage(header, "header", slug, "anime")
+            await downloadImage(header, "header", slug, "anime")
+            await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
         }
 
         return res.status(200).json({ 'success': 'success' })
