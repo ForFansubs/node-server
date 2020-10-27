@@ -83,6 +83,7 @@ const IndexRequestsLimiter = rateLimit({
 });
 
 // Use Routes
+app.use('/locales', express.static(__dirname + '/locales/'));
 ///ads txt
 app.get('/ads.txt', CrawlerFileLimiter, (req, res) => {
     res.sendFile(Path.resolve(__dirname, 'config', 'ads.txt'))

@@ -1,0 +1,57 @@
+{
+    "header": {
+        "homepage": {
+            "default": "Ana sayfa",
+            "short": "Ana sayfa",
+            "logo": ""
+        },
+        "anime": {
+            "default": "Anime",
+            "short": "Anime",
+            "logo": "An"
+        },
+        "episode": {
+            "default": "Bölüm",
+            "short": "Anime",
+            "logo": "Bö"
+        },
+        "manga": {
+            "default": "Manga",
+            "short": "Manga",
+            "logo": "Ma"
+        },
+        "manga_episode": {
+            "default": "Manga Bölüm",
+            "short": "Manga Bölüm",
+            "logo": "MB"
+        },
+        "motd": {
+            "default": "MOTD",
+            "short": "MOTD",
+            "logo": "Mo"
+        },
+        "user": {
+            "default": "Kullanıcı",
+            "short": "Kullanıcı",
+            "logo": "Ku"
+        },
+        "role": {
+            "default": "Rol",
+            "short": "Rol",
+            "logo": "Ro"
+        },
+        "logs": {
+            "default": "Kayıtlar",
+            "short": "Kayıtlar",
+            "logo": "Ka"
+        },
+        "go_back_to_site": {
+            "default": "Siteye dön",
+            "short": "Siteye dön",
+            "logo": ""
+        }
+    },
+    "footer": {
+        "release_name": "Yayın ismi"
+    }
+}

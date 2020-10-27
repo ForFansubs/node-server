@@ -1,0 +1,95 @@
+{
+    "header": {
+        "index": {
+            "default": "Ana sayfa",
+            "short": "Ana sayfa"
+        },
+        "search": {
+            "default": "İçerik ara",
+            "short": "Ara"
+        },
+        "calendar": {
+            "default": "Takvim",
+            "short": "Takvim"
+        },
+        "faq": {
+            "default": "Sıkça Sorulan Sorular",
+            "short": "SSS"
+        },
+        "recruitment": {
+            "default": "Ekip Alımları",
+            "short": "Ekip Alımları",
+            "logo": "EA"
+        }
+    },
+    "footer": {
+        "release_name": "Yayın ismi",
+        "language": "Dil",
+        "change_language": "Dili değiştir",
+        "select_the_language_you_wish_to_use": "Kullanmak istediğiniz dili seçin"
+    },
+    "disqus": {
+        "open_comments": "Yorumları aç"
+    },
+    "404": {
+        "header_text": "Aradığınız sayfayı bulamadık, kaldırılmış olabilir",
+        "subtitle_text": "10 saniye içerisinde ana sayfaya yönlendirileceksiniz."
+    },
+    "pre_screens": {
+        "connection_error": {
+            "header_text": "Sunucuyla bağlantı kuramadık :(",
+            "subtitle_text": "Lütfen daha sonra tekrar deneyin..."
+        }
+    },
+    "search": {
+        "warnings": {
+            "not_found_synopsis": "Konu bulunamadı.",
+            "not_found_premiered": "Çıkış dönemi bulunamadı."
+        }
+    },
+    "translations": {
+        "warnings": {
+            "+18": {
+                "header_text": "+18 ögelere sahip bir içeriğe ulaşmak istediniz, devam etmek istiyor musunuz?"
+            },
+            "content_metadata": {
+                "not_found": "{{title}} bulunamadı."
+            },
+            "anime": {
+                "not_found_download_links": "İndirme linki bulunamadı."
+            },
+            "youtube_pv": {
+                "not_found": "Youtube linki bulunmadı."
+            }
+        },
+        "buttons": {
+            "+18": {
+                "yes": "Evet",
+                "no": "Ana sayfaya dön"
+            }
+        },
+        "anime": {
+            "series_status": "{{episode_count}} Bölüm",
+            "series_status_plural": "{{episode_count}} Bölüm",
+            "download_links": "İndirme Linkleri",
+            "stats": "Bilgiler [MyAnimeList]"
+        },
+        "jikan_errors": {
+            "couldnt_reach_data": "İstenilen dataya ulaşamadık."
+        }
+    },
+    "motd": {
+        "warnings": {
+            "error": "**Bir sorun var? (Bu bir sistem mesajıdır.)**"
+        }
+    },
+    "toastify": {
+        "messages": {
+            "login-success": "Başarıyla giriş yaptınız!",
+            "login-error": "İsteğinizi gerçekleştirirken bir sorunla karşılaştık.",
+            "register-success": "Başarıyla kayıt oldunuz! Lütfen emailinizi doğrulayın.",
+            "register-error": "Kaydınızı oluştururken bir sorunla karşılaştık.",
+            "logout-success": "Başarıyla çıkış yaptınız!"
+        }
+    }
+}

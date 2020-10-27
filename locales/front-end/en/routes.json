@@ -1,0 +1,25 @@
+{
+    "react-router": {
+        "index_page": "/",
+        "faq_page": "/faq",
+        "search_page": "/search/:type?/:offset?",
+        "recruit_page": "/recruit",
+        "complete_registration_page": "/user/complete-registration/:hash",
+        "calendar_page": "/calendar",
+        "anime_page": "/translations/anime/:slug",
+        "manga_page": "/translations/manga/:slug",
+        "episode_page": "/translations/anime/:slug/watch/:episodeInfo?",
+        "manga_episode_page": "/translations/manga/:slug/read/:episode_number?/:page_number?"
+    },
+    "front-routes": {
+        "index": "/",
+        "faq": "/faq",
+        "search": "/search",
+        "calendar": "/calendar",
+        "recruit": "/recruit",
+        "anime_page": "/translations/anime",
+        "manga_page": "/translations/manga",
+        "watch_suffix": "/watch",
+        "read_suffix": "/read"
+    }
+}
