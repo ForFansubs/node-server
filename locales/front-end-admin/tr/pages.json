@@ -13,6 +13,9 @@
             "close": "Kapat",
             "update": "Güncelle",
             "save": "Kaydet"
+        },
+        "errors": {
+            "database_error": "Database bağlantısında bir sorun oluştu."
         }
     },
     "index": {
@@ -171,7 +174,13 @@
             "download_link": "İndirme Linkleri"
         },
         "common": {
-            "links": "Linkler"
+            "links": "Linkler",
+            "links_add_success": "Linkler başarıyla eklendi.",
+            "link_delete_success": "Link başarıyla silindi.",
+            "inputs": {
+                "helper_text_success": "Buraya birden fazla link koyabilirsiniz. Her link kendine ait satırda olmalıdır.",
+                "helper_text_error": "Hatalı linkler var!"
+            }
         },
         "create": {},
         "download_link": {
@@ -179,34 +188,40 @@
                 "errors": {
                     "error": "İndirme linklerini eklerken bir sorunla karşılaştık."
                 },
-                "warnings": {
-                    "success": "Linkler başarıyla eklendi."
-                },
                 "anime_selector": "İndirme linki ekleyeceğiniz animeyi seçin",
-                "episode_selector": "İndirme linki ekleyeceğiniz bölümü seçin",
-                "link_input": {
-                    "helperTextSuccess": "Buraya birden fazla link koyabilirsiniz. Her link kendine ait satırda olmalıdır.",
-                    "helperTextError": "Hatalı linkler var!"
-                }
+                "episode_selector": "İndirme linki ekleyeceğiniz bölümü seçin"
             },
-            "delete": {}
+            "delete": {
+                "errors": {
+                    "error": "İndirme linkini silerken bir sorunla karşılaştık.",
+                    "links_not_found": "Bölüme ekli indirme linki bulunamadı."
+                },
+                "anime_selector": "İndirme linki sileceğiniz animeyi seçin",
+                "episode_selector": "İndirme linki sileceğiniz bölümü seçin",
+                "buttons": {
+                    "download_link": "İndirme linki"
+                }
+            }
         },
         "watch_link": {
-            "errors": {
-                "cant_add_anime": "Animeyi düzenlenirken bir sorunla karşılaştık."
-            },
-            "warnings": {
-                "success": "Anime başarıyla düzenlendi."
-            },
-            "inputs": {
-                "logo": {
-                    "helperText": "- koyarak diskteki resmi silebilirsiniz."
+            "create": {
+                "errors": {
+                    "error": "İzleme linklerini eklerken bir sorunla karşılaştık."
                 },
-                "header": {
-                    "helperText": "- koyarak diskteki resmi silebilirsiniz."
-                }
+                "anime_selector": "İzleme linki ekleyeceğiniz animeyi seçin",
+                "episode_selector": "İzleme linki ekleyeceğiniz bölümü seçin"
             },
-            "anime_selector": "Düzenleyeceğiniz animeyi seçin"
+            "delete": {
+                "errors": {
+                    "error": "İzleme linkini silerken bir sorunla karşılaştık.",
+                    "links_not_found": "Bölüme ekli indirme linki bulunamadı."
+                },
+                "anime_selector": "İzleme linki sileceğiniz animeyi seçin",
+                "episode_selector": "İzleme linki sileceğiniz bölümü seçin",
+                "buttons": {
+                    "download_link": "İzleme linki"
+                }
+            }
         }
     }
 }
