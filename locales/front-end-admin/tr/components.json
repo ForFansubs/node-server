@@ -53,5 +53,14 @@
     },
     "footer": {
         "release_name": "Yayın ismi"
+    },
+    "login": {
+        "errors": {
+            "error": "Giriş yaparken bir sorun oluştu."
+        },
+        "site_title": "{{site_name}} Admin - Giriş yap",
+        "user_name": "Kullanıcı adı",
+        "password": "Şifre",
+        "login_button": "Giriş yap"
     }
 }
