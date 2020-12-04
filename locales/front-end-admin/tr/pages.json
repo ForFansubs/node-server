@@ -13,9 +13,12 @@
             "close": "Kapat",
             "update": "Güncelle",
             "save": "Kaydet",
+            "upload_pages": "Sayfa Yükle",
             "get_information": "Bilgileri getir",
             "clean_information": "Bilgileri temizle",
-            "add_without_api": "API kullanmadan ekle"
+            "add_without_api": "API kullanmadan ekle",
+            "yes": "Evet",
+            "no": "Hayır"
         },
         "inputs": {
             "episode_number_input": "Bölüm Numarası - (Sadece sayı)",
@@ -323,7 +326,7 @@
             "errors": {
                 "error": "Bölümü eklerken bir sorunla karşılaştık."
             },
-            "anime_selector": "Bölüm ekleyeceğiniz animeyi seçin"
+            "manga_selector": "Bölüm ekleyeceğiniz mangayı seçin"
         },
         "update": {
             "errors": {
@@ -338,8 +341,126 @@
             "errors": {
                 "error": "Bölümü silerken bir sorunla karşılaştık."
             },
-            "anime_selector": "Bölümünü sileceğiniz animeyi seçin",
-            "anime_title": "{{anime_title}} - bölümünü silmek üzeresiniz."
+            "manga_selector": "Bölümünü sileceğiniz animeyi seçin",
+            "manga_title": "{{manga_title}} - bölümünü silmek üzeresiniz."
+        }
+    },
+    "motd": {
+        "update": {
+            "warnings": {
+                "is_active_success": "Görünürlük başarıyla değiştirildi."
+            },
+            "errors": {
+                "is_active_error": "Görünürlük değiştirilirken bir sorunla karşılaştık."
+            },
+            "content_info": "İçerik IDsi: {{content_id}} // İçerik Tipi: {{content_type}}"
+        },
+        "create": {
+            "warnings": {
+                "success": "MOTD başarıyla eklendi."
+            },
+            "errors": {
+                "anime_database_error": "Animeleri getirirken bir sorunla karşılaştık.",
+                "manga_database_error": "Mangaları getirirken bir sorunla karşılaştık.",
+                "episode_database_error": "Anime bölümlerini getirirken bir sorunla karşılaştık.",
+                "manga_episode_database_error": "Manga bölümlerini getirirken bir sorunla karşılaştık.",
+                "error": "MOTDyi eklerken bir sorunla karşılaştık."
+            },
+            "inputs": {
+                "title": "MOTD Başlığı",
+                "subtitle": "MOTD İçerik",
+                "homepage": "Hiçbiri (Ana sayfa)"
+            },
+            "page_selector": "Görünmesini istediğiniz sayfayı seçin",
+            "content_selector": "Görünmesini istediğiniz içeriği seçin",
+            "episode_selector": "Görünmesini istediğiniz bölümü seçin",
+            "can_user_dismiss": "Kullanıcı kapatabilsin mi?"
+        },
+        "delete": {
+            "warnings": {
+                "success": "MOTD başarıyla silindi."
+            },
+            "errors": {
+                "error": "MOTD'yi silerken bir sorunla karşılaştık."
+            }
+        },
+        "inputs": {
+            "main_page": "Ana sayfa"
+        }
+    },
+    "perms": {
+        "common": {
+            "inputs": {
+                "name": "Rol İsmi",
+                "color": "Rol Rengi"
+            }
+        },
+        "update": {
+            "warnings": {
+                "success": "Rol başarıyla değiştirildi."
+            },
+            "errors": {
+                "error": "Rol değiştirilirken bir sorunla karşılaştık."
+            },
+            "perm_selector": "Düzenleyeceğiniz rolü seçin"
+        },
+        "create": {
+            "warnings": {
+                "success": "Rol başarıyla eklendi."
+            },
+            "errors": {
+                "error": "Rolü eklerken bir sorunla karşılaştık."
+            }
+        },
+        "delete": {
+            "warnings": {
+                "success": "Rol başarıyla silindi."
+            },
+            "errors": {
+                "error": "Rolü silerken bir sorunla karşılaştık."
+            },
+            "perm_selector": "Sileceğiniz rolü seçin",
+            "perm_title": "{{perm_title}} rolünü silmek üzeresiniz."
+        }
+    },
+    "user": {
+        "common": {
+            "inputs": {
+                "name": "Kullanıcı İsmi",
+                "password": "Kullanıcı Şifresi",
+                "password2": "Kullanıcı Şifresi Tekrar",
+                "permission_level": "Kullanıcı Rolü",
+                "avatar": "Kullanıcı avatar linki",
+                "email": "Kullanıcı email"
+            }
+        },
+        "update": {
+            "warnings": {
+                "success": "Kullanıcı bilgileri başarıyla değiştirildi."
+            },
+            "errors": {
+                "error": "Kullanıcı bilgileri değiştirilirken bir sorunla karşılaştık."
+            },
+            "user_selector": "Düzenleyeceğiniz kullanıcıyı seçin"
+        },
+        "create": {
+            "warnings": {
+                "success": "Kullanıcı başarıyla eklendi."
+            },
+            "errors": {
+                "error": "Kullanıcıyı eklerken bir sorunla karşılaştık."
+            }
+        },
+        "delete": {
+            "warnings": {
+                "success": "Kullanıcı başarıyla silindi."
+            },
+            "errors": {
+                "error": "Kullanıcıyı silerken bir sorunla karşılaştık."
+            },
+            "user_selector": "Sileceğiniz kullanıcıyı seçin",
+            "user_title": "{{user_title}} kullanıcısını silmek üzeresiniz.",
+            "user_title_subtitle": "Bu yıkıcı bir komuttur. Kullanıcının açtığı tüm konularda \"Silinmiş Üye\" yazacaktır."
         }
     }
 }
