@@ -271,6 +271,30 @@ router.get('/featured-anime', async (req, res) => {
     }
 })
 
+// @route   GET api/featured-manga
+// @desc    Get featured-manga
+// @access  Public
+router.get('/featured-manga', async (req, res) => {
+    try {
+        const featured_mangas = await Manga.findAll({
+            where: { is_featured: 1 },
+            attributes: [
+                'name',
+                'slug',
+                'id',
+                'synopsis',
+                'genres',
+            ],
+            limit: 12,
+            order: [['created_time', 'DESC']]
+        })
+
+        return res.status(200).json(featured_mangas)
+    } catch (err) {
+        console.log(err)
+    }
+})
+
 // @route   GET api/header-getir/:link
 // @desc    Get anime header
 // @access  Public

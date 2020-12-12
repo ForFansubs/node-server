@@ -73,7 +73,6 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
                 }
                 const c_hash = SHA256(`${(new Date()).toString()} ${user_result.insertId}`).toString()
 
-                console.log(c_hash)
                 try {
                     await PendingUser.create({
                         user_id: user_result.id,
@@ -116,12 +115,12 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
 // @desc    Register user (perm: "add-user")
 // @access  Private
 router.post('/kayit/admin', async (req, res) => {
-    const { name, email, password } = req.body
+    const { username, email, password } = req.body
 
-    let username, user
+    let admin, user
     try {
         const check_res = await check_permission(req.headers.authorization, "add-user")
-        username = check_res.username
+        admin = check_res.username
     } catch (err) {
         console.log(err)
         res.status(403).json({ 'err': err })
@@ -155,7 +154,7 @@ router.post('/kayit/admin', async (req, res) => {
                 try {
                     result = await User.create({
                         slug: standartSlugify(name),
-                        name: name,
+                        name: username,
                         email: email,
                         avatar,
                         password: p_hash,
@@ -169,7 +168,7 @@ router.post('/kayit/admin', async (req, res) => {
 
                 LogAddUser({
                     process_type: 'add-user',
-                    username: username,
+                    username: admin,
                     user_id: result.id
                 })
 
@@ -183,24 +182,21 @@ router.post('/kayit/admin', async (req, res) => {
 // @desc    Login User / Returning JWT Token
 // @access  Public
 router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (req, res) => {
-    let user
+    const { username, password } = req.body
 
     // Genel kontrollerden sonra farklı hata çıkarsa
     const errors = {}
 
-    const name = req.body.name.replace(/([!@#$%^&*()+=\[\]\\';,./{}|":<>?~_-])/g, "\\$1")
-    const password = req.body.password
-
     // Find user by email
     try {
-        user = await User.findOne({ raw: true, where: { name: name }, attributes: ['name', 'password', 'avatar', 'activated', 'id'] })
+        user = await User.findOne({ raw: true, where: { name: username }, attributes: ['name', 'password', 'avatar', 'activated', 'id'] })
     } catch (err) {
         console.log(err)
     }
 
     // Check for user
     if (!user) {
-        errors.name = 'Kullanıcı bulunamadı'
+        errors.username = 'Kullanıcı bulunamadı'
         return res.status(404).json({
             ...errors
         })
@@ -210,7 +206,7 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
     bcrypt.compare(password, user.password).then(isMatch => {
         if (isMatch) {
             if (!user.activated) {
-                errors.name = "Kullanıcı aktif edilmemiş"
+                errors.username = "Kullanıcı aktif edilmemiş"
 
                 return res.status(403).json({
                     ...errors,
@@ -220,7 +216,7 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
             // User Matched
             const payload = {
                 id: user.id,
-                name: user.name,
+                username: user.name,
                 avatar: user.avatar
             }; // Create JWT Payload
             // Sign Token

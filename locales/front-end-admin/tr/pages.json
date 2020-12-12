@@ -132,16 +132,6 @@
         "index": {
             "feature": "Öne Çıkar"
         },
-        "common": {
-            "inputs": {},
-            "radios": {
-                "currently_airing": "Devam ediyor",
-                "finished_airing": "Tamamlandı",
-                "not_aired_yet": "Daha yayınlanmadı",
-                "postponed": "Ertelendi",
-                "canceled": "İptal edildi"
-            }
-        },
         "create": {
             "errors": {
                 "wrong_mal_link": "Girdiğiniz link MyAnimeList Anime linki değil.",

@@ -14,7 +14,7 @@ function ValidateUserRegistration() {
 function ValidateUserLogin() {
     return [
         // name check, 2 chars min
-        body('name').isLength({ min: 2 }).escape().withMessage("Kullanıcı adınızı girmeniz gerekiyor"),
+        body('username').isLength({ min: 2 }).escape().withMessage("Kullanıcı adınızı girmeniz gerekiyor"),
         // password check, 6 chars min
         body('password').isLength({ min: 6, max: 100 }).withMessage("Şifreniz en az 6 karakter olmalıdır")
     ]

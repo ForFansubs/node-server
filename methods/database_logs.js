@@ -363,6 +363,18 @@ async function LogDeleteManga(props) {
 	}
 }
 
+async function LogFeaturedManga(props) {
+	const { process_type, username } = props
+
+	try {
+		const text = `${username} isimli kullanıcı öne çıkarılan mangaları değiştirdi.`
+		await HandleDatabaseQuery(username, text, process_type)
+	} catch (err) {
+		logFailError(process, "", err)
+	}
+}
+
+
 async function LogAddMangaEpisode(props) {
 	const process_type = "add-manga-episode"
 
@@ -592,6 +604,7 @@ module.exports = {
 	LogAddManga,
 	LogUpdateManga,
 	LogDeleteManga,
+	LogFeaturedManga,
 	LogAddMangaEpisode,
 	LogUpdateMangaEpisode,
 	LogDeleteMangaEpisode,

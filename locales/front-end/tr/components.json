@@ -83,13 +83,9 @@
             "error": "**Bir sorun var? (Bu bir sistem mesajıdır.)**"
         }
     },
-    "toastify": {
-        "messages": {
-            "login-success": "Başarıyla giriş yaptınız!",
-            "login-error": "İsteğinizi gerçekleştirirken bir sorunla karşılaştık.",
-            "register-success": "Başarıyla kayıt oldunuz! Lütfen emailinizi doğrulayın.",
-            "register-error": "Kaydınızı oluştururken bir sorunla karşılaştık.",
-            "logout-success": "Başarıyla çıkış yaptınız!"
+    "featured": {
+        "errors": {
+            "error": "Öne çıkarılan {{contentType}} bulunamadı."
         }
     }
 }

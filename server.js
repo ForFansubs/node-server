@@ -7,6 +7,10 @@ const fs = require('fs')
 const package = require('./package.json')
 const { generateSitemap } = require('./config/sitemap-generator')
 const rateLimit = require("express-rate-limit");
+const { sequelize } = require('./config/sequelize')
+const i18next = require('i18next')
+const FilesystemBackend = require('i18next-fs-backend')
+const i18nextMiddleware = require('i18next-http-middleware')
 
 const app = express()
 
@@ -21,8 +25,6 @@ const images = require('./routes/api/images')
 const permission = require('./routes/api/permission')
 const motd = require('./routes/api/motd')
 const calendar = require('./routes/api/calendar')
-
-const { sequelize } = require('./config/sequelize')
 
 // Pre-render middleware
 if (process.env.USE_NEW_SEO_METHOD === "true") {
@@ -52,10 +54,6 @@ app.use(function (req, res, next) {
 })
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
-app.use(function (req, res, next) {
-    res.setHeader('Content-Language', 'tr, en')
-    next()
-})
 
 // Helmet JS middleware
 app.use(helmet({
@@ -82,43 +80,82 @@ const IndexRequestsLimiter = rateLimit({
         "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
 });
 
-// Use Routes
-app.use('/locales', express.static(__dirname + '/locales/'));
-///ads txt
-app.get('/ads.txt', CrawlerFileLimiter, (req, res) => {
-    res.sendFile(Path.resolve(__dirname, 'config', 'ads.txt'))
-})
-///robots.txt
-app.get('/robots.txt', CrawlerFileLimiter, (req, res) => {
-    res.sendFile(Path.resolve(__dirname, 'config', 'robots.txt'))
-})
-///sitemap.xml
-app.get('/sitemap.xml', CrawlerFileLimiter, (req, res) => {
-    res.sendFile(Path.resolve(__dirname, 'config', 'sitemap.xml'))
-})
-///ACTUAL API
-app.use('/api/', index)
-app.use('/api/anime', anime)
-app.use('/api/manga', manga)
-app.use('/api/bolum', episode)
-app.use('/api/kullanici', user)
-app.use('/api/yetki', permission)
-app.use('/api/resimler', images)
-app.use('/api/manga-bolum', mangaEpisode)
-app.use('/api/motd', motd)
-app.use('/api/takvim', calendar)
-app.get('/api/*', (req, res) => {
-    res.status(400).json({ message: "Invalid request." })
-})
+// i18next middleware
+function getLoadPath(ns) {
+    switch (ns) {
+        case "days": {
+            return __dirname + '/locales/common/{{lng}}/{{ns}}.json'
+        }
+        case "genres": {
+            return __dirname + '/locales/common/{{lng}}/{{ns}}.json'
+        }
+        case "seasons": {
+            return __dirname + '/locales/common/{{lng}}/{{ns}}.json'
+        }
+        case "general": {
+            return __dirname + '/locales/common/{{lng}}/common.json'
+        }
+        default: {
+            return __dirname + '/locales/back-end/{{lng}}/{{ns}}.json'
+        }
+    }
+}
 
-app.use('/admin', express.static(__dirname + '/admin/'));
-app.use(express.static(__dirname + '/client/'));
-app.get('/admin/*', IndexRequestsLimiter, (req, res) => {
-    res.sendFile(Path.resolve(__dirname, 'admin', 'index.html'))
-})
-app.get('*', IndexRequestsLimiter, (req, res) => {
-    res.sendFile(Path.resolve(__dirname, 'client', 'index.html'))
-})
+app.use('/locales', express.static(__dirname + '/locales/'))
+
+i18next
+    .use(i18nextMiddleware.LanguageDetector)
+    .use(FilesystemBackend)
+    .init(
+        {
+            debug: true,
+            preload: ['tr', 'en'],
+            fallbackLng: ["tr"],
+            ns: ['days', 'seasons', 'genres'],
+            backend: {
+                loadPath: (_, ns) => getLoadPath(ns),
+                jsonIndent: 4
+            }
+        }, () => {
+            app.get('/ads.txt', async (req, res) => {
+                res.sendFile(Path.resolve(__dirname, 'config', 'ads.txt'))
+            })
+            ///ads txt
+            ///robots.txt
+            app.get('/robots.txt', CrawlerFileLimiter, async (req, res) => {
+                res.sendFile(Path.resolve(__dirname, 'config', 'robots.txt'))
+            })
+            ///sitemap.xml
+            app.get('/sitemap.xml', CrawlerFileLimiter, async (req, res) => {
+                res.sendFile(Path.resolve(__dirname, 'config', 'sitemap.xml'))
+            })
+
+            app.use('/api/', index)
+            app.use('/api/anime', anime)
+            app.use('/api/manga', manga)
+            app.use('/api/bolum', episode)
+            app.use('/api/kullanici', user)
+            app.use('/api/yetki', permission)
+            app.use('/api/resimler', images)
+            app.use('/api/manga-bolum', mangaEpisode)
+            app.use('/api/motd', motd)
+            app.use('/api/takvim', calendar)
+            app.get('/api/*', (req, res) => {
+                res.status(400).json({ message: "Invalid request." })
+            })
+
+            app.use('/admin', express.static(__dirname + '/admin/'));
+            app.use(express.static(__dirname + '/client/'));
+            app.get('/admin/*', IndexRequestsLimiter, (req, res) => {
+                res.sendFile(Path.resolve(__dirname, 'admin', 'index.html'))
+            })
+            app.get('*', IndexRequestsLimiter, (req, res) => {
+                res.sendFile(Path.resolve(__dirname, 'client', 'index.html'))
+            })
+
+        }
+    )
+app.use(i18nextMiddleware.handle(i18next))
 
 async function initializeServer() {
     if (process.env.NODE_ENV === "production") {
@@ -197,22 +234,21 @@ async function initializeServer() {
     }
 
     const port = process.env.PORT || 5000;
-    app.listen(port, () => {
-        console.info('\x1b[32m%s\x1b[0m', "----------------INFO----------------")
-        console.info(`ℹ️ NODE_ENV:`, "\x1b[33m", `            ${process.env.NODE_ENV}`)
-        console.info(`ℹ️ Service Name:`, "\x1b[33m", `        ${process.env.SITE_NAME}`)
-        console.info(`ℹ️ URL:`, "\x1b[33m", `                 ${process.env.HOST_URL}`)
-        console.info(`ℹ️ Port:`, "\x1b[33m", `                ${process.env.PORT}`)
-        console.info(`ℹ️ Database:`, "\x1b[33m", `            ${process.env.DB_NAME}`)
-        if (process.env.NODE_APP_INSTANCE !== undefined) {
-            console.info(`ℹ️ PM2 Cluster ID:`, "\x1b[33m", `      ${process.env.NODE_APP_INSTANCE == 0 ? `${process.env.NODE_APP_INSTANCE} (master)` : process.env.NODE_APP_INSTANCE}`)
-        }
-        console.info('\x1b[32m%s\x1b[0m', "---------------AUTHOR---------------")
-        console.info(`ℹ️ Service Author:`, "\x1b[35m", `      ${package.author}`)
-        console.info(`ℹ️ Service Version:`, "\x1b[35m", `     ${package.version}`)
-        console.info(`ℹ️ Service Release Name:`, "\x1b[35m", `${package["release-name"]}`)
-        console.info('\x1b[32m%s\x1b[0m', "------------------------------------")
-    });
+    await app.listen(port)
+    console.info('\x1b[32m%s\x1b[0m', "----------------INFO----------------")
+    console.info(`ℹ️ NODE_ENV:`, "\x1b[33m", `            ${process.env.NODE_ENV}`)
+    console.info(`ℹ️ Service Name:`, "\x1b[33m", `        ${process.env.SITE_NAME}`)
+    console.info(`ℹ️ URL:`, "\x1b[33m", `                 ${process.env.HOST_URL}`)
+    console.info(`ℹ️ Port:`, "\x1b[33m", `                ${process.env.PORT}`)
+    console.info(`ℹ️ Database:`, "\x1b[33m", `            ${process.env.DB_NAME}`)
+    if (process.env.NODE_APP_INSTANCE !== undefined) {
+        console.info(`ℹ️ PM2 Cluster ID:`, "\x1b[33m", `      ${process.env.NODE_APP_INSTANCE == 0 ? `${process.env.NODE_APP_INSTANCE} (master)` : process.env.NODE_APP_INSTANCE}`)
+    }
+    console.info('\x1b[32m%s\x1b[0m', "---------------AUTHOR---------------")
+    console.info(`ℹ️ Service Author:`, "\x1b[35m", `      ${package.author}`)
+    console.info(`ℹ️ Service Version:`, "\x1b[35m", `     ${package.version}`)
+    console.info(`ℹ️ Service Release Name:`, "\x1b[35m", `${package["release-name"]}`)
+    console.info('\x1b[32m%s\x1b[0m', "------------------------------------")
 }
 
 initializeServer()

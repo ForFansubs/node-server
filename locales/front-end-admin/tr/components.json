@@ -62,5 +62,12 @@
         "user_name": "Kullanıcı adı",
         "password": "Şifre",
         "login_button": "Giriş yap"
+    },
+    "datepicker": {
+        "label": "Çıkış tarihi",
+        "format": "dd/MM/yyyy"
+    },
+    "timepicker": {
+        "label": "Çıkış saati"
     }
 }

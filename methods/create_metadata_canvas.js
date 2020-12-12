@@ -171,6 +171,7 @@ module.exports = async function CreateMetacontentCanvas({ type, slug, background
         console.log(err)
     }
     // Draw background image
+    ctx.filter = "blur(5px)"
     if (background) drawImageProp(ctx, background, 0, 0, width, height);
     // Clear filter
     ctx.filter = "none";
@@ -268,7 +269,7 @@ module.exports = async function CreateMetacontentCanvas({ type, slug, background
         width - textWidth - 20,
         height - 20
     );
-    const typeFolderPath = Path.resolve(__dirname, 'output', type)
+    const typeFolderPath = Path.resolve(__dirname, '../', 'images', 'metadata', type)
     if (!fs.existsSync(typeFolderPath)) fs.mkdirSync(typeFolderPath)
 
     const streamToFile = (path, stream) => {

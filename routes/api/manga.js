@@ -10,7 +10,7 @@ const error_messages = require("../../config/error_messages")
 const { deleteMangaFolders } = require('../../methods/manga-episode')
 const CreateMetacontentCanvas = require('../../methods/create_metadata_canvas')
 
-const { LogAddManga, LogUpdateManga, LogDeleteManga } = require("../../methods/database_logs")
+const { LogAddManga, LogUpdateManga, LogDeleteManga, LogFeaturedManga } = require("../../methods/database_logs")
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
@@ -112,7 +112,7 @@ router.post('/manga-ekle', async (req, res) => {
 
             //Metadata resmini oluştur
             try {
-                await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
+                await CreateMetacontentCanvas({ type: "manga", slug, backgroundImage: header, coverArt: cover_art })
             } catch (err) {
                 console.log(err)
             }
@@ -179,13 +179,13 @@ router.post('/manga-guncelle', async (req, res) => {
     //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
     if (header === "-") {
         await deleteImage(slug, "manga", "header")
-        await CreateMetacontentCanvas({ type: "anime", slug, coverArt: cover_art })
+        await CreateMetacontentCanvas({ type: "manga", slug, coverArt: cover_art })
     }
 
     //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
     if (header && header !== "-") {
         await downloadImage(header, "header", slug, "manga")
-        await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
+        await CreateMetacontentCanvas({ type: "manga", slug, backgroundImage: header, coverArt: cover_art })
     }
 
     try {
@@ -268,6 +268,66 @@ router.post('/manga-sil/', async (req, res) => {
     } catch (err) {
         console.log(err)
         res.status(400).json({ 'err': 'Bir şeyler yanlış gitti.' })
+    }
+})
+
+// @route   POST api/manga/update-featured-manga
+// @desc    Featured manga (perm: "featured-manga")
+// @access  Private
+router.post('/update-featured-manga', async (req, res) => {
+    const { data } = req.body
+
+    let username
+    try {
+        const check_res = await check_permission(req.headers.authorization, "featured-manga")
+        username = check_res.username
+    } catch (err) {
+        return res.status(403).json({ 'err': err })
+    }
+
+    try {
+        Manga.update({ is_featured: 0 }, { where: { is_featured: 1 } })
+    } catch (err) {
+        return res.status(500).json({ 'err': error_messages.database_error })
+    }
+
+    try {
+        await Manga.update({ is_featured: 1 }, {
+            where: {
+                name: {
+                    [Sequelize.Op.in]: data.map(({ name }) => name)
+                },
+                version: {
+                    [Sequelize.Op.in]: data.map(({ version }) => version)
+                }
+            }
+        })
+        res.status(200).json({ 'success': 'success' })
+        LogFeaturedManga({
+            process_type: 'featured-manga',
+            username: username
+        })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ 'err': error_messages.database_error })
+    }
+})
+
+// @route   GET api/manga/admin-featured-manga
+// @desc    Get featured-manga
+// @access  Public
+router.get('/admin-featured-manga', async (req, res) => {
+    try {
+        await check_permission(req.headers.authorization, "see-admin-page")
+    } catch (err) {
+        return res.status(403).json({ 'err': err })
+    }
+    try {
+        const manga = await Manga.findAll({ where: { is_featured: 1 } })
+        res.status(200).json(manga)
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ err: error_messages.database_error })
     }
 })
 

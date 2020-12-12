@@ -82,13 +82,9 @@
             "error": "**There seems to be a problem. (This is a system message.)**"
         }
     },
-    "toastify": {
-        "messages": {
-            "login-success": "Logged in successfully!",
-            "login-error": "We had some issues while processing your request.",
-            "register-success": "Registered successfully! Please confirm your email adress.",
-            "register-error": "We had some issues while processing your request.",
-            "logout-success": "Logged out successfully!"
+    "featured": {
+        "errors": {
+            "error": "Couldn't find featured {{contentType}}"
         }
     }
 }

@@ -17,6 +17,8 @@ const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
 const { Sequelize, Anime, Episode, User } = require("../../config/sequelize")
+const { addAnimeSchema, updateAnimeSchema } = require('../../validators/anime')
+const authCheck = require('../../middlewares/authCheck')
 
 String.prototype.mapReplace = function (map) {
     var regex = [];
@@ -30,82 +32,41 @@ String.prototype.mapReplace = function (map) {
 // @route   POST api/anime/anime-ekle
 // @desc    Add anime (perm: "add-anime")
 // @access  Private
-router.post('/anime-ekle', async (req, res) => {
-    let anime
-
-    //Yetkiyi ve kullanıcıyı kontrol et. Kullanıcının "add-anime" yetkisi var mı bak.
-    let username, user_id
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-anime")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.post('/anime-ekle', authCheck("add-anime"), async (req, res) => {
+    // Validate body
+    await addAnimeSchema.validateAsync(req.body)
 
     //Eğer varsa anime daha önceden eklenmiş mi diye isimle kontrol et. 
-    try {
-        anime = await Anime.findOne({ raw: true, where: { name: req.body.name } })
-    } catch (err) {
-        console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
-    }
-
+    let anime = await Anime.findOne({ where: { name: req.body.name, version: req.body.version } })
     //Eğer varsa öne hata yolla.
     if (anime) return res.status(400).json({ 'err': 'Bu anime zaten ekli.' })
 
-    //Yoksa değerleri variable'lara eşitle.
-    const { header, cover_art, logo, translators, encoders, studios, version, trans_status, pv, name, synopsis } = req.body
-
     //Slug'ı yukardaki fonksiyonla oluştur.
-    const slug = version === 'bd' ? standartSlugify(name) + "-bd" : standartSlugify(name)
+    const slug = standartSlugify(req.body.name) + (req.body.version === "bd" ? "-bd" : "")
 
     //Release date için default bir değer oluştur, eğer MAL'dan data alındıysa onunla değiştir
-    let release_date = new Date(1)
-    if (req.body.release_date) release_date = req.body.release_date
+    let release_date = req.body.release_date || new Date()
 
     //Mal linkinin id'sini al, tekrardan buildle
-    let mal_link_id = req.body.mal_link.split("/")[4]
-    const mal_link = `https://myanimelist.net/anime/${mal_link_id}`
+    const mal_link = `https://myanimelist.net/anime/${req.body.mal_link.split("/")[4]}`
 
     //Türleri string olarak al ve mapten Türkçeye çevir
-    let genres = req.body.genres
-    genres = genres.mapReplace(genre_map)
+    let genres = req.body.genres.mapReplace(genre_map)
 
     //Yayınlanma sezonunu string olarak al, mapten Türkçeye çevir
-    let premiered = req.body.premiered
-    if (premiered) premiered = premiered.mapReplace(season_map)
-
-    const episode_count = req.body.episode_count ? req.body.episode_count : 0
+    let premiered = req.body.premiered.mapReplace(season_map) || ""
 
     //Seri durumunu string olarak al, mapten Türkçeye çevir
     const series_status = req.body.series_status.mapReplace(status_map)
 
     //Database'e yolla.
     try {
-        const result = await Anime.create({
-            synopsis,
-            name,
-            slug,
-            translators,
-            encoders,
-            series_status,
-            trans_status,
-            release_date,
-            created_by: user_id,
-            episode_count,
-            studios,
-            cover_art,
-            mal_link,
-            genres,
-            premiered,
-            version,
-            pv
-        })
+        const result = await Anime.create({ ...req.body, series_status, premiered, genres, mal_link, release_date, slug, created_by: req.authUser.id })
 
+        // Log
         LogAddAnime({
             process_type: 'add-anime',
-            username: username,
+            username: req.authUser.name,
             anime_id: result.id
         })
 
@@ -116,9 +77,9 @@ router.post('/anime-ekle', async (req, res) => {
         })
 
         //Eğer logo linki verilmişse al ve diske kaydet
-        if (logo) {
+        if (req.body.logo) {
             try {
-                await downloadImage(logo, "logo", slug, "anime")
+                await downloadImage(req.body.logo, "logo", slug, "anime")
             } catch (err) {
                 console.log(err)
             }
@@ -126,15 +87,15 @@ router.post('/anime-ekle', async (req, res) => {
 
         //Cover_art'ı diske indir
         try {
-            await downloadImage(cover_art, "cover", slug, "anime")
+            await downloadImage(req.body.cover_art, "cover", slug, "anime")
         } catch (err) {
             console.log(err)
         }
 
         //Header linki yollanmışsa alıp diske kaydet
-        if (header) {
+        if (req.body.header) {
             try {
-                await downloadImage(header, "header", slug, "anime")
+                await downloadImage(req.body.header, "header", slug, "anime")
             } catch (err) {
                 console.log(err)
             }
@@ -142,7 +103,7 @@ router.post('/anime-ekle', async (req, res) => {
 
         //Metadata resmini oluştur
         try {
-            await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
+            await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: req.body.header, coverArt: req.body.cover_art })
         } catch (err) {
             console.log(err)
         }
@@ -150,6 +111,7 @@ router.post('/anime-ekle', async (req, res) => {
         res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
+        Anime.destroy({ where: { name: req.body.name } })
         return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
     }
 })
@@ -157,45 +119,13 @@ router.post('/anime-ekle', async (req, res) => {
 // @route   POST api/anime/anime-guncelle
 // @desc    Update anime (perm: "update-anime")
 // @access  Private
-router.post('/anime-guncelle', async (req, res) => {
-    let anime
-    const { id } = req.body
-    //Yetkiyi ve kullanıcı kontrol et. "update-anime" yetkisi var mı bak.
-    let username, user_id
-    try {
-        const check_res = await check_permission(req.headers.authorization, "update-anime")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.post('/anime-guncelle', authCheck("update-anime"), async (req, res) => {
+    // Validate body
+    await updateAnimeSchema.validateAsync()
 
     //Güncellenecek animeyi database'te bul
-    try {
-        anime = await Anime.findOne({ raw: true, where: { id: id } })
-    } catch (err) {
-        console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
-    }
+    let anime = await Anime.findByPk(req.body.id)
 
-    const {
-        name,
-        header,
-        synopsis,
-        cover_art,
-        logo,
-        release_date,
-        mal_link,
-        premiered,
-        translators,
-        encoders,
-        studios,
-        episode_count,
-        series_status,
-        version,
-        trans_status,
-        pv
-    } = req.body
     let { slug } = anime
 
     //Türleri string olarak al ve mapten Türkçeye çevir
@@ -203,7 +133,7 @@ router.post('/anime-guncelle', async (req, res) => {
     genres = genres.mapReplace(genre_map)
 
     //Eğer içeriğin türü değiştiyse, slug'ı ona göre değiştir.
-    if (version !== anime.version) {
+    if (req.body.version !== anime.version) {
         const oldSlug = slug
         slug = version === "bd" ? `${slug}-bd` : `${slug.replace('-bd', '')}`
         try {
@@ -218,62 +148,53 @@ router.post('/anime-guncelle', async (req, res) => {
     //Database'teki satırı güncelle.
     try {
         await Anime.update({
-            synopsis,
-            name,
+            ...req.body,
             slug,
-            translators,
-            encoders,
-            series_status,
-            trans_status,
-            release_date,
-            created_by: user_id,
-            episode_count,
-            studios,
-            cover_art,
-            mal_link,
             genres,
-            premiered,
-            version,
-            pv
         }, {
             where: {
-                id: id
+                id: req.body.id
             }
         })
 
         LogUpdateAnime({
             process_type: 'update-anime',
-            username: username,
-            anime_id: id
+            username: req.authUser.name,
+            anime_id: req.body.id
         })
 
         //Cover_art'ı diske indir
-        downloadImage(cover_art, "cover", slug, "anime")
+        try {
+            await downloadImage(req.body.cover_art, "cover", slug, "anime")
+        } catch (err) {
+            console.log(err)
+        }
 
         //Eğer logo inputuna "-" konulmuşsa, diskteki logoyu sil
-        if (logo === "-") {
+        if (req.body.logo === "-") {
             await deleteImage(slug, "anime", "logo")
         }
 
         //Eğer logo linki verilmişse al ve diske kaydet
-        if (logo && logo !== "-") {
-            await downloadImage(logo, "logo", slug, "anime")
+        if (req.body.logo && req.body.logo !== "-") {
+            await downloadImage(req.body.logo, "logo", slug, "anime")
         }
 
         //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
-        if (header === "-") {
+        if (req.body.header === "-") {
             await deleteImage(slug, "anime", "header")
-            await CreateMetacontentCanvas({ type: "anime", slug, coverArt: cover_art })
+            await CreateMetacontentCanvas({ type: "anime", slug, coverArt: req.body.cover_art })
         }
 
         //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
-        if (header && header !== "-") {
-            await downloadImage(header, "header", slug, "anime")
-            await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: header, coverArt: cover_art })
+        if (req.body.header && req.body.header !== "-") {
+            await downloadImage(req.body.header, "header", slug, "anime")
+            await CreateMetacontentCanvas({ type: "anime", slug, backgroundImage: req.body.header, coverArt: req.body.cover_art })
         }
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
+        console.log(err)
         return res.status(500).json({ 'err': 'Güncellemede bir sorun oluştu.' })
     }
 })

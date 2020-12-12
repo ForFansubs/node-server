@@ -101,5 +101,27 @@
             "title": "{{site_name}} Takvim",
             "description": "Grubumuzun güncel olarak çevirdiği tüm animelerin hangi gün geleceğini buradan kontrol edebilirsiniz. - {{site_name}} Takvim"
         }
+    },
+    "user": {
+        "common": {
+            "inputs": {
+                "email": "Email Adresi",
+                "password": "Şifre",
+                "username": "Kullanıcı adı",
+                "repeat_password": "Şifre tekrar"
+            }
+        },
+        "login": {
+            "title": "Giriş yap",
+            "buttons": {
+                "dont_have_account": "Hesabınız yok mu? Hemen oluşturun"
+            }
+        },
+        "register": {
+            "title": "Kayıt ol",
+            "buttons": {
+                "have_account": "Hesabınız var mı? Giriş yapın"
+            }
+        }
     }
 }

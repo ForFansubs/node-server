@@ -101,5 +101,27 @@
             "title": "{{site_name}} Calendar",
             "description": "You can find the latest airing anime and when we're going to release them. - {{site_name}} Calendar"
         }
+    },
+    "user": {
+        "common": {
+            "inputs": {
+                "email": "Email Adress",
+                "password": "Password",
+                "username": "Username",
+                "repeat_password": "Password again"
+            }
+        },
+        "login": {
+            "title": "Login",
+            "buttons": {
+                "dont_have_account": "Don't have an account? Create one now!"
+            }
+        },
+        "register": {
+            "title": "Register",
+            "buttons": {
+                "have_account": "Have an account? Login now!"
+            }
+        }
     }
 }
