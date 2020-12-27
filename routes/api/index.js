@@ -8,6 +8,7 @@ const standartSlugify = require('standard-slugify')
 const { IndexAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 const { Sequelize, Anime, Manga, Episode, MangaEpisode, Log } = require("../../config/sequelize")
+const authCheck = require('../../middlewares/authCheck')
 
 // @route   GET api/
 // @desc    Index route
@@ -15,7 +16,7 @@ const { Sequelize, Anime, Manga, Episode, MangaEpisode, Log } = require("../../c
 router.get('/', async (req, res) => {
     let admin = false
     try {
-        await check_permission(req.headers.authorization, "see-admin-page")
+        await authCheck.inline("see-admin-page", req)
         admin = true
     } catch (err) {
         admin = false
@@ -35,12 +36,7 @@ router.get('/', async (req, res) => {
 // @route   GET api/logs
 // @desc    View logs (perm: "see-logs")
 // @access  Private
-router.get('/logs', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "see-logs")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.get('/logs', authCheck("see-logs"), async (req, res) => {
     try {
         const logs = await Log.findAll({ order: [['id', 'DESC']] })
         return res.status(200).json(logs)

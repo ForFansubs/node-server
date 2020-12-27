@@ -13,6 +13,15 @@ const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
 const { Sequelize, Episode, DownloadLink, WatchLink } = require("../../config/sequelize")
+const { watchLinkAdminViewSchema,
+    downloadLinkAdminViewSchema,
+    createEpisodeSchema,
+    updateEpisodeSchema,
+    addDownloadLinkSchema,
+    deleteDownloadLinkSchema,
+    addWatchLinkSchema,
+    deleteWatchLinkSchema } = require('../../validators/episode')
+const authCheck = require('../../middlewares/authCheck')
 
 
 // @route   GET api/bolum/:slug/watch
@@ -115,16 +124,11 @@ router.post('/izleme-linkleri', GeneralAPIRequestsLimiter, async (req, res) => {
 })
 
 // @route   GET api/bolum/izleme-linkleri/admin-view
-// @desc    View watch links
+// @desc    View watch links (perm: "delete-watch-link")
 // @access  Public
-router.post('/izleme-linkleri/admin-view', async (req, res) => {
+router.post('/izleme-linkleri/admin-view', authCheck("delete-watch-link"), async (req, res) => {
+    await watchLinkAdminViewSchema.validateAsync(req.body)
     const { episode_id } = req.body
-
-    try {
-        await check_permission(req.headers.authorization, "delete-watch-link")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         const eps = await WatchLink.findAll({ where: { episode_id: episode_id }, order: ['type'] })
@@ -138,16 +142,9 @@ router.post('/izleme-linkleri/admin-view', async (req, res) => {
 // @route   GET api/bolum/indirme-linkleri/admin-view
 // @desc    View watch links
 // @access  Public
-router.post('/indirme-linkleri/admin-view', async (req, res) => {
+router.post('/indirme-linkleri/admin-view', authCheck("delete-download-link"), async (req, res) => {
+    await downloadLinkAdminViewSchema.validateAsync(req.body)
     const { episode_id } = req.body
-
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-download-link")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         const eps = await DownloadLink.findAll({ where: { episode_id: episode_id }, order: ['type'] })
@@ -161,17 +158,11 @@ router.post('/indirme-linkleri/admin-view', async (req, res) => {
 // @route   POST api/bolum/bolum-ekle
 // @desc    Add episode (perm: "add-episode")
 // @access  Private
-router.post('/bolum-ekle', async (req, res) => {
+router.post('/bolum-ekle', authCheck("add-episode"), async (req, res) => {
+    await createEpisodeSchema.validateAsync(req.body)
     const { episode_number, anime_id, special_type, credits, can_user_download } = req.body
 
-    let username, user_id, anime
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-episode")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+    let anime
 
     try {
         anime = await Episode.findOne({ where: { episode_number: episode_number, anime_id: anime_id, special_type: special_type } })
@@ -189,18 +180,18 @@ router.post('/bolum-ekle', async (req, res) => {
                 anime_id,
                 episode_number,
                 credits,
-                created_by: user_id,
+                created_by: req.authUser.id,
                 special_type,
                 can_user_download: can_user_download ? can_user_download : 1
             })
 
             LogAddEpisode({
                 process_type: 'add-episode',
-                username: username,
+                username: req.authUser.name,
                 episode_id: result.id
             })
 
-            if (req.body.sendDiscordEmbed) {
+            if (req.body.send_discord_embed) {
                 sendDiscordEmbed({
                     type: "episode",
                     anime_id,
@@ -222,14 +213,8 @@ router.post('/bolum-ekle', async (req, res) => {
 // @route   POST api/bolum/bolum-duzenle
 // @desc    Update episode (perm: "update-episode")
 // @access  Private
-router.post('/bolum-duzenle', async (req, res) => {
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "update-episode")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.post('/bolum-duzenle', authCheck("update-episode"), async (req, res) => {
+    await updateEpisodeSchema.validateAsync(req.body)
 
     switch (req.body.request) {
         case "update-visibility":
@@ -239,7 +224,7 @@ router.post('/bolum-duzenle', async (req, res) => {
                 LogUpdateEpisode({
                     process_type: 'update-episode',
                     request: req.body.request,
-                    username: username,
+                    username: req.authUser.name,
                     episode_id: req.body.id,
                     can_user_download: req.body.value
                 })
@@ -258,7 +243,7 @@ router.post('/bolum-duzenle', async (req, res) => {
 
                 LogUpdateEpisode({
                     process_type: 'update-episode',
-                    username: username,
+                    username: req.authUser.name,
                     request: req.body.request,
                     episode_id: req.body.id,
                     can_user_download: req.body.value
@@ -278,16 +263,9 @@ router.post('/bolum-duzenle', async (req, res) => {
 // @route   GET api/bolum/bolum-sil
 // @desc    Delete episode (perm: "delete-episode")
 // @access  Private
-router.post('/bolum-sil', async (req, res) => {
+router.post('/bolum-sil', authCheck("delete-episode"), async (req, res) => {
+    await deleteEpisodeSchema.validateAsync(req.body)
     const { episode_id } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-episode")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         const episode = await Episode.findOne({ where: { id: episode_id } })
@@ -295,7 +273,7 @@ router.post('/bolum-sil', async (req, res) => {
 
         LogDeleteEpisode({
             process_type: 'delete-episode',
-            username: username,
+            username: req.authUser.name,
             anime_id: episode.anime_id,
             episode_number: episode.episode_number,
             special_type: episode.special_type
@@ -311,15 +289,9 @@ router.post('/bolum-sil', async (req, res) => {
 // @route   POST  api/bolum/indirme-linki-ekle
 // @desc    Yeni bölüm indirme linki ekle (perm: "add-download-link")
 // @access  Private
-router.post('/indirme-linki-ekle', async (req, res) => {
-    let username, user_id, anime
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-download-link")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.post('/indirme-linki-ekle', authCheck("add-download-link"), async (req, res) => {
+    await addDownloadLinkSchema.validateAsync(req.body)
+    let anime
 
     let links = req.body.link.split('\n')
     let link_errors = {}
@@ -358,12 +330,12 @@ router.post('/indirme-linki-ekle', async (req, res) => {
                 episode_id,
                 type: type,
                 link: link,
-                created_by: user_id
+                created_by: req.authUser.id
             })
 
             LogAddDownloadLink({
                 process_type: 'add-download-link',
-                username: username,
+                username: req.authUser.name,
                 download_link_id: result.id
             })
         } catch (err) {
@@ -381,16 +353,9 @@ router.post('/indirme-linki-ekle', async (req, res) => {
 // @route   POST api/bolum/indirme-linki-sil
 // @desc    İndirme linki sil (perm: "delete-download-link")
 // @access  Private
-router.post('/indirme-linki-sil', async (req, res) => {
+router.post('/indirme-linki-sil', authCheck("delete-download-link"), async (req, res) => {
+    await deleteDownloadLinkSchema.validateAsync(req.body)
     const { episode_id, downloadlink_id } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-download-link")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         const download_link = await DownloadLink.findOne({ where: { id: downloadlink_id } })
@@ -398,7 +363,7 @@ router.post('/indirme-linki-sil', async (req, res) => {
 
         LogDeleteDownloadLink({
             process_type: 'delete-download-link',
-            username: username,
+            username: req.authUser.name,
             episode_id: episode_id,
             download_link_type: download_link.type
         })
@@ -413,15 +378,9 @@ router.post('/indirme-linki-sil', async (req, res) => {
 // @route   POST api/bolum/izleme-linki-ekle
 // @desc    Yeni bölüm izleme linki ekle (perm: "add-watch-link")
 // @access  Private
-router.post('/izleme-linki-ekle', async (req, res) => {
-    let username, user_id, anime
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-watch-link")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.post('/izleme-linki-ekle', authCheck("add-watch-link"), async (req, res) => {
+    await addWatchLinkSchema.validateAsync(req.body)
+    let anime
 
     const links = req.body.link.split("\n")
     let link_errors = {}
@@ -460,12 +419,12 @@ router.post('/izleme-linki-ekle', async (req, res) => {
                 episode_id,
                 type: type,
                 link: src,
-                created_by: user_id
+                created_by: req.authUser.id
             })
 
             LogAddWatchLink({
                 process_type: 'add-watch-link',
-                username: username,
+                username: req.authUser.name,
                 watch_link_id: result.id
             })
         } catch (err) {
@@ -484,16 +443,9 @@ router.post('/izleme-linki-ekle', async (req, res) => {
 // @route   POST /episode/izleme-linki-sil
 // @desc    İzleme linki sil (perm: "delete-watch-link")
 // @access  Private
-router.post('/izleme-linki-sil', async (req, res) => {
+router.post('/izleme-linki-sil', authCheck("delete-watch-link"), async (req, res) => {
+    await deleteWatchLinkSchema.validateAsync(req.body)
     const { episode_id, watchlink_id } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-watch-link")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         const watch_link = await WatchLink.findOne({ where: { id: watchlink_id } })
@@ -502,7 +454,7 @@ router.post('/izleme-linki-sil', async (req, res) => {
 
         LogDeleteWatchLink({
             process_type: 'delete-watch-link',
-            username: username,
+            username: req.authUser.name,
             episode_id: episode_id,
             watch_link_type: watch_link.type
         })
@@ -517,12 +469,7 @@ router.post('/izleme-linki-sil', async (req, res) => {
 // @route   POST  api/bolum/download-link-list
 // @desc    İndirme linkleri listesi
 // @access  Private
-router.get('/download-link-list', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "add-download-link")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.get('/download-link-list', authCheck("add-download-link"), async (req, res) => {
     const list = Object.values(supported_sites.download_links)
     res.status(200).json({ list })
 })
@@ -530,13 +477,7 @@ router.get('/download-link-list', async (req, res) => {
 // @route   POST  api/bolum/watch-link-list
 // @desc    İzleme linkleri listesi
 // @access  Private
-router.get('/watch-link-list', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "add-watch-link")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
+router.get('/watch-link-list', authCheck("add-watch-link"), async (req, res) => {
     const list = Object.values(supported_sites.watch_links)
     res.status(200).json({ list })
 })

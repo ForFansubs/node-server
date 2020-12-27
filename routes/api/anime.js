@@ -17,7 +17,7 @@ const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
 const { Sequelize, Anime, Episode, User } = require("../../config/sequelize")
-const { addAnimeSchema, updateAnimeSchema } = require('../../validators/anime')
+const { addAnimeSchema, updateAnimeSchema, deleteAnimeSchema, updateFeaturedAnimeSchema } = require('../../validators/anime')
 const authCheck = require('../../middlewares/authCheck')
 
 String.prototype.mapReplace = function (map) {
@@ -121,7 +121,7 @@ router.post('/anime-ekle', authCheck("add-anime"), async (req, res) => {
 // @access  Private
 router.post('/anime-guncelle', authCheck("update-anime"), async (req, res) => {
     // Validate body
-    await updateAnimeSchema.validateAsync()
+    await updateAnimeSchema.validateAsync(req.body)
 
     //Güncellenecek animeyi database'te bul
     let anime = await Anime.findByPk(req.body.id)
@@ -202,19 +202,11 @@ router.post('/anime-guncelle', authCheck("update-anime"), async (req, res) => {
 // @route   GET api/anime/anime-sil
 // @desc    Delete anime (perm: "delete-anime")
 // @access  Private
-router.post('/anime-sil/', async (req, res) => {
-    let anime
+router.post('/anime-sil/', authCheck("delete-anime"), async (req, res) => {
+    await deleteAnimeSchema.validateAsync(req.body)
     const { id } = req.body
 
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-anime")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
-    anime = await Anime.findOne({ raw: true, where: { id: id } })
+    let anime = await Anime.findOne({ raw: true, where: { id: id } })
 
     if (!anime) return res.status(500).json({ 'err': error_messages.database_error })
 
@@ -239,7 +231,7 @@ router.post('/anime-sil/', async (req, res) => {
 
         LogDeleteAnime({
             process_type: 'delete-anime',
-            username: username,
+            username: req.authUser.name,
             anime_name: anime.name
         })
 
@@ -253,19 +245,12 @@ router.post('/anime-sil/', async (req, res) => {
 // @route   POST api/anime/update-featured-anime
 // @desc    Featured anime (perm: "featured-anime")
 // @access  Private
-router.post('/update-featured-anime', async (req, res) => {
+router.post('/update-featured-anime', authCheck("featured-anime"), async (req, res) => {
+    await updateFeaturedAnimeSchema.validateAsync(req.body)
     const { data } = req.body
 
-    let username
     try {
-        const check_res = await check_permission(req.headers.authorization, "featured-anime")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
-    try {
-        Anime.update({ is_featured: 0 }, { where: { is_featured: 1 } })
+        await Anime.update({ is_featured: 0 }, { where: { is_featured: 1 } })
     } catch (err) {
         return res.status(500).json({ 'err': error_messages.database_error })
     }
@@ -284,7 +269,7 @@ router.post('/update-featured-anime', async (req, res) => {
         res.status(200).json({ 'success': 'success' })
         LogFeaturedAnime({
             process_type: 'featured-anime',
-            username: username
+            username: req.authUser.name
         })
     } catch (err) {
         console.log(err)
@@ -295,12 +280,7 @@ router.post('/update-featured-anime', async (req, res) => {
 // @route   GET api/anime/admin-featured-anime
 // @desc    Get featured-anime
 // @access  Public
-router.get('/admin-featured-anime', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "see-admin-page")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.get('/admin-featured-anime', authCheck("see-admin-page"), async (req, res) => {
     try {
         const anime = await Anime.findAll({ where: { is_featured: 1 } })
         res.status(200).json(anime)
@@ -332,13 +312,7 @@ router.get('/liste', GeneralAPIRequestsLimiter, async (req, res) => {
 // @route   GET api/anime/admin-liste
 // @desc    Get all animes with all data
 // @access  Public
-router.get('/admin-liste', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "see-admin-page")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
+router.get('/admin-liste', authCheck("see-admin-page"), async (req, res) => {
     try {
         const animes = await Anime.findAll({ order: ['name'] })
         res.status(200).json(animes)
@@ -349,15 +323,10 @@ router.get('/admin-liste', async (req, res) => {
 })
 
 // @route   GET api/anime/:slug/admin-view
-// @desc    View anime
+// @desc    View anime (perm: "see-anime")
 // @access  Private
-router.get('/:slug/admin-view', async (req, res) => {
+router.get('/:slug/admin-view', authCheck("see-anime"), async (req, res) => {
     let anime
-    try {
-        await check_permission(req.headers.authorization, "see-anime")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         anime = await Anime.findOne({

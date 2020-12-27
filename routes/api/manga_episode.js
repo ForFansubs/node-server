@@ -12,7 +12,8 @@ const { LogAddMangaEpisode, LogUpdateMangaEpisode, LogDeleteMangaEpisode } = req
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
-const { Sequelize, MangaEpisode } = require("../../config/sequelize")
+const { Sequelize, MangaEpisode } = require("../../config/sequelize");
+const authCheck = require('../../middlewares/authCheck');
 
 const manga_storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -40,19 +41,9 @@ const upload = multer({
 
 
 // @route   GET api/manga-bolum/bolum-ekle
-// @desc    Add manga chapters to service
+// @desc    Add manga chapters to service (perm: "add-manga-episode")
 // @access  Private
-router.post('/bolum-ekle', async (req, res) => {
-    let username, user_id
-
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-manga-episode")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
+router.post('/bolum-ekle', authCheck("add-manga-episode"), async (req, res) => {
     upload(req, res, async function (err) {
         if (err) {
             return res.status(500).json({ err: err.message })
@@ -85,12 +76,12 @@ router.post('/bolum-ekle', async (req, res) => {
                 episode_name: episode_name ? episode_name : "",
                 episode_number: episode_number ? episode_number : "",
                 pages: files,
-                created_by: user_id
+                created_by: req.authUser.id
             })
 
             LogAddMangaEpisode({
                 process_type: 'add-manga-episode',
-                username: username,
+                username: req.authUser.name,
                 manga_episode_id: result.id
             })
 
@@ -113,16 +104,8 @@ router.post('/bolum-ekle', async (req, res) => {
 // @route   POST api/manga-bolum/bolum-guncelle
 // @desc    Update manga episode (perm: "update-manga-episode")
 // @access  Private
-router.post('/bolum-guncelle', async (req, res) => {
-    let username
+router.post('/bolum-guncelle', authCheck("update-manga-episode"), async (req, res) => {
     const { credits, episode_name, id } = req.body
-
-    try {
-        const check_res = await check_permission(req.headers.authorization, "update-manga-episode")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         await MangaEpisode.update({
@@ -132,7 +115,7 @@ router.post('/bolum-guncelle', async (req, res) => {
 
         LogUpdateMangaEpisode({
             process_type: 'update-manga-episode',
-            username: username,
+            username: req.authUser.name,
             manga_episode_id: id
         })
 

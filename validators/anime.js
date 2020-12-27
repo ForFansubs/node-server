@@ -41,4 +41,15 @@ const updateAnimeSchema = Joi.object({
     pv: Joi.string().uri().max(255).required()
 })
 
-module.exports = { addAnimeSchema, updateAnimeSchema }
+const deleteAnimeSchema = Joi.object({
+    id: Joi.number().required()
+})
+
+const updateFeaturedAnimeSchema = Joi.object({
+    data: Joi.array().items({
+        name: Joi.string().required(),
+        version: Joi.string().required()
+    })
+})
+
+module.exports = { addAnimeSchema, updateAnimeSchema, deleteAnimeSchema, updateFeaturedAnimeSchema }
