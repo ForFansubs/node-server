@@ -27,9 +27,9 @@ module.exports = function (permission) {
             if (!UserAccount) throw new Error("")
             const UserAuthPerms = await Permission.findOne({ where: { slug: UserAccount.permission_level } })
             if (!UserAuthPerms) throw new Error("")
-            // merge all permission nodes
+            // Bütün yetkileri bir yere topla
             let roles = UserAuthPerms.permission_set
-            // find required permission from merged permission list
+            // İstenen yetkiyi listeden bul
             const isPermitted = _.find(roles, function (r) { return r === permission })
             if (!isPermitted) throw new Error("123")
             // Bulunan kullanıcıyı yolla
@@ -42,7 +42,6 @@ module.exports = function (permission) {
 }
 
 module.exports.inline = async function (permission, req) {
-    console.log(req)
     try {
         // Token'i headerdan al
         let token = req.headers['x-access-token'] || req.headers['authorization']
@@ -59,14 +58,14 @@ module.exports.inline = async function (permission, req) {
         if (!UserAccount) throw new Error("")
         const UserAuthPerms = await Permission.findOne({ where: { slug: UserAccount.permission_level } })
         if (!UserAuthPerms) throw new Error("")
-        // merge all permission nodes
+        // Bütün yetkileri bir yere topla
         let roles = UserAuthPerms.permission_set
-        // find required permission from merged permission list
+        // İstenen yetkiyi listeden bul
         const isPermitted = _.find(roles, function (r) { return r === permission })
         if (!isPermitted) throw new Error("123")
-        // Bulunan kullanıcıyı yolla
+        // Doğrulamayı yolla
         return true
     } catch (err) {
-        throw new Error("123")
+        throw new Error("")
     }
 }
