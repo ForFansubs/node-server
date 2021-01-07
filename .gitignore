@@ -17,6 +17,4 @@ run-service-dev.bat
 ecosystem.config.js
 npm-debug\.log
 
-yarn.lock
-package-lock.json
 /config/sitemap.xml
