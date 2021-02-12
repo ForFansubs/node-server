@@ -3,6 +3,7 @@ const router = express.Router()
 const check_permission = require('../../middlewares/check_permission')
 const error_messages = require("../../config/error_messages")
 const standartSlugify = require('standard-slugify')
+const authCheck = require('../../middlewares/authCheck')
 
 const { LogAddPermission, LogUpdatePermission, LogDeletePermission } = require('../../methods/database_logs')
 
@@ -12,16 +13,8 @@ const { Permission } = require("../../config/sequelize")
 // @route   POST api/yetki/yetki-ekle
 // @desc    Update permission (perm: "add-permission")
 // @access  Private
-router.post('/yetki-ekle', async (req, res) => {
+router.post('/yetki-ekle', authCheck("add-permission"), async (req, res) => {
     const { name, color, permission_set } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-permission")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         const result = await Permission.create({
@@ -33,7 +26,7 @@ router.post('/yetki-ekle', async (req, res) => {
 
         LogAddPermission({
             process_type: 'add-permission',
-            username: username,
+            username: req.authUser.name,
             permission_id: result.id
         })
 
@@ -47,16 +40,8 @@ router.post('/yetki-ekle', async (req, res) => {
 // @route   POST api/yetki/yetki-liste
 // @desc    Update permission (perm: "update-permission")
 // @access  Private
-router.post('/yetki-guncelle', async (req, res) => {
+router.post('/yetki-guncelle', authCheck("update-permission"), async (req, res) => {
     const { id, name, color, permission_set } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "update-permission")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         await Permission.update({
@@ -67,7 +52,7 @@ router.post('/yetki-guncelle', async (req, res) => {
 
         LogUpdatePermission({
             process_type: 'update-permission',
-            username: username,
+            username: req.authUser.name,
             permission_id: id
         })
 
@@ -81,17 +66,9 @@ router.post('/yetki-guncelle', async (req, res) => {
 // @route   GET api/yetki/delete-permission
 // @desc    Delete permission (perm: "delete-permission")
 // @access  Private
-router.post('/yetki-sil', async (req, res) => {
+router.post('/yetki-sil', authCheck("delete-permission"), async (req, res) => {
     let permission
     const { permission_id } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-permission")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         permission = await Permission.findOne({ where: { id: permission_id } })
@@ -99,7 +76,7 @@ router.post('/yetki-sil', async (req, res) => {
 
         LogDeletePermission({
             process_type: 'delete-permission',
-            username: username,
+            username: req.authUser.name,
             permission_name: permission.name
         })
 
@@ -113,13 +90,7 @@ router.post('/yetki-sil', async (req, res) => {
 // @route   GET api/yetki/yetki-liste
 // @desc    Get all permissions (perm: "update-permission")
 // @access  Private
-router.get('/yetki-liste', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "update-permission")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
+router.get('/yetki-liste', authCheck("update-permission"), async (req, res) => {
     try {
         const perms = await Permission.findAll()
         res.status(200).json(perms)
@@ -132,14 +103,8 @@ router.get('/yetki-liste', async (req, res) => {
 // @route   GET api/yetki/:slug
 // @desc    Get all permissions (perm: "add-permission")
 // @access  Private
-router.get('/:slug', async (req, res) => {
+router.get('/:slug', authCheck("add-permission"), async (req, res) => {
     const { slug } = req.params
-
-    try {
-        await check_permission(req.headers.authorization, "add-permission")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         let perms = await Permission.findOne({ where: { slug: slug } })

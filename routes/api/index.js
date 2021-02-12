@@ -41,7 +41,7 @@ router.get('/logs', authCheck("see-logs"), async (req, res) => {
         const logs = await Log.findAll({ order: [['id', 'DESC']] })
         return res.status(200).json(logs)
     } catch (err) {
-        res.status(400).json({ 'err': 'Kayıtları alırken bir sorun oluştu.' })
+        res.status(400).json({ 'err': 'err' })
         return false
     }
 })

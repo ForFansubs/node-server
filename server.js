@@ -111,7 +111,7 @@ i18next
             debug: true,
             preload: ['tr', 'en'],
             fallbackLng: ["tr"],
-            ns: ['days', 'seasons', 'genres'],
+            ns: ['days', 'seasons', 'genres', 'errors', 'mail'],
             backend: {
                 loadPath: (_, ns) => getLoadPath(ns),
                 jsonIndent: 4

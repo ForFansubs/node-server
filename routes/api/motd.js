@@ -4,6 +4,7 @@ const check_permission = require('../../middlewares/check_permission')
 const error_messages = require('../../config/error_messages')
 const { LogAddMotd, LogUpdateMotd, LogDeleteMotd } = require('../../methods/database_logs')
 const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+const authCheck = require('../../middlewares/authCheck')
 
 // Models
 const { Sequelize, Motd } = require("../../config/sequelize")
@@ -11,17 +12,7 @@ const { Sequelize, Motd } = require("../../config/sequelize")
 // @route   GET api/motd/motd-ekle
 // @desc    Add motd (add-motd)
 // @access  Private
-router.post('/motd-ekle', async (req, res) => {
-    let username, user_id
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-motd")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        console.log(err)
-        return res.status(403).json({ 'err': err })
-    }
-
+router.post('/motd-ekle', authCheck("add-motd"), async (req, res) => {
     const { is_active, title, subtitle, content_type, content_id, can_user_dismiss } = req.body
 
     if ((!content_type && content_id) || (content_type && !content_id) || !subtitle) return res.status(400).json({ 'err': error_messages.bad_request })
@@ -34,11 +25,11 @@ router.post('/motd-ekle', async (req, res) => {
             content_type: content_type ? content_type : null,
             content_id: content_id ? content_id : null,
             can_user_dismiss: can_user_dismiss ? can_user_dismiss : 1,
-            created_by: user_id
+            created_by: req.authUser.id
         })
 
         LogAddMotd({
-            username: username,
+            username: req.authUser.name,
             motd_id: result.id
         })
 
@@ -52,16 +43,7 @@ router.post('/motd-ekle', async (req, res) => {
 // @route   GET api/motd/motd-guncelle
 // @desc    Update motd (update-motd)
 // @access  Private
-router.post('/motd-guncelle', async (req, res) => {
-    let username
-
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-motd")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
+router.post('/motd-guncelle', authCheck("update-motd"), async (req, res) => {
     const { motd_id, is_active } = req.body
 
     if (!motd_id || !(is_active === 0 || is_active === 1)) return res.status(400).json({ 'err': error_messages.bad_request })
@@ -76,7 +58,7 @@ router.post('/motd-guncelle', async (req, res) => {
         await motd_data.save()
 
         LogUpdateMotd({
-            username: username,
+            username: req.authUser.name,
             motd_id: motd_id
         })
 
@@ -90,16 +72,7 @@ router.post('/motd-guncelle', async (req, res) => {
 // @route   GET api/motd/motd-sil
 // @desc    Delete motd (delete-motd)
 // @access  Private
-router.post('/motd-sil', async (req, res) => {
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-motd")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
+router.post('/motd-sil', authCheck("delete-motd"), async (req, res) => {
     const { motd_id } = req.body
 
     if (!motd_id) return res.status(400).json({ 'err': error_messages.bad_request })
@@ -108,7 +81,7 @@ router.post('/motd-sil', async (req, res) => {
         await Motd.destroy({ where: { id: motd_id } })
 
         LogDeleteMotd({
-            username: username,
+            username: req.authUser.name,
             motd_id: motd_id
         })
 
@@ -122,16 +95,8 @@ router.post('/motd-sil', async (req, res) => {
 // @route   GET api/motd/
 // @desc    Get motd
 // @access  Public
-router.get('/admin-liste', async (req, res) => {
+router.get('/admin-liste', authCheck("see-motd"), async (req, res) => {
     const { content_id, content_type } = req.query
-
-    try {
-        const check_res = await check_permission(req.headers.authorization, "see-motd")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     if ((!content_type && content_id) || (content_type && !content_id)) return res.status(200).json([])
 

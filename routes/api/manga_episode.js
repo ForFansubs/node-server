@@ -54,7 +54,7 @@ router.post('/bolum-ekle', authCheck("add-manga-episode"), async (req, res) => {
         try {
             const episode = await MangaEpisode.findOne({ raw: true, where: { manga_id: manga_id, episode_number: episode_number } })
 
-            if (episode) return res.status(500).json({ 'err': error_messages.manga_episode_exists })
+            if (episode) return res.status(500).json({ 'err': req.t('errors:manga_episode.already_exists') })
         } catch (err) {
             return console.log(err)
         }
@@ -96,7 +96,7 @@ router.post('/bolum-ekle', authCheck("add-manga-episode"), async (req, res) => {
             return res.status(200).json({ 'success': 'success' })
         } catch (err) {
             console.log(err)
-            return res.status(500).json({ 'err': error_messages.database_error })
+            return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
         }
     })
 })
@@ -122,23 +122,15 @@ router.post('/bolum-guncelle', authCheck("update-manga-episode"), async (req, re
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
 // @route   GET api/manga-bolum/bolum-sil
-// @desc    Delete episode (perm: "delete-episode")
+// @desc    Delete episode (perm: "delete-manga-episode")
 // @access  Private
-router.post('/bolum-sil', async (req, res) => {
+router.post('/bolum-sil', authCheck("delete-manga-episode"), async (req, res) => {
     const { episode_id } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-manga-episode")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         const { manga_name, manga_slug, episode_number, pages } = await MangaEpisode.findOne({
@@ -170,7 +162,7 @@ router.post('/bolum-sil', async (req, res) => {
 
         LogDeleteMangaEpisode({
             process_type: 'delete-manga-episode',
-            username: username,
+            username: req.authUser.name,
             episode_number: episode_number,
             manga_name: manga_name
         })
@@ -178,7 +170,7 @@ router.post('/bolum-sil', async (req, res) => {
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -239,13 +231,13 @@ router.get('/:slug/read', GeneralAPIRequestsLimiter, async (req, res) => {
         })
 
         if (manga.length === 0) {
-            return res.status(404).json({ 'err': 'Görüntülemek istediğiniz mangayı bulamadık.' });
+            return res.status(404).json({ 'err': 'err' });
         } else {
             res.json(manga);
         }
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 

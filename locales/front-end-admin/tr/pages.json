@@ -3,7 +3,8 @@
         "index": {
             "create": "Oluştur",
             "update": "Düzenle",
-            "delete": "Sil"
+            "delete": "Sil",
+            "feature": "Öne Çıkar"
         },
         "buttons": {
             "send_discord_embed": "Discord'a bildirim yollanacak",
@@ -129,9 +130,6 @@
         }
     },
     "anime": {
-        "index": {
-            "feature": "Öne Çıkar"
-        },
         "create": {
             "errors": {
                 "wrong_mal_link": "Girdiğiniz link MyAnimeList Anime linki değil.",
@@ -306,6 +304,15 @@
                 "success": "Manga başarıyla silindi."
             },
             "selector": "Sileceğiniz mangayı seçin"
+        },
+        "featured": {
+            "errors": {
+                "error": "Mangaları öne çıkarırken bir sorunla karşılaştık."
+            },
+            "warnings": {
+                "success": "Mangalar başarıyla öne çıkarıldı."
+            },
+            "selector": "Öne çıkaracağınız mangaları seçin"
         }
     },
     "manga_episode": {

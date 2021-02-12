@@ -5,43 +5,42 @@ const router = express.Router()
 const gravatar = require('gravatar')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const check_permission = require('../../middlewares/check_permission')
 const keys = require('../../config/keys')
 const error_messages = require("../../config/error_messages")
 const standartSlugify = require('standard-slugify')
+const authCheck = require('../../middlewares/authCheck')
 
 const { NODE_ENV } = process.env
 
 const { LogAddUser, LogUpdateUser, LogDeleteUser } = require('../../methods/database_logs')
-const { Validation, ValidateUserRegistration, ValidateUserLogin } = require('../../middlewares/validate')
+const JoiValidator = require('../../middlewares/validate')
 const { UserLoginLimiter, UserRegisterLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
 const { Sequelize, sequelize, User, PendingUser } = require("../../config/sequelize")
+const { registerUserSchema, loginUserSchema } = require('../../validators/user')
 
 // @route   GET api/kullanici/kayit
 // @desc    Register user
 // @access  Public
-router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validation, async (req, res) => {
-    const { name, email, password } = req.body
-    const errors = {}
+router.post('/kayit', UserRegisterLimiter, JoiValidator(registerUserSchema), async (req, res) => {
+    const { username, email, password } = req.body
 
     let user_check, email_check
 
     try {
-        user_check = await User.findOne({ where: { name: name }, raw: true })
+        user_check = await User.findOne({ where: { name: username }, raw: true })
         email_check = await User.findOne({ where: { email: email }, raw: true })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ err: "Database bağlantısı kurulamıyor." })
+        return res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 
     if (user_check || email_check) {
-        if (user_check) errors.username = "Kullanıcı adı kullanılıyor."
-        if (email_check) errors.email = "Mail adresi kullanılıyor."
+        if (user_check) errors.username = req.t('errors:user.register.username_in_use')
+        if (email_check) errors.email = req.t('errors:user.register.email_in_use')
         return res.status(400).json({
-            ...errors,
-            'err': 'Kullanıcı adı ya da mail adresi kullanılıyor'
+            ...errors
         })
     }
 
@@ -52,7 +51,6 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
             d: 'mm' // Default
         })
 
-
         bcrypt.genSalt(10, (err, salt) => {
             bcrypt.hash(password, salt, async (err, p_hash) => {
                 let user_result
@@ -60,8 +58,8 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
 
                 try {
                     user_result = await User.create({
-                        slug: standartSlugify(name),
-                        name: name,
+                        slug: standartSlugify(username),
+                        name: username,
                         email: email,
                         avatar,
                         password: p_hash,
@@ -69,7 +67,7 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
                     })
                 } catch (err) {
                     console.log(err)
-                    return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
+                    return res.status(500).json({ err: req.t('errors:database.cant_connect') })
                 }
                 const c_hash = SHA256(`${(new Date()).toString()} ${user_result.insertId}`).toString()
 
@@ -83,15 +81,20 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
                     try {
                         await User.destroy({ where: { id: user_result.id } })
                     } catch (err) {
-                        console.log(`${user_result.id} id'li kullanıcının hash'i oluşturulamadı. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
+                        console.log(err)
                     }
-                    return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
+                    return res.status(500).json({ err: req.t('errors:database.cant_connect') })
                 }
                 const payload = {
                     to: email,
-                    subject: `${process.env.SITE_NAME} Mail Onaylama - no-reply`,
+                    subject: req.t('mail:subject', { SITE_NAME: process.env.SITE_NAME }),
                     text: "",
-                    html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/logo.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle"> Sitemize hoş geldin ${name}. Kaydını tamamlamak için lütfen aşağıdaki butona bas. (Bu link 10 dakika sonra geçersiz olacaktır.) </p><a class="buton" href="${process.env.HOST_URL}/kullanici/kayit-tamamla/${c_hash}" > Kaydı tamamla </a> </div></div></body></html>`
+                    html: req.t('mail:template', {
+                        SITE_NAME: process.env.SITE_NAME,
+                        USERNAME: username,
+                        HOST_URL: process.env.HOST_URL,
+                        c_hash: c_hash
+                    })
                 }
                 try {
                     await sendMail(payload)
@@ -102,9 +105,9 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
                         await User.destroy({ where: { id: user_result.id } })
                         await PendingUser.destroy({ where: { user_id: user_result.id } })
                     } catch (err) {
-                        console.log(`${user_result.id} id'li kullanıcının hash'i oluşturuldu, fakat mail yollayamadık. Fazlalık hesabı da silerken bir sorunla karşılaştık.`)
+                        console.log(err)
                     }
-                    res.status(400).json({ 'err': 'Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin.' })
+                    res.status(500).json({ 'err': req.t('errors:user.register.email_send_error') })
                 }
             })
         })
@@ -114,30 +117,22 @@ router.post('/kayit', UserRegisterLimiter, ValidateUserRegistration(), Validatio
 // @route   GET api/kullanici/kayit/admin
 // @desc    Register user (perm: "add-user")
 // @access  Private
-router.post('/kayit/admin', async (req, res) => {
+router.post('/kayit/admin', authCheck("add-user"), JoiValidator(registerUserSchema), async (req, res) => {
     const { username, email, password } = req.body
 
-    let admin, user
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-user")
-        admin = check_res.username
-    } catch (err) {
-        console.log(err)
-        res.status(403).json({ 'err': err })
-    }
+    let user
 
     try {
-        user = await User.findOne({ where: { email: email, name: name }, raw: true })
+        user = await User.findOne({ where: { email: email, name: username }, raw: true })
     } catch (err) {
         console.log(err)
-        return res.status(400).json({ err: "Database bağlantısı kurulamıyor." })
+        return res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 
     if (user) {
-        errors.username = "Kullanıcı adı veya email kullanılıyor."
         return res.status(400).json({
             ...errors,
-            'err': 'Kullanıcı adı veya email kullanılıyor'
+            'err': req.t('errors:user.register.info_in_use')
         })
     } else {
         const avatar = gravatar.url(req.body.email, {
@@ -163,12 +158,12 @@ router.post('/kayit/admin', async (req, res) => {
 
                 } catch (err) {
                     console.log(err)
-                    return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
+                    return res.status(500).json({ err: req.t('errors:database.cant_connect') })
                 }
 
                 LogAddUser({
                     process_type: 'add-user',
-                    username: admin,
+                    username: req.authUser.name,
                     user_id: result.id
                 })
 
@@ -181,11 +176,8 @@ router.post('/kayit/admin', async (req, res) => {
 // @route   GET api/kullanici/login
 // @desc    Login User / Returning JWT Token
 // @access  Public
-router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (req, res) => {
+router.post('/giris', UserLoginLimiter, JoiValidator(loginUserSchema), async (req, res) => {
     const { username, password } = req.body
-
-    // Genel kontrollerden sonra farklı hata çıkarsa
-    const errors = {}
 
     // Find user by email
     try {
@@ -196,7 +188,7 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
 
     // Check for user
     if (!user) {
-        errors.username = 'Kullanıcı bulunamadı'
+        errors.username = req.t('errors:user.login.no_user')
         return res.status(404).json({
             ...errors
         })
@@ -206,11 +198,9 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
     bcrypt.compare(password, user.password).then(isMatch => {
         if (isMatch) {
             if (!user.activated) {
-                errors.username = "Kullanıcı aktif edilmemiş"
-
                 return res.status(403).json({
                     ...errors,
-                    'err': 'Lütfen emailinizi kontrol edin.'
+                    'err': req.t('errors:user.login.account_not_activated')
                 })
             }
             // User Matched
@@ -236,10 +226,9 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
                 }
             )
         } else {
-            errors.password = 'Şifre yanlış';
+            errors.password = req.t('errors:user.login.wrong_password');
             return res.status(404).json({
-                ...errors,
-                'err': 'Kullanıcı adınız ya da şifreniz yanlış.'
+                ...errors
             })
         }
     })
@@ -248,16 +237,8 @@ router.post('/giris', UserLoginLimiter, ValidateUserLogin(), Validation, async (
 // @route   POST api/kullanici/uye-guncelle
 // @desc    Update user (perm: "update-user")
 // @access  Private
-router.post('/uye-guncelle', Validation, async (req, res) => {
+router.post('/uye-guncelle', authCheck("update-user"), async (req, res) => {
     const { id, slug, name, password, permission_level, avatar } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "update-user")
-        username = check_res.username
-    } catch (err) {
-        res.status(403).json({ 'err': err })
-    }
 
     try {
         await User.update({
@@ -273,31 +254,23 @@ router.post('/uye-guncelle', Validation, async (req, res) => {
 
         LogUpdateUser({
             process_type: 'update-user',
-            username: username,
+            username: req.authUser.name,
             user_id: id
         })
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
 // @route   GET api/kullanici/uye-sil
-// @desc    Delete user (perm: "delete-permission")
+// @desc    Delete user (perm: "delete-user")
 // @access  Private
-router.post('/uye-sil', async (req, res) => {
+router.post('/uye-sil', authCheck("delete-user"), async (req, res) => {
     let user
     const user_id_body = req.body.user_id
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-user")
-        username = check_res.username
-    } catch (err) {
-        res.status(403).json({ 'err': err })
-    }
 
     try {
         user = await User.findOne({ raw: true, where: { id: user_id_body } })
@@ -310,13 +283,13 @@ router.post('/uye-sil', async (req, res) => {
 
         LogDeleteUser({
             process_type: 'delete-user',
-            username: username,
+            username: req.authUser.name,
             name: user.name
         })
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -329,7 +302,7 @@ router.post('/kayit-tamamla', async (req, res) => {
     try {
         const pending_user = await PendingUser.findOne({ raw: true, where: { hash_key: hash } })
 
-        if (!pending_user.hash_key) return res.status(404).json({ 'err': "Kullanıcı kaydı bulunamadı!" })
+        if (!pending_user.hash_key) return res.status(404).json({ 'err': req.t('errors:user.login.no_user') })
 
         const { hash_key, user_id, created_time } = pending_user
 
@@ -343,7 +316,7 @@ router.post('/kayit-tamamla', async (req, res) => {
         return res.status(200).json({ success: "success" })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -370,7 +343,7 @@ router.post('/kayit-tamamla/yenile', async (req, res) => {
         })
 
         if (!user_id || !hash_key || !created_time) {
-            return res.status(404).json({ 'err': "Kullanıcı kaydı bulunamadı!" })
+            return res.status(404).json({ 'err': req.t('errors:user.login.no_user') })
         }
 
         const hash = SHA256(`${(new Date()).toString()} ${user_id}`).toString()
@@ -384,29 +357,30 @@ router.post('/kayit-tamamla/yenile', async (req, res) => {
 
         await sendMail({
             to: email,
-            subject: `${process.env.SITE_NAME} Mail Onaylama - no-reply`,
+            subject: req.t('mail:subject', {
+                SITE_NAME: process.env.SITE_NAME
+            }),
             text: "",
-            html: `<html> <head> <style>@import url("https://fonts.googleapis.com/css?family=Rubik&display=swap"); *{font-family: "Rubik", sans-serif; box-sizing: border-box;}.container{width: 400px; height: 300px; padding: 8px; justify-content: center; flex-direction: column; text-align: center;}.header{display: flex; align-items: center; justify-content: center;}.header h1{margin: 0 10px;}.logo{width: 50px; height: 50px;}.subtitle{margin: 10px 0 40px;}.subtitle .buton{justify-content: center;}.buton{width: 100%; color: white!important; margin: 10px 0; padding: 10px 16px; background-color: #fc4646; text-decoration: none;}</style> </head> <body> <div class="container"> <div class="header"> <img class="logo" src="${process.env.HOST_URL}/logo.png"/> <h1>${process.env.SITE_NAME}</h1> </div><div> <p class="subtitle">Sitemize hoş geldin ${username}.  Kaydını tamamlamak için lütfen aşağıdaki butona bas. </p><a class="buton" href="${process.env.HOST_URL}/kullanici/kayit-tamamla/${hash}" > Kaydı tamamla </a> </div></div></body></html>`
+            html: req.t('mail:template', {
+                SITE_NAME: process.env.SITE_NAME,
+                USERNAME: username,
+                HOST_URL: process.env.HOST_URL,
+                c_hash: c_hash
+            })
         })
 
         return res.status(200).json({ success: "success" })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
 // @route   GET api/kullanici/adminpage
 // @desc    Return to see if user can see the page or not (perm: "see-admin-page")
 // @access  Private
-router.get('/adminpage', async (req, res) => { //lgtm [js/missing-rate-limiting]
+router.get('/adminpage', authCheck("see-admin-page"), async (req, res) => { //lgtm [js/missing-rate-limiting]
     let username, count
-    try {
-        const check_res = await check_permission(req.headers.authorization, "see-admin-page")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     if (!req.query.withprops)
         return res.status(200).json({
@@ -422,8 +396,8 @@ router.get('/adminpage', async (req, res) => { //lgtm [js/missing-rate-limiting]
             (SELECT COUNT(*) FROM download_link) AS DOWNLOADLINK_COUNT,
             (SELECT COUNT(*) FROM watch_link) AS WATCHLINK_COUNT,
             (SELECT COUNT(*) FROM user) AS USER_COUNT,
-            (SELECT permission_set FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_LIST,
-            (SELECT name FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${username}")) as PERMISSION_NAME`, { type: Sequelize.QueryTypes.SELECT })
+            (SELECT permission_set FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${req.authUser.name}")) as PERMISSION_LIST,
+            (SELECT name FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${req.authUser.name}")) as PERMISSION_NAME`, { type: Sequelize.QueryTypes.SELECT })
         } catch (err) {
             console.log(err)
         }
@@ -432,15 +406,10 @@ router.get('/adminpage', async (req, res) => { //lgtm [js/missing-rate-limiting]
 })
 
 // @route   GET api/kullanici/uye-liste
-// @desc    Get all users (perm: "update-permission")
+// @desc    Get all users (perm: "see-user")
 // @access  Private
-router.get('/uye-liste', async (req, res) => {
+router.get('/uye-liste', authCheck("see-user"), async (req, res) => {
     let users
-    try {
-        await check_permission(req.headers.authorization, "update-permission")
-    } catch (err) {
-        res.status(403).json({ 'err': err })
-    }
 
     try {
         users = await User.findAll({
@@ -456,7 +425,7 @@ router.get('/uye-liste', async (req, res) => {
         res.status(200).json(users)
     } catch (err) {
         console.log(err)
-        res.status(500).json({ err: error_messages.database_error })
+        res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 })
 

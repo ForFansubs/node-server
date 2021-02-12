@@ -11,14 +11,14 @@ const MangaEpisodeImageLimiter = rateLimit({
     windowMs: 3 * 60 * 1000, // 5 minutes
     max: 1000, // start blocking after 1000 requests
     message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 5 dakika sonra tekrar deneyin."
+        "You are being rate limited."
 });
 
 const VariousImageLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 3 minutes
     max: 500, // start blocking after 500 requests
     message:
-        "Bu IP üzerinden çok fazla istek geldi. Lütfen 1 dakika sonra tekrar deneyin."
+        "You are being rate limited."
 });
 
 // @route   GET api/resimler/anime/:slug

@@ -19,6 +19,7 @@ const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 const { Sequelize, Anime, Episode, User } = require("../../config/sequelize")
 const { addAnimeSchema, updateAnimeSchema, deleteAnimeSchema, updateFeaturedAnimeSchema } = require('../../validators/anime')
 const authCheck = require('../../middlewares/authCheck')
+const JoiValidator = require('../../middlewares/validate')
 
 String.prototype.mapReplace = function (map) {
     var regex = [];
@@ -32,14 +33,11 @@ String.prototype.mapReplace = function (map) {
 // @route   POST api/anime/anime-ekle
 // @desc    Add anime (perm: "add-anime")
 // @access  Private
-router.post('/anime-ekle', authCheck("add-anime"), async (req, res) => {
-    // Validate body
-    await addAnimeSchema.validateAsync(req.body)
-
+router.post('/anime-ekle', authCheck("add-anime"), JoiValidator(addAnimeSchema), async (req, res) => {
     //Eğer varsa anime daha önceden eklenmiş mi diye isimle kontrol et. 
     let anime = await Anime.findOne({ where: { name: req.body.name, version: req.body.version } })
     //Eğer varsa öne hata yolla.
-    if (anime) return res.status(400).json({ 'err': 'Bu anime zaten ekli.' })
+    if (anime) return res.status(400).json({ 'err': req.t('errors:anime.already_exists') })
 
     //Slug'ı yukardaki fonksiyonla oluştur.
     const slug = standartSlugify(req.body.name) + (req.body.version === "bd" ? "-bd" : "")
@@ -112,7 +110,7 @@ router.post('/anime-ekle', authCheck("add-anime"), async (req, res) => {
     } catch (err) {
         console.log(err)
         Anime.destroy({ where: { name: req.body.name } })
-        return res.status(400).json({ 'err': 'Ekleme sırasında bir şeyler yanlış gitti.' })
+        return res.status(400).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -195,7 +193,7 @@ router.post('/anime-guncelle', authCheck("update-anime"), async (req, res) => {
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': 'Güncellemede bir sorun oluştu.' })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -208,7 +206,7 @@ router.post('/anime-sil/', authCheck("delete-anime"), async (req, res) => {
 
     let anime = await Anime.findOne({ raw: true, where: { id: id } })
 
-    if (!anime) return res.status(500).json({ 'err': error_messages.database_error })
+    if (!anime) return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
 
     try {
         await Anime.destroy({ where: { id: id } })
@@ -238,7 +236,7 @@ router.post('/anime-sil/', authCheck("delete-anime"), async (req, res) => {
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -252,7 +250,7 @@ router.post('/update-featured-anime', authCheck("featured-anime"), async (req, r
     try {
         await Anime.update({ is_featured: 0 }, { where: { is_featured: 1 } })
     } catch (err) {
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 
     try {
@@ -273,7 +271,7 @@ router.post('/update-featured-anime', authCheck("featured-anime"), async (req, r
         })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -286,7 +284,7 @@ router.get('/admin-featured-anime', authCheck("see-admin-page"), async (req, res
         res.status(200).json(anime)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ err: error_messages.database_error })
+        return res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 })
 
@@ -305,7 +303,7 @@ router.get('/liste', GeneralAPIRequestsLimiter, async (req, res) => {
         res.status(200).json(animeList)
     } catch (err) {
         console.log(err)
-        res.status(500).json({ err: error_messages.database_error })
+        res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 })
 
@@ -318,7 +316,7 @@ router.get('/admin-liste', authCheck("see-admin-page"), async (req, res) => {
         res.status(200).json(animes)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ err: error_messages.database_error })
+        return res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 })
 
@@ -341,18 +339,18 @@ router.get('/:slug/admin-view', authCheck("see-anime"), async (req, res) => {
         })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ err: error_messages.database_error })
+        return res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 
     if (!anime) {
-        return res.status(404).json({ 'err': 'Görüntülemek istediğiniz animeyi bulamadık.' });
+        return res.status(404).json({ 'err': req.t('errors:anime.no_anime') });
     } else {
         //Anime bulunduysa bölümlerini çek.
         try {
             res.status(200).json(anime)
         } catch (err) {
             console.log(err)
-            return res.status(500).json({ err: error_messages.database_error })
+            return res.status(500).json({ err: req.t('errors:database.cant_connect') })
         }
     }
 
@@ -403,18 +401,18 @@ router.get('/:slug', GeneralAPIRequestsLimiter, async (req, res) => {
         })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ err: error_messages.database_error })
+        return res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
     //Eğer anime yoksa hata yolla.
     if (!anime) {
-        return res.status(404).json({ 'err': 'Görüntülemek istediğiniz animeyi bulamadık.' });
+        return res.status(404).json({ 'err': req.t('errors:anime.no_anime') });
     } else {
         //Anime bulunduysa bölümlerini çek.
         try {
             res.status(200).json(anime)
         } catch (err) {
             console.log(err)
-            return res.status(500).json({ err: error_messages.database_error })
+            return res.status(500).json({ err: req.t('errors:database.cant_connect') })
         }
     }
 })

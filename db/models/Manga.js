@@ -5,6 +5,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.CHAR,
             allowNull: false
         },
+        is_featured: {
+            type: DataTypes.TINYINT,
+            allowNull: false,
+            defaultValue: 0
+        },
         series_status: {
             type: DataTypes.CHAR,
             allowNull: false,

@@ -15,26 +15,20 @@ const { GeneralAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 
 // Models
 const { Sequelize, Manga, MangaEpisode } = require("../../config/sequelize")
+const authCheck = require('../../middlewares/authCheck')
 
 
 // @route   GET api/manga/manga-ekle
 // @desc    Add manga (perm: "add-manga")
 // @access  Private
-router.post('/manga-ekle', async (req, res) => {
-    let username, user_id, manga
-    try {
-        const check_res = await check_permission(req.headers.authorization, "add-manga")
-        username = check_res.username
-        user_id = check_res.user_id
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.post('/manga-ekle', authCheck("add-manga"), async (req, res) => {
+    let manga
 
     try {
         manga = await Manga.findOne({ where: { name: req.body.name } })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 
     if (manga) res.status(400).json({ 'err': 'Bu manga zaten ekli.' })
@@ -63,7 +57,7 @@ router.post('/manga-ekle', async (req, res) => {
                 translators,
                 editors,
                 release_date: new Date(release_date).toISOString().slice(0, 19).replace('T', ' '),
-                created_by: user_id,
+                created_by: req.authUser.id,
                 authors,
                 cover_art,
                 mal_link,
@@ -76,7 +70,7 @@ router.post('/manga-ekle', async (req, res) => {
 
             LogAddManga({
                 process_type: 'add-manga',
-                username: username,
+                username: req.authUser.name,
                 manga_id: result.id
             })
 
@@ -128,23 +122,17 @@ router.post('/manga-ekle', async (req, res) => {
 // @route   POST api/manga/manga-guncelle
 // @desc    Update manga (perm: "update-manga")
 // @access  Private
-router.post('/manga-guncelle', async (req, res) => {
+router.post('/manga-guncelle', authCheck("update-manga"), async (req, res) => {
     const { id } = req.body
 
-    let username, manga
-    try {
-        const check_res = await check_permission(req.headers.authorization, "update-manga")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+    let manga
 
     //Güncellenecek mangayı database'te bul
     try {
         manga = await Manga.findOne({ raw: true, where: { id: id } })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 
     const { name, cover_art, synopsis, download_link, reader_link, release_date, translators, editors, genres, authors, header, logo, mal_link } = req.body
@@ -205,7 +193,7 @@ router.post('/manga-guncelle', async (req, res) => {
 
         LogUpdateManga({
             process_type: 'update-manga',
-            username: username,
+            username: req.authUser.name,
             manga_id: id
         })
 
@@ -219,23 +207,15 @@ router.post('/manga-guncelle', async (req, res) => {
 // @route   GET api/manga/manga-sil
 // @desc    Delete manga (perm: "delete-manga")
 // @access  Private
-router.post('/manga-sil/', async (req, res) => {
+router.post('/manga-sil/', authCheck("delete-manga"), async (req, res) => {
     let manga
     const { id } = req.body
-
-    let username
-    try {
-        const check_res = await check_permission(req.headers.authorization, "delete-manga")
-        username = check_res.username
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         manga = await Manga.findOne({ where: { id: id } })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 
     try {
@@ -260,7 +240,7 @@ router.post('/manga-sil/', async (req, res) => {
 
         LogDeleteManga({
             process_type: 'delete-manga',
-            username: username,
+            username: req.authUser.name,
             manga_name: manga.name
         })
 
@@ -274,66 +254,51 @@ router.post('/manga-sil/', async (req, res) => {
 // @route   POST api/manga/update-featured-manga
 // @desc    Featured manga (perm: "featured-manga")
 // @access  Private
-router.post('/update-featured-manga', async (req, res) => {
+router.post('/update-featured-manga', authCheck("featured-manga"), async (req, res) => {
     const { data } = req.body
 
-    let username
     try {
-        const check_res = await check_permission(req.headers.authorization, "featured-manga")
-        username = check_res.username
+        const resp = await Manga.update({ is_featured: 0 }, { where: { is_featured: 1 } })
+        console.log(resp)
     } catch (err) {
-        return res.status(403).json({ 'err': err })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 
     try {
-        Manga.update({ is_featured: 0 }, { where: { is_featured: 1 } })
-    } catch (err) {
-        return res.status(500).json({ 'err': error_messages.database_error })
-    }
-
-    try {
-        await Manga.update({ is_featured: 1 }, {
+        const resp = await Manga.update({ is_featured: 1 }, {
             where: {
                 name: {
-                    [Sequelize.Op.in]: data.map(({ name }) => name)
-                },
-                version: {
-                    [Sequelize.Op.in]: data.map(({ version }) => version)
+                    [Sequelize.Op.in]: data
                 }
             }
         })
-        res.status(200).json({ 'success': 'success' })
+        res.status(200).json({ 'success': 'success', payload: await Manga.findAll({ where: { is_featured: 1 } }) })
         LogFeaturedManga({
             process_type: 'featured-manga',
-            username: username
+            username: req.authUser.name
         })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
 // @route   GET api/manga/admin-featured-manga
 // @desc    Get featured-manga
 // @access  Public
-router.get('/admin-featured-manga', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "see-admin-page")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.get('/admin-featured-manga', authCheck("see-admin-page"), async (req, res) => {
     try {
         const manga = await Manga.findAll({ where: { is_featured: 1 } })
         res.status(200).json(manga)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ err: error_messages.database_error })
+        return res.status(500).json({ err: req.t('errors:database.cant_connect') })
     }
 })
 
 // @route   GET api/manga/liste
 // @desc    Get all mangas
-// @access  Private
+// @access  Public
 router.get('/liste', GeneralAPIRequestsLimiter, async (req, res) => {
     let mangas
 
@@ -356,40 +321,28 @@ router.get('/liste', GeneralAPIRequestsLimiter, async (req, res) => {
         res.status(200).json(mangaList)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
 // @route   GET api/manga/admin-liste
 // @desc    Get all mangas
 // @access  Private
-router.get('/admin-liste', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "see-admin-page")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
-
+router.get('/admin-liste', authCheck("see-admin-page"), async (req, res) => {
     try {
         const mangas = await Manga.findAll({ order: ['name'] })
         res.status(200).json(mangas)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
 // @route   GET api/manga/:slug/admin-view
 // @desc    View manga
 // @access  Private
-router.get('/:slug/admin-view', async (req, res) => {
+router.get('/:slug/admin-view', authCheck("see-manga"), async (req, res) => {
     const { slug } = req.params
-
-    try {
-        await check_permission(req.headers.authorization, "see-manga")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
 
     try {
         let manga = await Manga.findOne({ where: { slug: slug } })
@@ -402,7 +355,7 @@ router.get('/:slug/admin-view', async (req, res) => {
         }
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -456,7 +409,7 @@ router.get('/:slug', GeneralAPIRequestsLimiter, async (req, res) => {
         }
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 

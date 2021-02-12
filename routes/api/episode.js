@@ -86,7 +86,7 @@ router.get('/:slug/watch', GeneralAPIRequestsLimiter, async (req, res) => {
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -119,7 +119,7 @@ router.post('/izleme-linkleri', GeneralAPIRequestsLimiter, async (req, res) => {
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -135,7 +135,7 @@ router.post('/izleme-linkleri/admin-view', authCheck("delete-watch-link"), async
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -151,7 +151,7 @@ router.post('/indirme-linkleri/admin-view', authCheck("delete-download-link"), a
         res.status(200).json(eps)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -168,12 +168,12 @@ router.post('/bolum-ekle', authCheck("add-episode"), async (req, res) => {
         anime = await Episode.findOne({ where: { episode_number: episode_number, anime_id: anime_id, special_type: special_type } })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 
-    if (anime) res.status(400).json({ 'err': 'Bu bölüm zaten ekli.' })
+    if (anime) res.status(400).json({ 'err': req.t('errors:episode.already_exists') })
     else {
-        if (!episode_number && special_type === '') res.status(400).json({ 'err': 'Bölüm numarası veya tür seçmelisiniz.' })
+        if (!episode_number && special_type === '') res.status(400).json({ 'err': req.t('errors:episode.validation') })
 
         try {
             const result = await Episode.create({
@@ -204,7 +204,7 @@ router.post('/bolum-ekle', authCheck("add-episode"), async (req, res) => {
             return res.status(200).json({ 'success': 'success' })
         } catch (err) {
             console.log(err)
-            return res.status(500).json({ 'err': error_messages.database_error })
+            return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
         }
     }
 
@@ -232,7 +232,7 @@ router.post('/bolum-duzenle', authCheck("update-episode"), async (req, res) => {
                 return res.status(200).json({ 'success': 'success' })
             } catch (err) {
                 console.log(err)
-                return res.status(500).json({ 'err': error_messages.database_error })
+                return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
             }
             break
         case "update-data":
@@ -252,11 +252,11 @@ router.post('/bolum-duzenle', authCheck("update-episode"), async (req, res) => {
                 return res.status(200).json({ 'success': 'success' })
             } catch (err) {
                 console.log(err)
-                return res.status(500).json({ 'err': error_messages.database_error })
+                return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
             }
             break
         default:
-            return res.status(500).json({ 'err': 'İşlem türü belirtmediniz!' })
+            return res.status(500).json({ 'err': 'err' })
     }
 })
 
@@ -281,7 +281,7 @@ router.post('/bolum-sil', authCheck("delete-episode"), async (req, res) => {
 
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
-        return res.status(500).json({ 'err': 'Bir şeyler yanlış gitti.' })
+        return res.status(500).json({ 'err': 'err' })
     }
 })
 
@@ -301,7 +301,7 @@ router.post('/indirme-linki-ekle', authCheck("add-download-link"), async (req, r
 
         const { link, type } = downloadLinkExtract(linkTemp)
         if (!type) {
-            link_errors[linkTemp] = "Link tanımlanamadı."
+            link_errors[linkTemp] = req.t('errors:episode.link_couldnt_identified')
             continue
         }
 
@@ -309,18 +309,18 @@ router.post('/indirme-linki-ekle', authCheck("add-download-link"), async (req, r
             anime = await DownloadLink.findOne({ raw: true, where: { link: link } })
 
             if (anime) {
-                link_errors[linkTemp] = "Bu link zaten ekli."
+                link_errors[linkTemp] = req.t('errors:episode.link_already_exists')
                 continue
             }
         } catch (err) {
             console.log(err)
-            link_errors[linkTemp] = error_messages.database_error
+            link_errors[linkTemp] = req.t('errors:database.cant_connect')
             continue
         }
 
         const { anime_id, episode_id } = req.body
         if (!Validator.isURL(link)) {
-            link_errors[linkTemp] = "Bu bir link değil."
+            link_errors[linkTemp] = req.t('errors:episode.link_couldnt_identified')
             continue
         }
 
@@ -339,7 +339,7 @@ router.post('/indirme-linki-ekle', authCheck("add-download-link"), async (req, r
                 download_link_id: result.id
             })
         } catch (err) {
-            link_errors[linkTemp] = error_messages.database_error
+            link_errors[linkTemp] = req.t('errors:database.cant_connect')
             continue
         }
     }
@@ -371,7 +371,7 @@ router.post('/indirme-linki-sil', authCheck("delete-download-link"), async (req,
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -390,7 +390,7 @@ router.post('/izleme-linki-ekle', authCheck("add-watch-link"), async (req, res) 
 
         const { type, src } = watchLinkExtract(linkTemp)
         if (!type) {
-            link_errors[linkTemp] = "Link tanımlanamadı."
+            link_errors[linkTemp] = req.t('errors:episode.link_couldnt_identified')
             continue
         }
 
@@ -398,18 +398,18 @@ router.post('/izleme-linki-ekle', authCheck("add-watch-link"), async (req, res) 
             anime = await WatchLink.findOne({ where: { link: src }, raw: true })
 
             if (anime) {
-                link_errors[linkTemp] = "Bu link zaten ekli."
+                link_errors[linkTemp] = req.t('errors:episode.link_already_exists')
                 continue
             }
         } catch (err) {
             console.log(err)
-            link_errors[linkTemp] = error_messages.database_error
+            link_errors[linkTemp] = req.t('errors:database.cant_connect')
             continue
         }
 
         const { anime_id, episode_id } = req.body
         if (!Validator.isURL(linkTemp)) {
-            link_errors[linkTemp] = "Bu bir link değil."
+            link_errors[linkTemp] = req.t('errors:episode.link_couldnt_identified')
             continue
         }
 
@@ -429,7 +429,7 @@ router.post('/izleme-linki-ekle', authCheck("add-watch-link"), async (req, res) 
             })
         } catch (err) {
             console.log(err)
-            link_errors[`${linkTemp}`] = error_messages.database_error
+            link_errors[`${linkTemp}`] = req.t('errors:database.cant_connect')
             continue
         }
     }
@@ -462,7 +462,7 @@ router.post('/izleme-linki-sil', authCheck("delete-watch-link"), async (req, res
         return res.status(200).json({ 'success': 'success' })
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -500,7 +500,7 @@ router.get('/info/:anime_id', GeneralAPIRequestsLimiter, async (req, res) => {
         return res.status(200).json(eps)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 
@@ -523,7 +523,7 @@ router.post('/download-links/:anime_slug', GeneralAPIRequestsLimiter, async (req
         return res.status(200).json(eps)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ 'err': error_messages.database_error })
+        return res.status(500).json({ 'err': req.t('errors:database.cant_connect') })
     }
 })
 

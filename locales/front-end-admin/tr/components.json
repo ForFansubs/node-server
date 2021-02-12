@@ -59,7 +59,7 @@
             "error": "Giriş yaparken bir sorun oluştu."
         },
         "site_title": "{{site_name}} Admin - Giriş yap",
-        "user_name": "Kullanıcı adı",
+        "username": "Kullanıcı adı",
         "password": "Şifre",
         "login_button": "Giriş yap"
     },
