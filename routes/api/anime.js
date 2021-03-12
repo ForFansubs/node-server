@@ -43,129 +43,119 @@ String.prototype.mapReplace = function (map) {
 // @route   POST api/anime/anime-ekle
 // @desc    Add anime (perm: "add-anime")
 // @access  Private
-router.post(
-    "/anime-ekle",
-    authCheck("add-anime"),
-    JoiValidator(addAnimeSchema),
-    async (req, res) => {
-        //Eğer varsa anime daha önceden eklenmiş mi diye isimle kontrol et.
-        let anime = await Anime.findOne({
-            where: { name: req.body.name, version: req.body.version },
+router.post("/anime-ekle", authCheck("add-anime"), async (req, res) => {
+    //Eğer varsa anime daha önceden eklenmiş mi diye isimle kontrol et.
+    let anime = await Anime.findOne({
+        where: { name: req.body.name, version: req.body.version },
+    });
+    //Eğer varsa öne hata yolla.
+    if (anime)
+        return res
+            .status(400)
+            .json({ err: req.t("errors:anime.already_exists") });
+
+    //Slug'ı yukardaki fonksiyonla oluştur.
+    const slug =
+        standartSlugify(req.body.name) +
+        (req.body.version === "bd" ? "-bd" : "");
+
+    //Release date için default bir değer oluştur, eğer MAL'dan data alındıysa onunla değiştir
+    let release_date = req.body.release_date || new Date();
+
+    //Mal linkinin id'sini al, tekrardan buildle
+    const mal_link = `https://myanimelist.net/anime/${
+        req.body.mal_link.split("/")[4]
+    }`;
+
+    //Türleri string olarak al ve mapten Türkçeye çevir
+    let genres = req.body.genres.mapReplace(genre_map);
+
+    //Yayınlanma sezonunu string olarak al, mapten Türkçeye çevir
+    let premiered = req.body.premiered.mapReplace(season_map) || "";
+
+    //Seri durumunu string olarak al, mapten Türkçeye çevir
+    const series_status = req.body.series_status.mapReplace(status_map);
+
+    //Database'e yolla.
+    try {
+        const result = await Anime.create({
+            ...req.body,
+            series_status,
+            premiered,
+            genres,
+            mal_link,
+            release_date,
+            slug,
+            created_by: req.authUser.id,
         });
-        //Eğer varsa öne hata yolla.
-        if (anime)
-            return res
-                .status(400)
-                .json({ err: req.t("errors:anime.already_exists") });
 
-        //Slug'ı yukardaki fonksiyonla oluştur.
-        const slug =
-            standartSlugify(req.body.name) +
-            (req.body.version === "bd" ? "-bd" : "");
+        // Log
+        LogAddAnime({
+            process_type: "add-anime",
+            username: req.authUser.name,
+            anime_id: result.id,
+        });
 
-        //Release date için default bir değer oluştur, eğer MAL'dan data alındıysa onunla değiştir
-        let release_date = req.body.release_date || new Date();
+        //Discord Webhook isteği yolla.
+        sendDiscordEmbed({
+            type: "anime",
+            anime_id: result.id,
+        });
 
-        //Mal linkinin id'sini al, tekrardan buildle
-        const mal_link = `https://myanimelist.net/anime/${
-            req.body.mal_link.split("/")[4]
-        }`;
+        //Eğer logo linki verilmişse al ve diske kaydet
+        if (req.body.logo) {
+            try {
+                await downloadImage(req.body.logo, "logo", slug, "anime");
+            } catch (err) {
+                console.log(err);
+            }
+        }
 
-        //Türleri string olarak al ve mapten Türkçeye çevir
-        let genres = req.body.genres.mapReplace(genre_map);
-
-        //Yayınlanma sezonunu string olarak al, mapten Türkçeye çevir
-        let premiered = req.body.premiered.mapReplace(season_map) || "";
-
-        //Seri durumunu string olarak al, mapten Türkçeye çevir
-        const series_status = req.body.series_status.mapReplace(status_map);
-
-        //Database'e yolla.
+        //Cover_art'ı diske indir
         try {
-            const result = await Anime.create({
-                ...req.body,
-                series_status,
-                premiered,
-                genres,
-                mal_link,
-                release_date,
-                slug,
-                created_by: req.authUser.id,
-            });
-
-            // Log
-            LogAddAnime({
-                process_type: "add-anime",
-                username: req.authUser.name,
-                anime_id: result.id,
-            });
-
-            //Discord Webhook isteği yolla.
-            sendDiscordEmbed({
-                type: "anime",
-                anime_id: result.id,
-            });
-
-            //Eğer logo linki verilmişse al ve diske kaydet
-            if (req.body.logo) {
-                try {
-                    await downloadImage(req.body.logo, "logo", slug, "anime");
-                } catch (err) {
-                    console.log(err);
-                }
-            }
-
-            //Cover_art'ı diske indir
-            try {
-                await downloadImage(req.body.cover_art, "cover", slug, "anime");
-            } catch (err) {
-                console.log(err);
-            }
-
-            //Header linki yollanmışsa alıp diske kaydet
-            if (req.body.header) {
-                try {
-                    await downloadImage(
-                        req.body.header,
-                        "header",
-                        slug,
-                        "anime"
-                    );
-                } catch (err) {
-                    console.log(err);
-                }
-            }
-
-            //Metadata resmini oluştur
-            try {
-                await CreateMetacontentCanvas({
-                    type: "anime",
-                    slug,
-                    backgroundImage: req.body.header,
-                    coverArt: req.body.cover_art,
-                    t: req.t,
-                });
-            } catch (err) {
-                console.log(err);
-            }
-
-            res.status(200).json({ success: "success" });
+            await downloadImage(req.body.cover_art, "cover", slug, "anime");
         } catch (err) {
             console.log(err);
-            Anime.destroy({ where: { name: req.body.name } });
-            return res
-                .status(400)
-                .json({ err: req.t("errors:database.cant_connect") });
         }
+
+        //Header linki yollanmışsa alıp diske kaydet
+        if (req.body.header) {
+            try {
+                await downloadImage(req.body.header, "header", slug, "anime");
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        //Metadata resmini oluştur
+        try {
+            await CreateMetacontentCanvas({
+                type: "anime",
+                slug,
+                backgroundImage: req.body.header,
+                coverArt: req.body.cover_art,
+                t: req.t,
+            });
+        } catch (err) {
+            console.log(err);
+        }
+
+        res.status(200).json({ success: "success" });
+    } catch (err) {
+        console.log(err);
+        Anime.destroy({ where: { name: req.body.name } });
+        return res
+            .status(400)
+            .json({ err: req.t("errors:database.cant_connect") });
     }
-);
+});
 
 // @route   POST api/anime/anime-guncelle
 // @desc    Update anime (perm: "update-anime")
 // @access  Private
 router.post("/anime-guncelle", authCheck("update-anime"), async (req, res) => {
     // Validate body
-    await updateAnimeSchema.validateAsync(req.body);
+    // await updateAnimeSchema.validateAsync(req.body);
 
     //Güncellenecek animeyi database'te bul
     let anime = await Anime.findByPk(req.body.id);
@@ -263,7 +253,7 @@ router.post("/anime-guncelle", authCheck("update-anime"), async (req, res) => {
 // @desc    Delete anime (perm: "delete-anime")
 // @access  Private
 router.post("/anime-sil/", authCheck("delete-anime"), async (req, res) => {
-    await deleteAnimeSchema.validateAsync(req.body);
+    // await deleteAnimeSchema.validateAsync(req.body);
     const { id } = req.body;
 
     let anime = await Anime.findOne({ raw: true, where: { id: id } });
@@ -314,7 +304,7 @@ router.post(
     "/update-featured-anime",
     authCheck("featured-anime"),
     async (req, res) => {
-        await updateFeaturedAnimeSchema.validateAsync(req.body);
+        // await updateFeaturedAnimeSchema.validateAsync(req.body);
         const { data } = req.body;
 
         try {
