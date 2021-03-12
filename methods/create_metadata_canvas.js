@@ -1,13 +1,33 @@
-const fs = require('fs')
-const Path = require('path')
-const { createCanvas, registerFont, loadImage } = require("canvas")
-const { Anime, Manga } = require("../config/sequelize")
+const fs = require("fs");
+const Path = require("path");
+const { createCanvas, registerFont, loadImage } = require("canvas");
+const { Anime, Manga } = require("../config/sequelize");
 
-const width = 1200
-const height = 628
+const width = 1200;
+const height = 628;
 
-registerFont(Path.resolve(__dirname, '..', 'assets', 'fonts', 'Poppins', 'Poppins-Bold.ttf'), { family: "Poppins" })
-registerFont(Path.resolve(__dirname, '..', 'assets', 'fonts', 'SourceSansPro', 'SourceSansPro-Bold.ttf'), { family: "Source Sans Pro" })
+registerFont(
+    Path.resolve(
+        __dirname,
+        "..",
+        "assets",
+        "fonts",
+        "Poppins",
+        "Poppins-Bold.ttf"
+    ),
+    { family: "Poppins" }
+);
+registerFont(
+    Path.resolve(
+        __dirname,
+        "..",
+        "assets",
+        "fonts",
+        "SourceSansPro",
+        "SourceSansPro-Bold.ttf"
+    ),
+    { family: "Source Sans Pro" }
+);
 
 function wrapText(context, text, x, y, maxWidth, lineHeight) {
     const initialY = y;
@@ -85,16 +105,7 @@ function drawImageProp(ctx, img, x, y, w, h, offsetX, offsetY) {
     ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
 }
 
-function roundRect(
-    ctx,
-    x,
-    y,
-    width,
-    height,
-    radius,
-    fill,
-    stroke
-) {
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
     if (typeof stroke === "undefined") {
         stroke = true;
     }
@@ -133,45 +144,57 @@ function roundRect(
     }
 }
 
-module.exports = async function CreateMetacontentCanvas({ type, slug, backgroundImage, coverArt }) {
-    let content = null
+module.exports = async function CreateMetacontentCanvas({
+    type,
+    slug,
+    backgroundImage,
+    coverArt,
+    t,
+}) {
+    let content = null;
 
     switch (type) {
         case "anime":
-            content = await Anime.findOne({ where: { slug: slug } })
+            content = await Anime.findOne({ where: { slug: slug } });
             break;
         case "manga":
-            content = await Manga.findOne({ where: { slug: slug } })
-            break
+            content = await Manga.findOne({ where: { slug: slug } });
+            break;
         default:
             break;
     }
 
-    if (!content) return false
+    if (!content) return false;
 
-    const headerPath = Path.resolve(__dirname, `../images/${type}/${slug}-header.jpeg`)
-    const coverPath = Path.resolve(__dirname, `../images/${type}/${slug}-cover.jpeg`)
-    const logoPath = Path.resolve(__dirname, "../images/static/logo.png")
+    const headerPath = Path.resolve(
+        __dirname,
+        `../images/${type}/${slug}-header.jpeg`
+    );
+    const coverPath = Path.resolve(
+        __dirname,
+        `../images/${type}/${slug}-cover.jpeg`
+    );
+    const logoPath = Path.resolve(__dirname, "../images/static/logo.png");
 
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    let background = null
+    let background = null;
     try {
-        background = await loadImage(backgroundImage || headerPath)
+        background = await loadImage(backgroundImage || headerPath);
     } catch (err) {
         try {
-            background = await loadImage(coverArt || coverPath)
+            background = await loadImage(coverArt || coverPath);
         } catch (err) {
-            background = await loadImage(content.cover_art)
-            console.log(err)
+            background = await loadImage(content.cover_art);
+            console.log(err);
         }
-        console.log(err)
+        console.log(err);
     }
     // Draw background image
-    ctx.filter = "blur(5px)"
+    ctx.filter = "blur(5px)";
     if (background) drawImageProp(ctx, background, 0, 0, width, height);
     // Clear filter
     ctx.filter = "none";
@@ -244,47 +267,49 @@ module.exports = async function CreateMetacontentCanvas({ type, slug, background
         genreWidth += tempGenre.width;
     }
     // Draw cover art
-    let cover_art = null
+    let cover_art = null;
     try {
-        cover_art = await loadImage(coverArt || coverPath)
+        cover_art = await loadImage(coverArt || coverPath);
     } catch (err) {
-        cover_art = await loadImage(content.cover_art)
-        console.log(err)
+        cover_art = await loadImage(content.cover_art);
+        console.log(err);
     }
     ctx.shadowBlur = 12;
     ctx.shadowColor = "rgba(0,0,0,.5)";
     if (cover_art) drawImageProp(ctx, cover_art, width - 350, 130, 250, 350);
     // Draw logo
-    let logo_image = null
+    let logo_image = null;
     try {
-        logo_image = await loadImage(logoPath)
+        logo_image = await loadImage(logoPath);
     } catch (err) {
-        console.log(err)
+        console.log(err);
     }
     if (logo_image) drawImageProp(ctx, logo_image, 100, 25, 100, 100);
     // Draw FFs Copyright
     const textWidth = ctx.measureText("Powered by ForFansubs").width;
-    ctx.fillText(
-        "Powered by ForFansubs",
-        width - textWidth - 20,
-        height - 20
+    ctx.fillText("Powered by ForFansubs", width - textWidth - 20, height - 20);
+    const typeFolderPath = Path.resolve(
+        __dirname,
+        "../",
+        "images",
+        "metadata",
+        type
     );
-    const typeFolderPath = Path.resolve(__dirname, '../', 'images', 'metadata', type)
-    if (!fs.existsSync(typeFolderPath)) fs.mkdirSync(typeFolderPath)
+    if (!fs.existsSync(typeFolderPath)) fs.mkdirSync(typeFolderPath);
 
     const streamToFile = (path, stream) => {
         return new Promise((resolve, reject) => {
-            const out = fs.createWriteStream(path)
-            stream
-                .pipe(out)
-                .on('finish', resolve)
-                .on('error', reject)
-        })
-    }
+            const out = fs.createWriteStream(path);
+            stream.pipe(out).on("finish", resolve).on("error", reject);
+        });
+    };
 
     try {
-        await streamToFile(Path.resolve(typeFolderPath, `${slug}.png`), canvas.createPNGStream())
+        await streamToFile(
+            Path.resolve(typeFolderPath, `${slug}.png`),
+            canvas.createPNGStream()
+        );
     } catch (err) {
-        console.log(err)
+        console.log(err);
     }
-}
+};
