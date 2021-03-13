@@ -1,0 +1,34 @@
+{
+    "database": {
+        "cant_connect": "Can't connect to the database."
+    },
+    "user": {
+        "login": {
+            "no_email": "Email hesabınızı girmeniz gerekiyor",
+            "no_password": "Şifrenizi girmeniz gerekiyor",
+            "wrong_username_or_password": "Girdiğiniz bilgiler yanlış",
+            "wrong_password": "Girdiğiniz şifre yanlış",
+            "no_user": "Kullanıcı bulunamadı",
+            "account_not_activated": "Kullanıcı aktif edilmemiş"
+        },
+        "register": {
+            "email_in_use": "Bu mail adresi zaten kayıtlı",
+            "username_in_use": "Bu kullanıcı ismi zaten kayıtlı",
+            "info_in_use": "Bu kullanıcı adı ya da mail adresi zaten kayıtlı",
+            "email_send_error": "Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin."
+        }
+    },
+    "anime": {
+        "already_exists": "Bu anime zaten ekli.",
+        "no_anime": "Görüntülemek istediğiniz animeyi bulamadık."
+    },
+    "episode": {
+        "already_exists": "Bu bölüm zaten ekli.",
+        "validation": "Bölüm numarası veya tür seçmelisiniz.",
+        "link_couldnt_identified": "Link tanımlanamadı.",
+        "link_already_exists": "Bu link zaten ekli."
+    },
+    "manga_episode": {
+        "already_exists": "Bu bölüm zaten kayıtlı!"
+    }
+}

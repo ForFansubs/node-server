@@ -423,12 +423,8 @@
     "user": {
         "common": {
             "inputs": {
-                "name": "Kullanıcı İsmi",
-                "password": "Kullanıcı Şifresi",
-                "password2": "Kullanıcı Şifresi Tekrar",
                 "permission_level": "Kullanıcı Rolü",
-                "avatar": "Kullanıcı avatar linki",
-                "email": "Kullanıcı email"
+                "avatar": "Kullanıcı avatar linki"
             }
         },
         "update": {

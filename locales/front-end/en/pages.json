@@ -121,7 +121,8 @@
             "title": "Register",
             "buttons": {
                 "have_account": "Have an account? Login now!"
-            }
+            },
+            "success": "Your account is registered successfully. Please confirm your mail adress."
         }
     }
 }

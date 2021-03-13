@@ -121,7 +121,8 @@
             "title": "Kayıt ol",
             "buttons": {
                 "have_account": "Hesabınız var mı? Giriş yapın"
-            }
+            },
+            "success": "Hesabınız başarıyla oluşturuldu. Lütfen mail adresinizi doğrulayın."
         }
     }
 }

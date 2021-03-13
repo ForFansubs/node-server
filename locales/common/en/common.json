@@ -64,10 +64,13 @@
     },
     "episode": {
         "episode_title": "Episode {{episode_number}}",
+        "total_episode_count": "{{count}} Episode",
+        "total_episode_count_prular": "{{count}} Episodes",
         "episode_title_batch": "BATCH LINK",
         "episode_title_batch_episode_number": "BATCH LINK for {{episode_number}}"
     },
     "metadata": {},
     "date_format": "MM.dd.yyyy",
-    "calendar_date_format": "MM.dd"
+    "calendar_date_format": "MM.dd",
+    "date_picker_format": "dd/MM/yyyy"
 }

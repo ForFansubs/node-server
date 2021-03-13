@@ -1,0 +1,459 @@
+{
+    "common": {
+        "index": {
+            "create": "Create",
+            "update": "Update",
+            "delete": "Delete",
+            "feature": "Feature"
+        },
+        "buttons": {
+            "send_discord_embed": "Send notification to Discord",
+            "dont_send_discord_embed": "Don't send notification to Discord",
+            "can_user_download": "Show this on download page",
+            "cant_user_download": "Don't show this on download page",
+            "close": "Close",
+            "update": "Update",
+            "save": "Save",
+            "upload_pages": "Upload pages",
+            "get_information": "Get Information",
+            "clean_information": "Clear Information",
+            "add_without_api": "Add without API",
+            "yes": "Yes",
+            "no": "No"
+        },
+        "inputs": {
+            "episode_number_input": "Episode Number",
+            "credits_input": "Credits",
+            "special_type_input": "Special Type",
+            "episode_name_input": "Episode Name",
+            "mal_link": {
+                "label": "MyAnimeList Link",
+                "helperText": "https://myanimelist.net/anime/32526/Love_Live_Sunshine or https://myanimelist.net/manga/99529 (if there's none -)"
+            },
+            "cover_art": {
+                "label": "Cover Art Link",
+                "helperText": ""
+            },
+            "logo": {
+                "label": "Logo Link",
+                "helperText": "You can delete existing art with typing - ."
+            },
+            "header": {
+                "label": "Header Art Link",
+                "helperText": "You can delete existing art with typing - ."
+            },
+            "name": {
+                "label": "Name",
+                "helperText": ""
+            },
+            "synopsis": {
+                "label": "Synopsis",
+                "helperText": ""
+            },
+            "translators": {
+                "label": "Translators",
+                "helperText": "Seperate the names with ',' and without any spaces. name1,name2 etc."
+            },
+            "encoders": {
+                "label": "Encoders",
+                "helperText": "Seperate the names with ',' and without any spaces. name1,name2 etc."
+            },
+            "editors": {
+                "label": "Editors",
+                "helperText": "Seperate the names with ',' and without any spaces. name1,name2 etc."
+            },
+            "studios": {
+                "label": "Studios",
+                "helperText": "Seperate the names with ',' and without any spaces. name1,name2 etc."
+            },
+            "authors": {
+                "label": "Authors",
+                "helperText": "Seperate the names with ',' and without any spaces. name1,name2 etc."
+            },
+            "genres": {
+                "label": "Genres",
+                "helperText": "Seperate the names with ',' and without any spaces. name1,name2 etc."
+            },
+            "premiered": {
+                "label": "Premiered",
+                "helperText": "Spring/Summer/Fall/Winter XXXX (Please don't touch this if you're adding with API)"
+            },
+            "reader_link": {
+                "label": "Reading Site Link",
+                "helperText": "If you're using another site for reading, type the link here."
+            },
+            "download_link": {
+                "label": "Download link",
+                "helperText": ""
+            },
+            "pv": {
+                "label": "PV",
+                "helperText": "Sadece Youtube linki"
+            },
+            "episode_count": {
+                "label": "Episode count",
+                "helperText": ""
+            },
+            "version": {
+                "label": "Version",
+                "helperText": ""
+            },
+            "series_status": {
+                "label": "Series Status",
+                "helperText": ""
+            },
+            "trans_status": {
+                "label": "Translation Status",
+                "helperText": ""
+            }
+        },
+        "errors": {
+            "database_error": "Can't connect to the database."
+        }
+    },
+    "index": {
+        "anime": {
+            "title": "Anime Statistics",
+            "anime_count": "Anime Count",
+            "episode_count": "Episode Count",
+            "download_link_count": "Download Link Count",
+            "watch_link_count": "Watch Link Count"
+        },
+        "manga": {
+            "title": "Manga Statistics",
+            "manga_count": "Manga Count",
+            "episode_count": "Episode Count"
+        },
+        "site_statistics": {
+            "title": "Site Statistics",
+            "user_count": "User Count"
+        }
+    },
+    "anime": {
+        "create": {
+            "errors": {
+                "wrong_mal_link": "This link isn't related to MyAnimeList.",
+                "cant_find_link": "We couldn't find data from the link you provided.",
+                "error": "We encountered a problem while adding the anime."
+            },
+            "warnings": {
+                "success": "Anime added successfully."
+            }
+        },
+        "update": {
+            "errors": {
+                "error": "We encountered a problem while updating the anime."
+            },
+            "warnings": {
+                "success": "Anime updated successfully."
+            },
+            "inputs": {
+                "logo": {
+                    "helperText": "You can delete existing art with typing - ."
+                },
+                "header": {
+                    "helperText": "You can delete existing art with typing - ."
+                }
+            },
+            "selector": "Select the anime you want to update"
+        },
+        "delete": {
+            "errors": {
+                "error": "We encountered a problem while deleting the anime."
+            },
+            "warnings": {
+                "title": "You are about to delete {{title}}",
+                "subtitle": "This action is irreversible. All episodes, watch and download links related to this anime will be deleted.",
+                "success": "Anime deleted successfully."
+            },
+            "selector": "Select the anime you want to delete"
+        },
+        "featured": {
+            "errors": {
+                "error": "We encountered a problem while featuring the anime."
+            },
+            "warnings": {
+                "success": "Anime featured successfully."
+            },
+            "selector": "Select the anime you want to feature"
+        }
+    },
+    "episode": {
+        "index": {
+            "watch_link": "Watch Links",
+            "download_link": "Download Links"
+        },
+        "common": {
+            "links": "Links",
+            "links_add_success": "Links were added successfully.",
+            "link_delete_success": "Link deleted successfully.",
+            "inputs": {
+                "helper_text_success": "You can type multiple links here. All links should be in their own line.",
+                "helper_text_error": "You have incorrect links!",
+                "episode_number_input": "Episode Number"
+            }
+        },
+        "download_link": {
+            "create": {
+                "errors": {
+                    "error": "We encountered a problem while adding the links."
+                },
+                "anime_selector": "Select the anime you want to add links",
+                "episode_selector": "Select the episode you want to add links"
+            },
+            "delete": {
+                "errors": {
+                    "error": "We encountered a problem while deleting the link.",
+                    "links_not_found": "Couldn't find any link added to this episode."
+                },
+                "anime_selector": "Select the anime you want to delete links from",
+                "episode_selector": "Select the episode you want to delete links from",
+                "buttons": {
+                    "download_link": "Download link"
+                }
+            }
+        },
+        "watch_link": {
+            "create": {
+                "errors": {
+                    "error": "We encountered a problem while adding the links."
+                },
+                "anime_selector": "Select the anime you want to add links",
+                "episode_selector": "Select the episode you want to add links"
+            },
+            "delete": {
+                "errors": {
+                    "error": "We encountered a problem while deleting the link.",
+                    "links_not_found": "Couldn't find any link added to this episode."
+                },
+                "anime_selector": "Select the anime you want to delete links from",
+                "episode_selector": "Select the episode you want to delete links from",
+                "buttons": {
+                    "watch_link": "Watch Link"
+                }
+            }
+        },
+        "create": {
+            "warnings": {
+                "success": "Episode added successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while adding the episode."
+            },
+            "anime_selector": "Select the anime you want to add episode"
+        },
+        "update": {
+            "warnings": {
+                "can_user_download_success": "Visibility updated successfully.",
+                "success": "Episode updated successfully."
+            },
+            "errors": {
+                "episodes_not_found": "Couldn't find any episode added to this anime.",
+                "can_user_download_error": "We encountered a problem while updating the visibility.",
+                "error": "We encountered a problem while updating the episode."
+            },
+            "inputs": {
+                "batch_link": "Batch Link"
+            },
+            "anime_selector": "Select the anime you want to update an episode from"
+        },
+        "delete": {
+            "warnings": {
+                "success": "Episode deleted successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while deleting the episode."
+            },
+            "anime_selector": "Select the anime you want to delete an episode from",
+            "anime_title": "You're about to delete {{anime_title}}"
+        }
+    },
+    "logs": {
+        "keys": {
+            "user_name": "Username",
+            "text": "Process",
+            "created_time": "Process Time"
+        }
+    },
+    "manga": {
+        "update": {
+            "warnings": {
+                "success": "Manga updated successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while updating the manga."
+            },
+            "manga_selector": "Select the manga you want to update"
+        },
+        "create": {
+            "warnings": {
+                "success": "Manga added successfully."
+            },
+            "errors": {
+                "wrong_mal_link": "This link isn't related to MyAnimeList.",
+                "error": "We encountered a problem while adding the manga."
+            }
+        },
+        "delete": {
+            "errors": {
+                "error": "We encountered a problem while deleting the manga."
+            },
+            "warnings": {
+                "title": "You are about to delete {{title}}",
+                "subtitle": "This action is irreversible. All episodes related to this manga will be deleted.",
+                "success": "Manga deleted successfully."
+            },
+            "selector": "Select the manga you want to delete"
+        },
+        "featured": {
+            "errors": {
+                "error": "We encountered a problem while featuring the manga."
+            },
+            "warnings": {
+                "success": "Manga featured successfully."
+            },
+            "selector": "Select the manga you want to feature"
+        }
+    },
+    "manga_episode": {
+        "create": {
+            "warnings": {
+                "success": "Manga episode added successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while adding the manga episode."
+            },
+            "manga_selector": "Select the manga you want to add episode"
+        },
+        "update": {
+            "errors": {
+                "episodes_not_found": "Couldn't find any episode added to this manga."
+            },
+            "manga_selector": "Select the manga you want to update an episode from"
+        },
+        "delete": {
+            "warnings": {
+                "success": "Manga episode deleted successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while deleting the episode."
+            },
+            "manga_selector": "Select the manga you want to delete an episode from",
+            "manga_title": "You're about to delete {{anime_title}}"
+        }
+    },
+    "motd": {
+        "update": {
+            "warnings": {
+                "is_active_success": "Visibility updated successfully."
+            },
+            "errors": {
+                "is_active_error": "We encountered a problem while updating the visibility."
+            },
+            "content_info": "Content ID: {{content_id}} // Content Type: {{content_type}}"
+        },
+        "create": {
+            "warnings": {
+                "success": "MOTD added successfully."
+            },
+            "errors": {
+                "anime_database_error": "We encountered a problem while getting the anime.",
+                "manga_database_error": "We encountered a problem while getting the manga.",
+                "episode_database_error": "We encountered a problem while getting the episodes.",
+                "manga_episode_database_error": "We encountered a problem while getting the manga episodes.",
+                "error": "We encountered a problem while adding the MOTD."
+            },
+            "inputs": {
+                "title": "MOTD Title",
+                "subtitle": "MOTD Content",
+                "homepage": "Nothing (Homepage)"
+            },
+            "page_selector": "Select the page you want to relate the MOTD with",
+            "content_selector": "Select the content you want to relate the MOTD with",
+            "episode_selector": "Select the episode you want to relate the MOTD with",
+            "can_user_dismiss": "Can users dismiss this MOTD?"
+        },
+        "delete": {
+            "warnings": {
+                "success": "MOTD deleted successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while deleting the MOTD."
+            }
+        },
+        "inputs": {
+            "main_page": "Homepage"
+        }
+    },
+    "perms": {
+        "common": {
+            "inputs": {
+                "name": "Role Name",
+                "color": "Role Color"
+            }
+        },
+        "update": {
+            "warnings": {
+                "success": "Role updated successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while updating the role."
+            },
+            "perm_selector": "Select the role you want to update"
+        },
+        "create": {
+            "warnings": {
+                "success": "Role added successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while adding the MOTD."
+            }
+        },
+        "delete": {
+            "warnings": {
+                "success": "Role deleted successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while deleting the MOTD."
+            },
+            "perm_selector": "Select the role you want to delete",
+            "perm_title": "You're about to delete {{perm_title}}"
+        }
+    },
+    "user": {
+        "common": {
+            "inputs": {
+                "permission_level": "User role",
+                "avatar": "User avatar link"
+            }
+        },
+        "update": {
+            "warnings": {
+                "success": "User info updated successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while updating the user."
+            },
+            "user_selector": "Select the user you want to update"
+        },
+        "create": {
+            "warnings": {
+                "success": "User added successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while adding the user."
+            }
+        },
+        "delete": {
+            "warnings": {
+                "success": "User deleted successfully."
+            },
+            "errors": {
+                "error": "We encountered a problem while deleting the user."
+            },
+            "user_selector": "Select the user you want to delete",
+            "user_title": "You're about to delete {{user_title}}",
+            "user_title_subtitle": "This action is irreversible."
+        }
+    }
+}

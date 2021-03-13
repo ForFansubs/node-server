@@ -64,8 +64,7 @@
         "login_button": "Giriş yap"
     },
     "datepicker": {
-        "label": "Çıkış tarihi",
-        "format": "dd/MM/yyyy"
+        "label": "Çıkış tarihi"
     },
     "timepicker": {
         "label": "Çıkış saati"

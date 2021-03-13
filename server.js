@@ -116,6 +116,9 @@ const IndexRequestsLimiter = rateLimit({
 // i18next middleware
 function getLoadPath(ns) {
     switch (ns) {
+        case "common": {
+            return __dirname + "/locales/common/{{lng}}/common.json";
+        }
         case "days": {
             return __dirname + "/locales/common/{{lng}}/{{ns}}.json";
         }
@@ -143,7 +146,15 @@ i18next
         {
             preload: ["tr", "en"],
             fallbackLng: ["tr"],
-            ns: ["days", "seasons", "genres", "errors", "mail"],
+            ns: [
+                "common",
+                "days",
+                "seasons",
+                "genres",
+                "errors",
+                "mail",
+                "metadata",
+            ],
             backend: {
                 loadPath: (_, ns) => getLoadPath(ns),
                 jsonIndent: 4,

@@ -209,8 +209,12 @@ module.exports = async function CreateMetacontentCanvas({
     ctx.shadowColor = "rgba(0,0,0,0.3)";
     let premieredText = { width: 0, height: 0 };
     if (content.premiered) {
-        ctx.fillText(content.premiered, 100, 150);
-        premieredText = ctx.measureText(content.premiered);
+        const splitPremiered = content.premiered.split(" ");
+        const premieredTrans = `${t(`seasons:${splitPremiered[0]}`)} ${
+            splitPremiered[1]
+        }`;
+        ctx.fillText(premieredTrans, 100, 150);
+        premieredText = ctx.measureText(premieredTrans);
     }
     // Draw bullet if premiered and episode count exists
     if (content.premiered && content.episode_count) {
@@ -219,7 +223,9 @@ module.exports = async function CreateMetacontentCanvas({
     // Draw episode count if exists
     if (content.episode_count) {
         ctx.fillText(
-            `${content.episode_count} Bölüm`,
+            t("common:episode.total_episode_count", {
+                count: content.episode_count,
+            }),
             100 + premieredText.width + (content.premiered ? 30 : 0),
             150
         );
@@ -232,6 +238,28 @@ module.exports = async function CreateMetacontentCanvas({
     ctx.fillStyle = "#FF00C1";
     ctx.font = "36px Source Sans Pro";
     ctx.fillText(content.studios, 100, 260 + studioPosition * 60);
+    // Draw credits
+    // Credits styles
+    ctx.fillStyle = "#FFF";
+    ctx.font = "22px Source Sans Pro";
+    wrapText(
+        ctx,
+        t("metadata:translators", {
+            translators: content.translators,
+        }),
+        100,
+        height - 162,
+        650,
+        24
+    );
+    wrapText(
+        ctx,
+        t("metadata:encoders", { encoders: content.encoders }),
+        100,
+        height - 132,
+        650,
+        24
+    );
     // Draw genres
     // Genre styles
     ctx.fillStyle = "#ccc";
@@ -244,7 +272,7 @@ module.exports = async function CreateMetacontentCanvas({
         // If it's at 7th genre, stop drawing
         if (index > 6) return;
         // Genre width for background size and other genres
-        const tempGenre = ctx.measureText(genre);
+        const tempGenre = ctx.measureText(t(`genres:${genre}`));
         ctx.fillStyle = "rgba(0,0,0,0.5)";
         // Draw background rectangles
         roundRect(
@@ -260,7 +288,11 @@ module.exports = async function CreateMetacontentCanvas({
         // Change color for text
         ctx.fillStyle = "#ccc";
         // Print genre on top of background
-        ctx.fillText(genre, 10 + genreWidth + 100 + index * 30, height - 62);
+        ctx.fillText(
+            t(`genres:${genre}`),
+            10 + genreWidth + 100 + index * 30,
+            height - 62
+        );
         // Increment index by 1 for margin
         index += 1;
         // Add width of current genre for later placement use

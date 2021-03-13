@@ -64,6 +64,7 @@
     },
     "episode": {
         "episode_title": "{{episode_number}}. Bölüm",
+        "total_episode_count": "{{count}} Bölüm",
         "episode_title_batch": "TOPLU LİNK",
         "episode_title_batch_episode_number": "TOPLU LİNK {{episode_number}}"
     },
