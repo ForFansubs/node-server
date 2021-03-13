@@ -70,5 +70,6 @@
     },
     "metadata": {},
     "date_format": "dd.MM.yyyy",
-    "calendar_date_format": "dd.MM"
+    "calendar_date_format": "dd.MM",
+    "date_picker_format": "dd/MM/yyyy"
 }
