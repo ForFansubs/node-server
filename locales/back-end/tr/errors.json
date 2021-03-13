@@ -4,9 +4,6 @@
     },
     "user": {
         "login": {
-            "no_email": "Email hesabınızı girmeniz gerekiyor",
-            "no_password": "Şifrenizi girmeniz gerekiyor",
-            "wrong_username_or_password": "Girdiğiniz bilgiler yanlış",
             "wrong_password": "Girdiğiniz şifre yanlış",
             "no_user": "Kullanıcı bulunamadı",
             "account_not_activated": "Kullanıcı aktif edilmemiş"
@@ -24,11 +21,11 @@
     },
     "episode": {
         "already_exists": "Bu bölüm zaten ekli.",
-        "validation": "Bölüm numarası veya tür seçmelisiniz.",
+        "validation": "Bölüm numarası yazmalı veya tür seçmelisiniz.",
         "link_couldnt_identified": "Link tanımlanamadı.",
         "link_already_exists": "Bu link zaten ekli."
     },
     "manga_episode": {
-        "already_exists": "Bu bölüm zaten kayıtlı!"
+        "already_exists": "Bu bölüm zaten kayıtlı."
     }
 }

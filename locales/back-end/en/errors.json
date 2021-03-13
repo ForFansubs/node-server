@@ -4,31 +4,28 @@
     },
     "user": {
         "login": {
-            "no_email": "Email hesabınızı girmeniz gerekiyor",
-            "no_password": "Şifrenizi girmeniz gerekiyor",
-            "wrong_username_or_password": "Girdiğiniz bilgiler yanlış",
-            "wrong_password": "Girdiğiniz şifre yanlış",
-            "no_user": "Kullanıcı bulunamadı",
-            "account_not_activated": "Kullanıcı aktif edilmemiş"
+            "wrong_password": "Wrong password",
+            "no_user": "Username is not found",
+            "account_not_activated": "User is not activated"
         },
         "register": {
-            "email_in_use": "Bu mail adresi zaten kayıtlı",
-            "username_in_use": "Bu kullanıcı ismi zaten kayıtlı",
-            "info_in_use": "Bu kullanıcı adı ya da mail adresi zaten kayıtlı",
-            "email_send_error": "Mail yollama sırasında bir sorun oluştu. Lütfen yöneticiyle iletişime geçin."
+            "email_in_use": "This mail adress is already in use",
+            "username_in_use": "This username is already in use",
+            "info_in_use": "This username or mail adress is already in use",
+            "email_send_error": "We had some problems while sending the mail. Please try again later."
         }
     },
     "anime": {
-        "already_exists": "Bu anime zaten ekli.",
-        "no_anime": "Görüntülemek istediğiniz animeyi bulamadık."
+        "already_exists": "This anime is already in database.",
+        "no_anime": "Couldn't find the anime you're looking for."
     },
     "episode": {
-        "already_exists": "Bu bölüm zaten ekli.",
-        "validation": "Bölüm numarası veya tür seçmelisiniz.",
-        "link_couldnt_identified": "Link tanımlanamadı.",
-        "link_already_exists": "Bu link zaten ekli."
+        "already_exists": "This episode is already in database.",
+        "validation": "You either have to type episode number or choose special type.",
+        "link_couldnt_identified": "We couldn't identify this link.",
+        "link_already_exists": "This link is already in database."
     },
     "manga_episode": {
-        "already_exists": "Bu bölüm zaten kayıtlı!"
+        "already_exists": "This episode is already in database."
     }
 }
