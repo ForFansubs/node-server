@@ -1,4 +1,8 @@
 {
+    "service_worker": {
+        "message": "We updated the site.",
+        "button": "Update"
+    },
     "header": {
         "index": {
             "default": "Home",

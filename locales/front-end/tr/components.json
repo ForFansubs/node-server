@@ -1,4 +1,8 @@
 {
+    "service_worker": {
+        "message": "Uygulamanın yeni bir sürümü var.",
+        "button": "Güncelle"
+    },
     "header": {
         "index": {
             "default": "Ana sayfa",
