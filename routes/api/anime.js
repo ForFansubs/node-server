@@ -220,21 +220,18 @@ router.post("/anime-guncelle", authCheck("update-anime"), async (req, res) => {
         //Eğer header inputuna "-" konulmuşsa, diskteki resmi sil
         if (req.body.header === "-") {
             await deleteImage(slug, "anime", "header");
-            await CreateMetacontentCanvas({
-                type: "anime",
-                slug,
-                coverArt: req.body.cover_art,
-                t: req.t,
-            });
         }
 
         //Eğer bir header linki gelmişse, bu resmi indirip diskteki resmi değiştir
         if (req.body.header && req.body.header !== "-") {
             await downloadImage(req.body.header, "header", slug, "anime");
+        }
+
+        if (req.body.cover_art) {
             await CreateMetacontentCanvas({
                 type: "anime",
                 slug,
-                backgroundImage: req.body.header,
+                backgroundImage: req.body.header || undefined,
                 coverArt: req.body.cover_art,
                 t: req.t,
             });
