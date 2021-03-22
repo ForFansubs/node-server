@@ -237,7 +237,15 @@ module.exports = async function CreateMetacontentCanvas({
     // Draw studio
     ctx.fillStyle = "#FF00C1";
     ctx.font = "36px Source Sans Pro";
-    ctx.fillText(content.studios, 100, 260 + studioPosition * 60);
+    if (type === "anime") {
+        if (content.studios) {
+            ctx.fillText(content.studios, 100, 260 + studioPosition * 60);
+        }
+    } else {
+        if (content.authors) {
+            ctx.fillText(content.authors, 100, 260 + studioPosition * 60);
+        }
+    }
     // Draw credits
     // Credits styles
     ctx.fillStyle = "#FFF";
@@ -252,14 +260,29 @@ module.exports = async function CreateMetacontentCanvas({
         650,
         24
     );
-    wrapText(
-        ctx,
-        t("metadata:encoders", { encoders: content.encoders }),
-        100,
-        height - 132,
-        650,
-        24
-    );
+    if (type === "anime") {
+        if (content.encoders) {
+            wrapText(
+                ctx,
+                t("metadata:encoders", { encoders: content.encoders }),
+                100,
+                height - 132,
+                650,
+                24
+            );
+        }
+    } else {
+        if (content.editors) {
+            wrapText(
+                ctx,
+                t("metadata:editors", { editors: content.editors }),
+                100,
+                height - 132,
+                650,
+                24
+            );
+        }
+    }
     // Draw genres
     // Genre styles
     ctx.fillStyle = "#ccc";

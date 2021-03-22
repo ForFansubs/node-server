@@ -1,4 +1,5 @@
 {
     "translators": "Çevirmen: {{translators}}",
-    "encoders": "Encoder: {{encoders}}"
+    "encoders": "Encoder: {{encoders}}",
+    "editors": "Editör: {{editors}}"
 }
