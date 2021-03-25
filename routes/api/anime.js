@@ -100,6 +100,7 @@ router.post("/anime-ekle", authCheck("add-anime"), async (req, res) => {
         sendDiscordEmbed({
             type: "anime",
             anime_id: result.id,
+            t: req.t,
         });
 
         //Eğer logo linki verilmişse al ve diske kaydet

@@ -98,6 +98,7 @@ router.post("/manga-ekle", authCheck("add-manga"), async (req, res) => {
             sendDiscordEmbed({
                 type: "manga",
                 manga_id: result.id,
+                t: req.t
             });
 
             //Eğer logo linki verilmişse al ve diske kaydet

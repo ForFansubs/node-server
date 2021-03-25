@@ -154,6 +154,7 @@ i18next
                 "errors",
                 "mail",
                 "metadata",
+                "discordEmbed",
             ],
             backend: {
                 loadPath: (_, ns) => getLoadPath(ns),

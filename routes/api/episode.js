@@ -249,6 +249,7 @@ router.post("/bolum-ekle", authCheck("add-episode"), async (req, res) => {
                     credits,
                     special_type,
                     episode_number,
+                    t: req.t,
                 });
             }
 

@@ -1,0 +1,21 @@
+{
+    "general": {
+        "synopsis": "Özet",
+        "translators": "Çevirmen(ler)",
+        "credits": "Emektarlar"
+    },
+    "anime": {
+        "name": "Yeni Anime Habercisi",
+        "encoders": "Encoder(lar)"
+    },
+    "manga": {
+        "name": "Yeni Manga Habercisi",
+        "editors": "Editör(ler)"
+    },
+    "episode": {
+        "name": "Yeni Bölüm Habercisi"
+    },
+    "manga_episode": {
+        "name": "Yeni Manga Bölümü Habercisi"
+    }
+}
