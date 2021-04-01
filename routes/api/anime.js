@@ -166,11 +166,15 @@ router.post("/anime-guncelle", authCheck("update-anime"), async (req, res) => {
     //Türleri string olarak al ve mapten Türkçeye çevir
     let genres = req.body.genres;
     genres = genres.mapReplace(genre_map);
+    console.log(anime.version);
 
     //Eğer içeriğin türü değiştiyse, slug'ı ona göre değiştir.
     if (req.body.version !== anime.version) {
         const oldSlug = slug;
-        slug = version === "bd" ? `${slug}-bd` : `${slug.replace("-bd", "")}`;
+        slug =
+            req.body.version === "bd"
+                ? `${slug}-bd`
+                : `${slug.replace("-bd", "")}`;
         try {
             await renameImage(oldSlug, slug, "logo", "anime");
             await renameImage(oldSlug, slug, "header", "anime");
