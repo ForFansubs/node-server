@@ -1,0 +1,31 @@
+{
+    "database": {
+        "cant_connect": "Can't connect to the database."
+    },
+    "user": {
+        "login": {
+            "wrong_password": "Wrong password",
+            "no_user": "Username is not found",
+            "account_not_activated": "User is not activated"
+        },
+        "register": {
+            "email_in_use": "This mail adress is already in use",
+            "username_in_use": "This username is already in use",
+            "info_in_use": "This username or mail adress is already in use",
+            "email_send_error": "We had some problems while sending the mail. Please try again later."
+        }
+    },
+    "anime": {
+        "already_exists": "This anime is already in database.",
+        "no_anime": "Couldn't find the anime you're looking for."
+    },
+    "episode": {
+        "already_exists": "This episode is already in database.",
+        "validation": "You either have to type episode number or choose special type.",
+        "link_couldnt_identified": "We couldn't identify this link.",
+        "link_already_exists": "This link is already in database."
+    },
+    "manga_episode": {
+        "already_exists": "This episode is already in database."
+    }
+}

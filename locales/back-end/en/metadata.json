@@ -1,0 +1,5 @@
+{
+    "translators": "Translator: {{translators}}",
+    "encoders": "Encoder: {{encoders}}",
+    "editors": "Editor: {{editors}}"
+}

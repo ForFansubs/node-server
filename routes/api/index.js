@@ -5,13 +5,10 @@ const check_permission = require('../../middlewares/check_permission')
 const axios = require("axios")
 const genremap = require('../../config/maps/genremap')
 const standartSlugify = require('standard-slugify')
-const Log = require('../../models/Log')
-const Anime = require('../../models/Anime')
-const Manga = require('../../models/Manga')
-const Episode = require('../../models/Episode')
-const MangaEpisode = require('../../models/MangaEpisode')
-const Sequelize = require('sequelize')
 const { IndexAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
+
+const { Sequelize, Anime, Manga, Episode, MangaEpisode, Log } = require("../../config/sequelize")
+const authCheck = require('../../middlewares/authCheck')
 
 // @route   GET api/
 // @desc    Index route
@@ -19,7 +16,7 @@ const { IndexAPIRequestsLimiter } = require('../../middlewares/rate-limiter')
 router.get('/', async (req, res) => {
     let admin = false
     try {
-        await check_permission(req.headers.authorization, "see-admin-page")
+        await authCheck.inline("see-admin-page", req)
         admin = true
     } catch (err) {
         admin = false
@@ -39,17 +36,12 @@ router.get('/', async (req, res) => {
 // @route   GET api/logs
 // @desc    View logs (perm: "see-logs")
 // @access  Private
-router.get('/logs', async (req, res) => {
-    try {
-        await check_permission(req.headers.authorization, "see-logs")
-    } catch (err) {
-        return res.status(403).json({ 'err': err })
-    }
+router.get('/logs', authCheck("see-logs"), async (req, res) => {
     try {
         const logs = await Log.findAll({ order: [['id', 'DESC']] })
         return res.status(200).json(logs)
     } catch (err) {
-        res.status(400).json({ 'err': 'Kayıtları alırken bir sorun oluştu.' })
+        res.status(400).json({ 'err': 'err' })
         return false
     }
 })
@@ -188,7 +180,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 13,
+                limit: 18,
                 order: [['created_time', 'DESC']],
                 where: { special_type: { [Sequelize.Op.ne]: "toplu" } }
             }),
@@ -234,7 +226,7 @@ router.get('/latest-works', async (req, res) => {
                     ],
                     'created_time'
                 ],
-                limit: 13,
+                limit: 18,
                 order: [['created_time', 'DESC']],
             })])
 
@@ -270,6 +262,30 @@ router.get('/featured-anime', async (req, res) => {
         })
 
         return res.status(200).json(featured_animes)
+    } catch (err) {
+        console.log(err)
+    }
+})
+
+// @route   GET api/featured-manga
+// @desc    Get featured-manga
+// @access  Public
+router.get('/featured-manga', async (req, res) => {
+    try {
+        const featured_mangas = await Manga.findAll({
+            where: { is_featured: 1 },
+            attributes: [
+                'name',
+                'slug',
+                'id',
+                'synopsis',
+                'genres',
+            ],
+            limit: 12,
+            order: [['created_time', 'DESC']]
+        })
+
+        return res.status(200).json(featured_mangas)
     } catch (err) {
         console.log(err)
     }

@@ -1,0 +1,459 @@
+{
+    "common": {
+        "index": {
+            "create": "Oluştur",
+            "update": "Düzenle",
+            "delete": "Sil",
+            "feature": "Öne Çıkar"
+        },
+        "buttons": {
+            "send_discord_embed": "Discord'a bildirim yollanacak",
+            "dont_send_discord_embed": "Discord'a bildirim yollanmayacak",
+            "can_user_download": "İndirme sayfasında gösterilecek",
+            "cant_user_download": "İndirme sayfasında gösterilmeyecek",
+            "close": "Kapat",
+            "update": "Güncelle",
+            "save": "Kaydet",
+            "upload_pages": "Sayfa Yükle",
+            "get_information": "Bilgileri getir",
+            "clean_information": "Bilgileri temizle",
+            "add_without_api": "API kullanmadan ekle",
+            "yes": "Evet",
+            "no": "Hayır"
+        },
+        "inputs": {
+            "episode_number_input": "Bölüm Numarası - (Sadece sayı)",
+            "credits_input": "Emektar",
+            "special_type_input": "Bölüm Özel Türü",
+            "episode_name_input": "Bölüm ismi",
+            "mal_link": {
+                "label": "MyAnimeList Linki",
+                "helperText": "https://myanimelist.net/anime/32526/Love_Live_Sunshine ya da https://myanimelist.net/manga/99529 (yoksa -)"
+            },
+            "cover_art": {
+                "label": "Poster linki",
+                "helperText": ""
+            },
+            "logo": {
+                "label": "Logo linki",
+                "helperText": "- koyarak diskteki resmi silebilirsiniz."
+            },
+            "header": {
+                "label": "Başlık linki",
+                "helperText": "- koyarak diskteki resmi silebilirsiniz."
+            },
+            "name": {
+                "label": "İçerik İsmi",
+                "helperText": ""
+            },
+            "synopsis": {
+                "label": "Konusu",
+                "helperText": ""
+            },
+            "translators": {
+                "label": "Çevirmenler",
+                "helperText": "Çevirmenleri arasında virgülle, boşluksuz yazın. çevirmen1,çevirmen2 gibi"
+            },
+            "encoders": {
+                "label": "Encoderlar",
+                "helperText": "Encoderları arasında virgülle, boşluksuz yazın. encoder1,encoder2 gibi"
+            },
+            "editors": {
+                "label": "Editörler",
+                "helperText": "Editörleri arasında virgülle, boşluksuz yazın. encoder1,encoder2 gibi"
+            },
+            "studios": {
+                "label": "Stüdyolar",
+                "helperText": "Stüdyoları arasında virgülle, boşluksuz yazın. stüdyo1,stüdyo2 gibi"
+            },
+            "authors": {
+                "label": "Yazarlar",
+                "helperText": "Yazarları arasında virgülle, boşluksuz yazın. stüdyo1,stüdyo2 gibi"
+            },
+            "genres": {
+                "label": "Türler",
+                "helperText": "Türleri arasında virgülle, boşluksuz yazın. tür1,tür2 gibi"
+            },
+            "premiered": {
+                "label": "Yayınlandığı Sezon",
+                "helperText": "İlkbahar/Yaz/Sonbahar/Kış XXXX"
+            },
+            "reader_link": {
+                "label": "Okuma Sitesi Linki",
+                "helperText": "Site dışına yükleme yapacaksanız, o sitenin linki."
+            },
+            "download_link": {
+                "label": "İndirme Linki",
+                "helperText": ""
+            },
+            "pv": {
+                "label": "Tanıtıcı Video",
+                "helperText": "Sadece Youtube linki"
+            },
+            "episode_count": {
+                "label": "Bölüm sayısı (Toplam)",
+                "helperText": ""
+            },
+            "version": {
+                "label": "Versiyon",
+                "helperText": ""
+            },
+            "series_status": {
+                "label": "Seri Durumu",
+                "helperText": ""
+            },
+            "trans_status": {
+                "label": "Çeviri Durumu",
+                "helperText": ""
+            }
+        },
+        "errors": {
+            "database_error": "Database bağlantısında bir sorun oluştu."
+        }
+    },
+    "index": {
+        "anime": {
+            "title": "Anime İstatistikleri",
+            "anime_count": "Anime Sayısı",
+            "episode_count": "Bölüm Sayısı",
+            "download_link_count": "İndirme Linki Sayısı",
+            "watch_link_count": "İzleme Linki Sayısı"
+        },
+        "manga": {
+            "title": "Manga İstatistikleri",
+            "manga_count": "Manga Sayısı",
+            "episode_count": "Bölüm Sayısı"
+        },
+        "site_statistics": {
+            "title": "Site İstatistikleri",
+            "user_count": "Kullanıcı Sayısı"
+        }
+    },
+    "anime": {
+        "create": {
+            "errors": {
+                "wrong_mal_link": "Girdiğiniz link MyAnimeList Anime linki değil.",
+                "cant_find_link": "Girdiğiniz linkin bilgisi bulunamadı.",
+                "error": "Animeyi eklerken bir sorunla karşılaştık."
+            },
+            "warnings": {
+                "success": "Anime başarıyla eklendi."
+            }
+        },
+        "update": {
+            "errors": {
+                "error": "Animeyi düzenlenirken bir sorunla karşılaştık."
+            },
+            "warnings": {
+                "success": "Anime başarıyla düzenlendi."
+            },
+            "inputs": {
+                "logo": {
+                    "helperText": "- koyarak diskteki resmi silebilirsiniz."
+                },
+                "header": {
+                    "helperText": "- koyarak diskteki resmi silebilirsiniz."
+                }
+            },
+            "selector": "Düzenleyeceğiniz animeyi seçin"
+        },
+        "delete": {
+            "errors": {
+                "error": "Animeyi silerken bir sorunla karşılaştık."
+            },
+            "warnings": {
+                "title": "{{title}} animesini silmek üzeresiniz.",
+                "subtitle": "Bu yıkıcı bir komuttur. Bu animeyle ilişkili bütün bölümler, indirme ve izleme linkleri silinecektir.",
+                "success": "Anime başarıyla silindi."
+            },
+            "selector": "Sileceğiniz animeyi seçin"
+        },
+        "featured": {
+            "errors": {
+                "error": "Animeleri öne çıkarırken bir sorunla karşılaştık."
+            },
+            "warnings": {
+                "success": "Animeler başarıyla öne çıkarıldı."
+            },
+            "selector": "Öne çıkaracağınız animeleri seçin"
+        }
+    },
+    "episode": {
+        "index": {
+            "watch_link": "İzleme Linkleri",
+            "download_link": "İndirme Linkleri"
+        },
+        "common": {
+            "links": "Linkler",
+            "links_add_success": "Linkler başarıyla eklendi.",
+            "link_delete_success": "Link başarıyla silindi.",
+            "inputs": {
+                "helper_text_success": "Buraya birden fazla link koyabilirsiniz. Her link kendine ait satırda olmalıdır.",
+                "helper_text_error": "Hatalı linkler var!",
+                "episode_number_input": "Bölüm Numarası - (Sadece sayı)"
+            }
+        },
+        "download_link": {
+            "create": {
+                "errors": {
+                    "error": "İndirme linklerini eklerken bir sorunla karşılaştık."
+                },
+                "anime_selector": "İndirme linki ekleyeceğiniz animeyi seçin",
+                "episode_selector": "İndirme linki ekleyeceğiniz bölümü seçin"
+            },
+            "delete": {
+                "errors": {
+                    "error": "İndirme linkini silerken bir sorunla karşılaştık.",
+                    "links_not_found": "Bölüme ekli indirme linki bulunamadı."
+                },
+                "anime_selector": "İndirme linki sileceğiniz animeyi seçin",
+                "episode_selector": "İndirme linki sileceğiniz bölümü seçin",
+                "buttons": {
+                    "download_link": "İndirme linki"
+                }
+            }
+        },
+        "watch_link": {
+            "create": {
+                "errors": {
+                    "error": "İzleme linklerini eklerken bir sorunla karşılaştık."
+                },
+                "anime_selector": "İzleme linki ekleyeceğiniz animeyi seçin",
+                "episode_selector": "İzleme linki ekleyeceğiniz bölümü seçin"
+            },
+            "delete": {
+                "errors": {
+                    "error": "İzleme linkini silerken bir sorunla karşılaştık.",
+                    "links_not_found": "Bölüme ekli indirme linki bulunamadı."
+                },
+                "anime_selector": "İzleme linki sileceğiniz animeyi seçin",
+                "episode_selector": "İzleme linki sileceğiniz bölümü seçin",
+                "buttons": {
+                    "download_link": "İzleme linki"
+                }
+            }
+        },
+        "create": {
+            "warnings": {
+                "success": "Bölüm başarıyla eklendi."
+            },
+            "errors": {
+                "error": "Bölümü eklerken bir sorunla karşılaştık."
+            },
+            "anime_selector": "Bölüm ekleyeceğiniz animeyi seçin"
+        },
+        "update": {
+            "warnings": {
+                "can_user_download_success": "Görünürlük başarıyla değiştirildi.",
+                "success": "Bölüm bilgileri başarıyla değiştirildi."
+            },
+            "errors": {
+                "episodes_not_found": "Bu animenin ekli herhangi bir bölümü yok.",
+                "can_user_download_error": "Görünürlük değiştirilirken bir sorunla karşılaştık.",
+                "error": "Bölüm bilgileri değiştirilirken bir sorunla karşılaştık."
+            },
+            "inputs": {
+                "batch_link": "Toplu Link"
+            },
+            "anime_selector": "Bölümünü düzenleyeceğiniz animeyi seçin"
+        },
+        "delete": {
+            "warnings": {
+                "success": "Bölüm başarıyla silindi."
+            },
+            "errors": {
+                "error": "Bölümü silerken bir sorunla karşılaştık."
+            },
+            "anime_selector": "Bölümünü sileceğiniz animeyi seçin",
+            "anime_title": "{{anime_title}} - bölümünü silmek üzeresiniz."
+        }
+    },
+    "logs": {
+        "keys": {
+            "user_name": "Kullanıcı Adı",
+            "text": "Yapılan İşlem",
+            "created_time": "İşlem Zamanı"
+        }
+    },
+    "manga": {
+        "update": {
+            "warnings": {
+                "success": "Manga başarıyla güncellendi."
+            },
+            "errors": {
+                "error": "Mangayı güncellerken bir sorunla karşılaştık."
+            },
+            "manga_selector": "Düzenleyeceğiniz mangayı seçin"
+        },
+        "create": {
+            "warnings": {
+                "success": "Manga başarıyla eklendi."
+            },
+            "errors": {
+                "wrong_mal_link": "Girdiğiniz link MyAnimeList Manga linki değil.",
+                "error": "Mangayı eklerken bir sorunla karşılaştık."
+            }
+        },
+        "delete": {
+            "errors": {
+                "error": "Mangayı silerken bir sorunla karşılaştık."
+            },
+            "warnings": {
+                "title": "{{title}} mangasını silmek üzeresiniz.",
+                "subtitle": "Bu yıkıcı bir komuttur. Bu mangayla ilişkili bütün bölümler silinecektir.",
+                "success": "Manga başarıyla silindi."
+            },
+            "selector": "Sileceğiniz mangayı seçin"
+        },
+        "featured": {
+            "errors": {
+                "error": "Mangaları öne çıkarırken bir sorunla karşılaştık."
+            },
+            "warnings": {
+                "success": "Mangalar başarıyla öne çıkarıldı."
+            },
+            "selector": "Öne çıkaracağınız mangaları seçin"
+        }
+    },
+    "manga_episode": {
+        "create": {
+            "warnings": {
+                "success": "Bölüm başarıyla eklendi."
+            },
+            "errors": {
+                "error": "Bölümü eklerken bir sorunla karşılaştık."
+            },
+            "manga_selector": "Bölüm ekleyeceğiniz mangayı seçin"
+        },
+        "update": {
+            "errors": {
+                "episodes_not_found": "Bu manganın ekli herhangi bir bölümü yok."
+            },
+            "manga_selector": "Bölümünü düzenleyeceğiniz mangayı seçin"
+        },
+        "delete": {
+            "warnings": {
+                "success": "Bölüm başarıyla silindi."
+            },
+            "errors": {
+                "error": "Bölümü silerken bir sorunla karşılaştık."
+            },
+            "manga_selector": "Bölümünü sileceğiniz animeyi seçin",
+            "manga_title": "{{manga_title}} - bölümünü silmek üzeresiniz."
+        }
+    },
+    "motd": {
+        "update": {
+            "warnings": {
+                "is_active_success": "Görünürlük başarıyla değiştirildi."
+            },
+            "errors": {
+                "is_active_error": "Görünürlük değiştirilirken bir sorunla karşılaştık."
+            },
+            "content_info": "İçerik IDsi: {{content_id}} // İçerik Tipi: {{content_type}}"
+        },
+        "create": {
+            "warnings": {
+                "success": "MOTD başarıyla eklendi."
+            },
+            "errors": {
+                "anime_database_error": "Animeleri getirirken bir sorunla karşılaştık.",
+                "manga_database_error": "Mangaları getirirken bir sorunla karşılaştık.",
+                "episode_database_error": "Anime bölümlerini getirirken bir sorunla karşılaştık.",
+                "manga_episode_database_error": "Manga bölümlerini getirirken bir sorunla karşılaştık.",
+                "error": "MOTDyi eklerken bir sorunla karşılaştık."
+            },
+            "inputs": {
+                "title": "MOTD Başlığı",
+                "subtitle": "MOTD İçerik",
+                "homepage": "Hiçbiri (Ana sayfa)"
+            },
+            "page_selector": "Görünmesini istediğiniz sayfayı seçin",
+            "content_selector": "Görünmesini istediğiniz içeriği seçin",
+            "episode_selector": "Görünmesini istediğiniz bölümü seçin",
+            "can_user_dismiss": "Kullanıcı kapatabilsin mi?"
+        },
+        "delete": {
+            "warnings": {
+                "success": "MOTD başarıyla silindi."
+            },
+            "errors": {
+                "error": "MOTD'yi silerken bir sorunla karşılaştık."
+            }
+        },
+        "inputs": {
+            "main_page": "Ana sayfa"
+        }
+    },
+    "perms": {
+        "common": {
+            "inputs": {
+                "name": "Rol İsmi",
+                "color": "Rol Rengi"
+            }
+        },
+        "update": {
+            "warnings": {
+                "success": "Rol başarıyla değiştirildi."
+            },
+            "errors": {
+                "error": "Rol değiştirilirken bir sorunla karşılaştık."
+            },
+            "perm_selector": "Düzenleyeceğiniz rolü seçin"
+        },
+        "create": {
+            "warnings": {
+                "success": "Rol başarıyla eklendi."
+            },
+            "errors": {
+                "error": "Rolü eklerken bir sorunla karşılaştık."
+            }
+        },
+        "delete": {
+            "warnings": {
+                "success": "Rol başarıyla silindi."
+            },
+            "errors": {
+                "error": "Rolü silerken bir sorunla karşılaştık."
+            },
+            "perm_selector": "Sileceğiniz rolü seçin",
+            "perm_title": "{{perm_title}} rolünü silmek üzeresiniz."
+        }
+    },
+    "user": {
+        "common": {
+            "inputs": {
+                "permission_level": "Kullanıcı Rolü",
+                "avatar": "Kullanıcı avatar linki"
+            }
+        },
+        "update": {
+            "warnings": {
+                "success": "Kullanıcı bilgileri başarıyla değiştirildi."
+            },
+            "errors": {
+                "error": "Kullanıcı bilgileri değiştirilirken bir sorunla karşılaştık."
+            },
+            "user_selector": "Düzenleyeceğiniz kullanıcıyı seçin"
+        },
+        "create": {
+            "warnings": {
+                "success": "Kullanıcı başarıyla eklendi."
+            },
+            "errors": {
+                "error": "Kullanıcıyı eklerken bir sorunla karşılaştık."
+            }
+        },
+        "delete": {
+            "warnings": {
+                "success": "Kullanıcı başarıyla silindi."
+            },
+            "errors": {
+                "error": "Kullanıcıyı silerken bir sorunla karşılaştık."
+            },
+            "user_selector": "Sileceğiniz kullanıcıyı seçin",
+            "user_title": "{{user_title}} kullanıcısını silmek üzeresiniz.",
+            "user_title_subtitle": "Bu yıkıcı bir komuttur. Kullanıcının açtığı tüm konularda \"Silinmiş Üye\" yazacaktır."
+        }
+    }
+}

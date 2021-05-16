@@ -1,9 +1,7 @@
 const sitemap = require('express-sitemap')
 const Sequelize = require('sequelize')
-const Anime = require('../models/Anime')
-const Manga = require('../models/Manga')
-const Episode = require('../models/Episode')
-const MangaEpisode = require('../models/MangaEpisode')
+
+const { Anime, Manga, Episode, MangaEpisode } = require('./sequelize')
 
 function episodeTitleParser(episodenumber, specialtype) {
     if (specialtype && specialtype !== "toplu") {

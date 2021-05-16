@@ -1,0 +1,69 @@
+{
+    "header": {
+        "homepage": {
+            "default": "Home",
+            "short": "Home",
+            "logo": ""
+        },
+        "anime": {
+            "default": "Anime",
+            "short": "Anime",
+            "logo": "An"
+        },
+        "episode": {
+            "default": "Episode",
+            "short": "Episode",
+            "logo": "Ep"
+        },
+        "manga": {
+            "default": "Manga",
+            "short": "Manga",
+            "logo": "Ma"
+        },
+        "manga_episode": {
+            "default": "Manga Episode",
+            "short": "M.Episode",
+            "logo": "MB"
+        },
+        "motd": {
+            "default": "MOTD",
+            "short": "MOTD",
+            "logo": "Mo"
+        },
+        "user": {
+            "default": "User",
+            "short": "User",
+            "logo": "Us"
+        },
+        "role": {
+            "default": "Role",
+            "short": "Role",
+            "logo": "Ro"
+        },
+        "logs": {
+            "default": "Logs",
+            "short": "Logs",
+            "logo": "Lo"
+        },
+        "go_back_to_site": {
+            "default": "Back to site",
+            "short": "Homepage",
+            "logo": ""
+        }
+    },
+    "footer": {
+        "release_name": "Release name"
+    },
+    "login": {
+        "errors": {
+            "error": "Something bad happened."
+        },
+        "site_title": "{{site_name}} Admin - Log in"
+    },
+    "datepicker": {
+        "label": "Release date"
+    },
+    "timepicker": {
+        "label": "Release time"
+    }
+}

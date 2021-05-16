@@ -1,0 +1,94 @@
+{
+    "service_worker": {
+        "message": "We updated the site.",
+        "button": "Update"
+    },
+    "header": {
+        "index": {
+            "default": "Home",
+            "short": "Home"
+        },
+        "search": {
+            "default": "Search",
+            "short": "Search"
+        },
+        "calendar": {
+            "default": "Calendar",
+            "short": "Calendar"
+        },
+        "faq": {
+            "default": "Frequently Asked Questions",
+            "short": "FAQ"
+        },
+        "recruitment": {
+            "default": "Recruitment",
+            "short": "Recruitment",
+            "logo": "Re"
+        }
+    },
+    "footer": {
+        "release_name": "Release name",
+        "change_language": "Change language",
+        "select_the_language_you_wish_to_use": "Select the language you wish to use"
+    },
+    "disqus": {
+        "open_comments": "Open comments section"
+    },
+    "404": {
+        "header_text": "We couldn't find the page you're looking for",
+        "subtitle_text": "You will be redirected to home page after 10 seconds."
+    },
+    "pre_screens": {
+        "connection_error": {
+            "header_text": "We couldn't connect to our services :(",
+            "subtitle_text": "Please try again later..."
+        }
+    },
+    "search": {
+        "warnings": {
+            "not_found_synopsis": "We couldn't find the synopsis.",
+            "not_found_premiered": "We couldn't find the release date."
+        }
+    },
+    "translations": {
+        "warnings": {
+            "+18": {
+                "header_text": "You wanted to access something that is NSFW. Are you sure that you want to continue?"
+            },
+            "content_metadata": {
+                "not_found": "Couldn't find {{title}}."
+            },
+            "anime": {
+                "not_found_download_links": "We couldn't find any download links."
+            },
+            "youtube_pv": {
+                "not_found": "Couldn't find Youtube link."
+            }
+        },
+        "buttons": {
+            "+18": {
+                "yes": "Yes",
+                "no": "Go back to home page"
+            }
+        },
+        "anime": {
+            "series_status": "{{episode_count}} Episode",
+            "series_status_plural": "{{episode_count}} Episodes",
+            "download_links": "Download links",
+            "stats": "Information [MyAnimeList]"
+        },
+        "jikan_errors": {
+            "couldnt_reach_data": "Couldn't reach the data requested."
+        }
+    },
+    "motd": {
+        "warnings": {
+            "error": "**There seems to be a problem. (This is a system message.)**"
+        }
+    },
+    "featured": {
+        "errors": {
+            "error": "Couldn't find featured {{contentType}}"
+        }
+    }
+}

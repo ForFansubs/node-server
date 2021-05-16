@@ -1,0 +1,25 @@
+{
+    "react-router": {
+        "index_page": "/",
+        "faq_page": "/sss",
+        "search_page": "/ara/:type?/:offset?",
+        "recruit_page": "/ekip-alimlari",
+        "complete_registration_page": "/kullanici/kayit-tamamla/:hash",
+        "calendar_page": "/takvim",
+        "anime_page": "/ceviriler/anime/:slug",
+        "manga_page": "/ceviriler/manga/:slug",
+        "episode_page": "/ceviriler/anime/:slug/izle/:episodeInfo?",
+        "manga_episode_page": "/ceviriler/manga/:slug/oku/:episode_number?/:page_number?"
+    },
+    "front-routes": {
+        "index": "/",
+        "faq": "/sss",
+        "search": "/ara",
+        "calendar": "/takvim",
+        "recruit": "/ekip-alimlari",
+        "anime_page": "/ceviriler/anime",
+        "manga_page": "/ceviriler/manga",
+        "watch_suffix": "/izle",
+        "read_suffix": "/oku"
+    }
+}

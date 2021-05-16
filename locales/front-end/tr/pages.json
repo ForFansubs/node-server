@@ -1,0 +1,128 @@
+{
+    "index": {
+        "batch_links": {
+            "default": "Toplu Linkler",
+            "description": "Sisteme eklenen toplu linkleri sırasıyla burada bulabilirsiniz"
+        },
+        "newest_anime": {
+            "default": "Animeler",
+            "description": ""
+        },
+        "newest_manga": {
+            "default": "Mangalar",
+            "description": ""
+        },
+        "newest_anime_episodes": {
+            "default": "En Yeni Bölümler",
+            "description": ""
+        },
+        "newest_manga_episodes": {
+            "default": "En Yeni Bölümler",
+            "description": ""
+        }
+    },
+    "search": {
+        "warnings": {
+            "blu_ray_notification": "Üstü mavi çizgili olanlar Blu-ray içeriklerdir.",
+            "performance_problem": "Sayfanın performans sorunu vardır. Donma yaşarsanız şimdilik 🤷",
+            "not_found": "Gösterilecek bir şey bulunamadı.",
+            "end_of_list": "Liste sonu"
+        },
+        "metadata": {
+            "title": "Anime & Manga Ara Türkçe İzle & Oku - {{site_name}}",
+            "description": "Anime ve Manga arama motoru. Türlere göre anime ve manga arayabilir, konularına göz atabilirsiniz. - {{site_name}}"
+        }
+    },
+    "anime": {
+        "metadata": {
+            "title": "{{anime_name}} Türkçe İzle & İndir - {{site_name}}",
+            "description": "{{anime_name}} Türkçe İzle & İndir - {{anime_synopsis}} - {{site_name}}"
+        }
+    },
+    "manga": {
+        "metadata": {
+            "title": "{{manga_name}} Türkçe Oku & İndir - {{site_name}}",
+            "description": "{{manga_name}} Türkçe Oku & İndir - {{manga_synopsis}} - {{site_name}}"
+        }
+    },
+    "recruitment": {
+        "metadata": {
+            "title": "Ekip Alımları - {{site_name}}"
+        },
+        "buttons": {
+            "not_recruiting": "Alımlar kapalı",
+            "apply_for_recruiting": "Başvuru için tıklayın"
+        }
+    },
+    "episode": {
+        "warnings": {
+            "links_not_found": "Link bulunamadı.",
+            "please_select_episode": "Lütfen bölüm seçin.",
+            "no_episode_data": "Bölüm bulunamadı."
+        },
+        "metadata": {
+            "title": "{{anime_name}} {{episode_title}} Türkçe İzle - {{site_name}} Anime",
+            "description": "{{anime_name}} {{episode_title}} Türkçe İzle ve İndir - {{site_name}} Anime İzle"
+        },
+        "credits": "Emektar",
+        "added_at": "Eklenme tarihi"
+    },
+    "complete_registration": {
+        "warnings": {
+            "loading": "Kaydınız tamamlanıyor...",
+            "successful": "Kayıt başarıyla tamamlandı.",
+            "error": "İşleminizi tamamlarken bir sorunla karşılaştık.",
+            "link_expired": "Bu linkin süresi dolmuş. Yenisini istemek için lütfen aşağıdaki butona basın.",
+            "resend_confirmation_email": "Linki tekrar yolla",
+            "resend_confirmation_email_successful": "Yeni link mailinize gönderildi."
+        }
+    },
+    "manga_episode": {
+        "warnings": {
+            "select_the_episode_you_wish_to_read": "Okumak istediğiniz bölümü seçin",
+            "please_select_episode": "Lütfen bölüm seçin.",
+            "no_episode_data": "Bölüm bulunamadı."
+        },
+        "metadata": {
+            "title_plural": "{{manga_name}} Türkçe Oku - {{site_name}} Manga",
+            "title": "{{manga_name}} {{episode_number}}. Bölüm Türkçe Oku - {{site_name}} Manga",
+            "description_plural": "{{manga_name}} Türkçe Oku ve İndir - {{site_name}} Manga Oku",
+            "description": "{{manga_name}} {{episode_number}}. Bölüm Türkçe Oku ve İndir - {{site_name}} Manga Oku"
+        },
+        "img_alt": "{{manga_name}} {{episode_number}}. Bölüm {{page_number}}. Sayfa",
+        "previous_page": "Önceki Sayfa",
+        "next_page": "Sonraki Sayfa"
+    },
+    "faq": {
+        "header_text": "Sıkça Sorulan Sorular"
+    },
+    "calendar": {
+        "metadata": {
+            "title": "{{site_name}} Takvim",
+            "description": "Grubumuzun güncel olarak çevirdiği tüm animelerin hangi gün geleceğini buradan kontrol edebilirsiniz. - {{site_name}} Takvim"
+        }
+    },
+    "user": {
+        "common": {
+            "inputs": {
+                "email": "Email Adresi",
+                "password": "Şifre",
+                "username": "Kullanıcı adı",
+                "repeat_password": "Şifre tekrar"
+            }
+        },
+        "login": {
+            "title": "Giriş yap",
+            "buttons": {
+                "dont_have_account": "Hesabınız yok mu? Hemen oluşturun"
+            }
+        },
+        "register": {
+            "title": "Kayıt ol",
+            "buttons": {
+                "have_account": "Hesabınız var mı? Giriş yapın"
+            },
+            "success": "Hesabınız başarıyla oluşturuldu. Lütfen mail adresinizi doğrulayın."
+        }
+    }
+}

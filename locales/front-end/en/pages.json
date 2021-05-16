@@ -1,0 +1,128 @@
+{
+    "index": {
+        "batch_links": {
+            "default": "Batch links",
+            "description": "You can find the latest batch links here"
+        },
+        "newest_anime": {
+            "default": "Anime",
+            "description": ""
+        },
+        "newest_manga": {
+            "default": "Manga",
+            "description": ""
+        },
+        "newest_anime_episodes": {
+            "default": "New Episodes",
+            "description": ""
+        },
+        "newest_manga_episodes": {
+            "default": "New Episodes",
+            "description": ""
+        }
+    },
+    "search": {
+        "warnings": {
+            "blu_ray_notification": "Boxes that have blue border on top of them are blu-ray content.",
+            "performance_problem": "This page has some performance issues. If you have problems 🤷",
+            "not_found": "Couldn't find anything to show.",
+            "end_of_list": "End of List"
+        },
+        "metadata": {
+            "title": "Search Anime & Manga - Watch & Read - {{site_name}}",
+            "description": "Anime and Manga search engine. You can search by genres and you can read the synopsises. - {{site_name}}"
+        }
+    },
+    "anime": {
+        "metadata": {
+            "title": "{{anime_name}} Watch & Download - {{site_name}}",
+            "description": "{{anime_name}} Watch & Download - {{anime_synopsis}} - {{site_name}}"
+        }
+    },
+    "manga": {
+        "metadata": {
+            "title": "{{manga_name}} Read & Download - {{site_name}}",
+            "description": "{{manga_name}} Read & Download - {{manga_synopsis}} - {{site_name}}"
+        }
+    },
+    "recruitment": {
+        "metadata": {
+            "title": "Recruitment - {{site_name}}"
+        },
+        "buttons": {
+            "not_recruiting": "Closed",
+            "apply_for_recruiting": "Click to apply"
+        }
+    },
+    "episode": {
+        "warnings": {
+            "links_not_found": "Couldn't find any links.",
+            "please_select_episode": "Please select an episode.",
+            "no_episode_data": "Couldn't find any episodes."
+        },
+        "metadata": {
+            "title": "{{anime_name}} {{episode_title}} Watch - {{site_name}} Anime",
+            "description": "{{anime_name}} {{episode_title}} watch and download - {{site_name}} Anime İzle"
+        },
+        "credits": "Credits",
+        "added_at": "Added at"
+    },
+    "complete_registration": {
+        "warnings": {
+            "loading": "Completing your registration...",
+            "successful": "Your registration is successfully completed.",
+            "error": "We had some issues while processing your request",
+            "link_expired": "This link is expired. Please click the link below to renew your link.",
+            "resend_confirmation_email": "Renew the link",
+            "resend_confirmation_email_successful": "New link is sent to your email adress."
+        }
+    },
+    "manga_episode": {
+        "warnings": {
+            "select_the_episode_you_wish_to_read": "Select the episode you wish to read",
+            "please_select_episode": "Please select an episode.",
+            "no_episode_data": "Couldn't find any episodes."
+        },
+        "metadata": {
+            "title_plural": "{{manga_name}} Read - {{site_name}} Manga",
+            "title": "{{manga_name}} Episode {{episode_number}} Read- {{site_name}} Manga",
+            "description_plural": "{{manga_name}} Read and Download - {{site_name}} Read Manga",
+            "description": "{{manga_name}} Episode {{episode_number}} Read and Download - {{site_name}} Read Manga"
+        },
+        "img_alt": "{{manga_name}} Episode {{episode_number}} Page {{page_number}}",
+        "previous_page": "Previous page",
+        "next_page": "Next page"
+    },
+    "faq": {
+        "header_text": "Frequently Asked Questions"
+    },
+    "calendar": {
+        "metadata": {
+            "title": "{{site_name}} Calendar",
+            "description": "You can find the latest airing anime and when we're going to release them. - {{site_name}} Calendar"
+        }
+    },
+    "user": {
+        "common": {
+            "inputs": {
+                "email": "Email Adress",
+                "password": "Password",
+                "username": "Username",
+                "repeat_password": "Password again"
+            }
+        },
+        "login": {
+            "title": "Login",
+            "buttons": {
+                "dont_have_account": "Don't have an account? Create one now!"
+            }
+        },
+        "register": {
+            "title": "Register",
+            "buttons": {
+                "have_account": "Have an account? Login now!"
+            },
+            "success": "Your account is registered successfully. Please confirm your mail adress."
+        }
+    }
+}

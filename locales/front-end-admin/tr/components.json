@@ -1,0 +1,72 @@
+{
+    "header": {
+        "homepage": {
+            "default": "Ana sayfa",
+            "short": "Ana sayfa",
+            "logo": ""
+        },
+        "anime": {
+            "default": "Anime",
+            "short": "Anime",
+            "logo": "An"
+        },
+        "episode": {
+            "default": "Bölüm",
+            "short": "Anime",
+            "logo": "Bö"
+        },
+        "manga": {
+            "default": "Manga",
+            "short": "Manga",
+            "logo": "Ma"
+        },
+        "manga_episode": {
+            "default": "Manga Bölüm",
+            "short": "Manga Bölüm",
+            "logo": "MB"
+        },
+        "motd": {
+            "default": "MOTD",
+            "short": "MOTD",
+            "logo": "Mo"
+        },
+        "user": {
+            "default": "Kullanıcı",
+            "short": "Kullanıcı",
+            "logo": "Ku"
+        },
+        "role": {
+            "default": "Rol",
+            "short": "Rol",
+            "logo": "Ro"
+        },
+        "logs": {
+            "default": "Kayıtlar",
+            "short": "Kayıtlar",
+            "logo": "Ka"
+        },
+        "go_back_to_site": {
+            "default": "Siteye dön",
+            "short": "Siteye dön",
+            "logo": ""
+        }
+    },
+    "footer": {
+        "release_name": "Yayın ismi"
+    },
+    "login": {
+        "errors": {
+            "error": "Giriş yaparken bir sorun oluştu."
+        },
+        "site_title": "{{site_name}} Admin - Giriş yap",
+        "username": "Kullanıcı adı",
+        "password": "Şifre",
+        "login_button": "Giriş yap"
+    },
+    "datepicker": {
+        "label": "Çıkış tarihi"
+    },
+    "timepicker": {
+        "label": "Çıkış saati"
+    }
+}

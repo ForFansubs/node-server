@@ -1,0 +1,21 @@
+{
+    "general": {
+        "synopsis": "Synopsis",
+        "translators": "Translator(s)",
+        "credits": "Credits"
+    },
+    "anime": {
+        "name": "New Anime",
+        "encoders": "Encoder(lar)"
+    },
+    "manga": {
+        "name": "New Manga",
+        "editors": "Editor(s)"
+    },
+    "episode": {
+        "name": "New Episodes"
+    },
+    "manga_episode": {
+        "name": "New Manga Episodes"
+    }
+}

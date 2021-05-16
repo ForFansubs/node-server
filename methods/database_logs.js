@@ -1,15 +1,8 @@
 const { logFailError } = require('./console_logs')
 
 const Sequelize = require('sequelize')
-const Anime = require('../models/Anime')
-const Manga = require('../models/Manga')
-const Log = require('../models/Log')
-const Episode = require('../models/Episode')
-const MangaEpisode = require('../models/MangaEpisode')
-const DownloadLink = require('../models/DownloadLink')
-const WatchLink = require('../models/WatchLink')
-const Permission = require('../models/Permission')
-const User = require('../models/User')
+
+const { Anime, Manga, Log, Episode, MangaEpisode, DownloadLink, WatchLink, Permission, User } = require('../config/sequelize')
 
 async function HandleDatabaseQuery(username, text, process_type) {
 	return await Log.create({
@@ -370,6 +363,18 @@ async function LogDeleteManga(props) {
 	}
 }
 
+async function LogFeaturedManga(props) {
+	const { process_type, username } = props
+
+	try {
+		const text = `${username} isimli kullanıcı öne çıkarılan mangaları değiştirdi.`
+		await HandleDatabaseQuery(username, text, process_type)
+	} catch (err) {
+		logFailError(process, "", err)
+	}
+}
+
+
 async function LogAddMangaEpisode(props) {
 	const process_type = "add-manga-episode"
 
@@ -599,6 +604,7 @@ module.exports = {
 	LogAddManga,
 	LogUpdateManga,
 	LogDeleteManga,
+	LogFeaturedManga,
 	LogAddMangaEpisode,
 	LogUpdateMangaEpisode,
 	LogDeleteMangaEpisode,
