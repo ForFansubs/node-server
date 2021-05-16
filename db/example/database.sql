@@ -37,9 +37,11 @@ CREATE TABLE IF NOT EXISTS `anime` (
   `release_date` datetime NOT NULL,
   `premiered` char(50) DEFAULT '',
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `slug` (`slug`)
+  UNIQUE KEY `slug` (`slug`),
+  KEY `anime_created_by_fk` (`created_by`),
+  CONSTRAINT `anime_created_by_fk` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.
@@ -52,11 +54,15 @@ CREATE TABLE IF NOT EXISTS `download_link` (
   `type` char(50) NOT NULL,
   `link` char(255) NOT NULL,
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `link` (`link`),
-  KEY `anime_id` (`anime_id`),
-  KEY `episode_id` (`episode_id`)
+  KEY `download_link_anime_id_fk` (`anime_id`),
+  KEY `download_link_episode_id_fk` (`episode_id`),
+  KEY `download_link_created_by_fk` (`created_by`),
+  CONSTRAINT `download_link_anime_id_fk` FOREIGN KEY (`anime_id`) REFERENCES `anime` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `download_link_created_by_fk` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `download_link_episode_id_fk` FOREIGN KEY (`episode_id`) REFERENCES `episode` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.
@@ -70,9 +76,12 @@ CREATE TABLE IF NOT EXISTS `episode` (
   `credits` char(255) DEFAULT NULL,
   `can_user_download` tinyint(4) NOT NULL DEFAULT 1,
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `anime_id` (`anime_id`)
+  KEY `anime_id` (`anime_id`),
+  KEY `episode_created_by_fk` (`created_by`),
+  CONSTRAINT `episode_anime_id_fk` FOREIGN KEY (`anime_id`) REFERENCES `anime` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `episode_created_by_fk` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.
@@ -96,6 +105,7 @@ CREATE TABLE IF NOT EXISTS `manga` (
   `slug` char(255) NOT NULL,
   `name` char(100) NOT NULL,
   `synopsis` text DEFAULT NULL,
+  `is_featured` tinyint(1) NOT NULL DEFAULT 0,
   `series_status` char(50) NOT NULL DEFAULT 'Tamamlandı',
   `trans_status` char(50) NOT NULL DEFAULT 'Tamamlandı',
   `translators` char(255) DEFAULT NULL,
@@ -108,9 +118,11 @@ CREATE TABLE IF NOT EXISTS `manga` (
   `genres` char(255) NOT NULL,
   `release_date` datetime NOT NULL,
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `slug` (`slug`)
+  UNIQUE KEY `slug` (`slug`),
+  KEY `manga_created_by_fk` (`created_by`),
+  CONSTRAINT `manga_created_by_fk` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.
@@ -123,10 +135,14 @@ CREATE TABLE IF NOT EXISTS `manga_episode` (
   `episode_name` varchar(255) DEFAULT NULL,
   `credits` char(255) DEFAULT NULL,
   `pages` longtext NOT NULL,
-  `created_by` int(11) NOT NULL,
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`)
+  UNIQUE KEY `id` (`id`),
+  KEY `manga_episode_manga_id_fk` (`manga_id`),
+  KEY `manga_episode_created_by_fk` (`created_by`),
+  CONSTRAINT `manga_episode_created_by_fk` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `manga_episode_manga_id_fk` FOREIGN KEY (`manga_id`) REFERENCES `manga` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.
@@ -140,8 +156,8 @@ CREATE TABLE IF NOT EXISTS `motd` (
   `subtitle` text NOT NULL,
   `content_type` char(50) DEFAULT NULL,
   `content_id` int(11) DEFAULT NULL,
-  `created_by` int(11) NOT NULL,
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -154,7 +170,8 @@ CREATE TABLE IF NOT EXISTS `pending_user` (
   `hash_key` text NOT NULL,
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`user_id`),
-  UNIQUE KEY `user_id` (`user_id`)
+  UNIQUE KEY `user_id` (`user_id`),
+  CONSTRAINT `pending_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.
@@ -170,16 +187,19 @@ CREATE TABLE IF NOT EXISTS `permission` (
   UNIQUE KEY `slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Dumping data for table ffs_nodejs.permission: ~1 rows (approximately)
+-- Dumping data for table ffs_nodejs.permission: ~4 rows (approximately)
 DELETE FROM `permission`;
 /*!40000 ALTER TABLE `permission` DISABLE KEYS */;
 INSERT INTO `permission` (`id`, `slug`, `name`, `permission_set`, `color`) VALUES
-	(1, 'yonetici', 'Yönetici', '["see-admin-page","see-logs","see-anime","add-anime","update-anime","delete-anime","featured-anime","see-episode","add-episode","update-episode","delete-episode","see-watch-link","add-watch-link","delete-watch-link","see-download-link","add-download-link","delete-download-link","see-manga","add-manga","update-manga","delete-manga","see-manga-episode","add-manga-episode","update-manga-episode","delete-manga-episode","see-motd","add-motd","update-motd","delete-motd","see-user","add-user","update-user","delete-user","see-permission","add-permission","update-permission","delete-permission","see-notification","add-notification","update-notification","delete-notification"]', '#CC0000'),
-	(3, 'kullanici', 'Kullanıcı', '[]', NULL);
+	(1, 'yonetici', 'Yönetici', '["see-admin-page","see-logs","see-anime","add-anime","update-anime","delete-anime","featured-anime","see-episode","add-episode","update-episode","delete-episode","see-watch-link","add-watch-link","delete-watch-link","see-download-link","add-download-link","delete-download-link","see-manga","add-manga","update-manga","delete-manga","featured-manga","see-manga-episode","add-manga-episode","update-manga-episode","delete-manga-episode","see-motd","add-motd","update-motd","delete-motd","see-user","add-user","update-user","delete-user","see-permission","add-permission","update-permission","delete-permission","see-content-list","see-anime-list","see-manga-list","see-notification","add-notification","update-notification","delete-notification"]', '#CC0000'),
+	(3, 'kullanici', 'Kullanıcı', '[]', NULL),
+	(12, 'yonetimupload', 'Yönetim Upload', '["see-admin-page","see-logs","see-anime","add-anime","update-anime","delete-anime","featured-anime","see-episode","add-episode","update-episode","delete-episode","see-watch-link","add-watch-link","delete-watch-link","see-download-link","add-download-link","delete-download-link","see-manga","add-manga","update-manga","delete-manga","see-manga-episode","add-manga-episode","update-manga-episode","delete-manga-episode","see-motd","add-motd","update-motd","delete-motd"]', 'ccc'),
+	(13, 'animeuploader', 'Anime Uploader', '["see-admin-page","see-logs","add-anime","add-manga","add-episode","add-watch-link","featured-anime","add-download-link"]', 'ccc');
+/*!40000 ALTER TABLE `permission` ENABLE KEYS */;
 
 -- Dumping structure for table ffs_nodejs.user
 CREATE TABLE IF NOT EXISTS `user` (
-  `id` int(55) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `slug` char(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `name` char(75) NOT NULL,
   `password` text NOT NULL,
@@ -203,10 +223,14 @@ CREATE TABLE IF NOT EXISTS `watch_link` (
   `type` char(255) NOT NULL,
   `link` char(255) NOT NULL,
   `created_time` datetime NOT NULL DEFAULT current_timestamp(),
-  `created_by` int(11) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `episode_id` (`episode_id`),
-  KEY `anime_id` (`anime_id`)
+  KEY `watch_link_anime_id_fk` (`anime_id`),
+  KEY `watch_link_episode_id_fk` (`episode_id`),
+  KEY `watch_link_created_by_fk` (`created_by`),
+  CONSTRAINT `watch_link_anime_id_fk` FOREIGN KEY (`anime_id`) REFERENCES `anime` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `watch_link_created_by_fk` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `watch_link_episode_id_fk` FOREIGN KEY (`episode_id`) REFERENCES `episode` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.
