@@ -21,6 +21,7 @@ const JoiValidator = require("../../middlewares/validate");
 const {
     UserLoginLimiter,
     UserRegisterLimiter,
+    GeneralAPIRequestsLimiter,
 } = require("../../middlewares/rate-limiter");
 
 // Models
@@ -477,18 +478,21 @@ router.post("/kayit-tamamla/yenile", async (req, res) => {
 // @route   GET api/kullanici/adminpage
 // @desc    Return to see if user can see the page or not (perm: "see-admin-page")
 // @access  Private
-router.get("/adminpage", authCheck("see-admin-page"), async (req, res) => {
-    //lgtm [js/missing-rate-limiting]
-    let username, count;
+router.get(
+    "/adminpage",
+    GeneralAPIRequestsLimiter,
+    authCheck("see-admin-page"),
+    async (req, res) => {
+        let username, count;
 
-    if (!req.query.withprops)
-        return res.status(200).json({
-            success: "success",
-        });
-    else {
-        try {
-            [count] = await sequelize.query(
-                `
+        if (!req.query.withprops)
+            return res.status(200).json({
+                success: "success",
+            });
+        else {
+            try {
+                [count] = await sequelize.query(
+                    `
             SELECT (SELECT COUNT(*) FROM anime) AS ANIME_COUNT,
             (SELECT COUNT(*) FROM manga) AS MANGA_COUNT,
             (SELECT COUNT(*) FROM episode) AS EPISODE_COUNT,
@@ -498,14 +502,15 @@ router.get("/adminpage", authCheck("see-admin-page"), async (req, res) => {
             (SELECT COUNT(*) FROM user) AS USER_COUNT,
             (SELECT permission_set FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${req.authUser.name}")) as PERMISSION_LIST,
             (SELECT name FROM permission WHERE slug=(SELECT permission_level FROM user WHERE name="${req.authUser.name}")) as PERMISSION_NAME`,
-                { type: Sequelize.QueryTypes.SELECT }
-            );
-        } catch (err) {
-            console.log(err);
+                    { type: Sequelize.QueryTypes.SELECT }
+                );
+            } catch (err) {
+                console.log(err);
+            }
+            return res.status(200).json(count);
         }
-        return res.status(200).json(count);
     }
-});
+);
 
 // @route   GET api/kullanici/uye-liste
 // @desc    Get all users (perm: "see-user")

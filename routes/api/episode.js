@@ -37,13 +37,15 @@ const {
     deleteWatchLinkSchema,
 } = require("../../validators/episode");
 const authCheck = require("../../middlewares/authCheck");
+const sanitize = require("sanitize-filename");
 
 // @route   GET api/bolum/:slug/watch
 // @desc    View episodes
 // @access  Public
 router.get("/:slug/watch", GeneralAPIRequestsLimiter, async (req, res) => {
     let eps;
-    const { slug } = req.params;
+    let { slug } = req.params;
+    slug = sanitize(slug);
 
     try {
         eps = await Episode.findAll({
@@ -113,8 +115,12 @@ router.get("/:slug/watch", GeneralAPIRequestsLimiter, async (req, res) => {
 // @access  Public
 router.post("/izleme-linkleri", GeneralAPIRequestsLimiter, async (req, res) => {
     let eps;
-    const { slug } = req.body;
+    let { slug } = req.body;
     let [special_type, episode_number] = req.body.episode_data.split("-");
+
+    slug = sanitize(slug);
+    special_type = sanitize(special_type);
+    episode_number = sanitize(episode_number);
 
     special_type === "bolum" ? (special_type = "") : null;
 
@@ -631,8 +637,10 @@ router.post(
     "/download-links/:anime_slug",
     GeneralAPIRequestsLimiter,
     async (req, res) => {
-        const { anime_slug } = req.params;
+        let { anime_slug } = req.params;
         const { episode_id } = req.body;
+
+        anime_slug = sanitize(anime_slug);
 
         try {
             const eps = await DownloadLink.findAll({

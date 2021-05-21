@@ -162,7 +162,7 @@ i18next
             },
         },
         () => {
-            app.get("/ads.txt", async (req, res) => {
+            app.get("/ads.txt", CrawlerFileLimiter, async (req, res) => {
                 res.sendFile(Path.resolve(__dirname, "config", "ads.txt"));
             });
             ///ads txt

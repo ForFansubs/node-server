@@ -2,6 +2,7 @@ const fs = require("fs");
 const Path = require("path");
 const { createCanvas, registerFont, loadImage } = require("canvas");
 const { Anime, Manga } = require("../config/sequelize");
+const sanitize = require("sanitize-filename");
 
 const width = 1200;
 const height = 628;
@@ -106,12 +107,6 @@ function drawImageProp(ctx, img, x, y, w, h, offsetX, offsetY) {
 }
 
 function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
-    if (typeof stroke === "undefined") {
-        stroke = true;
-    }
-    if (typeof radius === "undefined") {
-        radius = 5;
-    }
     if (typeof radius === "number") {
         radius = { tl: radius, tr: radius, br: radius, bl: radius };
     } else {
@@ -152,6 +147,9 @@ module.exports = async function CreateMetacontentCanvas({
     t,
 }) {
     let content = null;
+
+    slug = sanitize(slug);
+    type = sanitize(type);
 
     switch (type) {
         case "anime":
