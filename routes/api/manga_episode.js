@@ -22,6 +22,7 @@ const { GeneralAPIRequestsLimiter } = require("../../middlewares/rate-limiter");
 // Models
 const { Sequelize, MangaEpisode } = require("../../config/sequelize");
 const authCheck = require("../../middlewares/authCheck");
+const sanitize = require("sanitize-filename");
 
 const manga_storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -63,13 +64,8 @@ router.post("/bolum-ekle", authCheck("add-manga-episode"), async (req, res) => {
         if (err) {
             return res.status(500).json({ err: err.message });
         }
-        const {
-            manga_id,
-            manga_slug,
-            credits,
-            episode_number,
-            episode_name,
-        } = req.body;
+        const { manga_id, manga_slug, credits, episode_number, episode_name } =
+            req.body;
         let files = [];
 
         try {
@@ -79,11 +75,9 @@ router.post("/bolum-ekle", authCheck("add-manga-episode"), async (req, res) => {
             });
 
             if (episode)
-                return res
-                    .status(500)
-                    .json({
-                        err: req.t("errors:manga_episode.already_exists"),
-                    });
+                return res.status(500).json({
+                    err: req.t("errors:manga_episode.already_exists"),
+                });
         } catch (err) {
             return console.log(err);
         }
@@ -177,36 +171,32 @@ router.post(
         const { episode_id } = req.body;
 
         try {
-            const {
-                manga_name,
-                manga_slug,
-                episode_number,
-                pages,
-            } = await MangaEpisode.findOne({
-                raw: true,
-                attributes: [
-                    "*",
-                    [
-                        Sequelize.literal(`(
+            const { manga_name, manga_slug, episode_number, pages } =
+                await MangaEpisode.findOne({
+                    raw: true,
+                    attributes: [
+                        "*",
+                        [
+                            Sequelize.literal(`(
                     SELECT name
                     FROM manga
                     WHERE
                         id = manga_episode.manga_id
                 )`),
-                        "manga_name",
-                    ],
-                    [
-                        Sequelize.literal(`(
+                            "manga_name",
+                        ],
+                        [
+                            Sequelize.literal(`(
                     SELECT slug
                     FROM manga
                     WHERE
                         id = manga_episode.manga_id
                 )`),
-                        "manga_slug",
+                            "manga_slug",
+                        ],
                     ],
-                ],
-                where: { id: episode_id },
-            });
+                    where: { id: episode_id },
+                });
 
             Promise.all([
                 deleteMangaFolder(manga_slug, episode_number, pages),
@@ -235,7 +225,9 @@ router.post(
 // @access  Public
 router.get("/:slug/read", GeneralAPIRequestsLimiter, async (req, res) => {
     let manga;
-    const { slug } = req.params;
+    let { slug } = req.params;
+
+    slug = sanitize(slug);
 
     try {
         manga = await MangaEpisode.findAll({
