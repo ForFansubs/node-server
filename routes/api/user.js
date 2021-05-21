@@ -2,8 +2,10 @@ const sendMail = require("../../methods/mailer").sendMail;
 const SHA256 = require("crypto-js/sha256");
 const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
+const qs = require("qs");
 const jwt = require("jsonwebtoken");
 const keys = require("../../config/keys");
 const error_messages = require("../../config/error_messages");
@@ -80,6 +82,19 @@ router.post(
                 r: "pg", // Rating
                 d: "mm", // Default
             });
+
+            const recaptchaResponse = await axios.post(
+                "https://www.google.com/recaptcha/api/siteverify",
+                qs.stringify({
+                    secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+                    response: req.body.recaptcha_response,
+                    remoteip: req.ip,
+                })
+            );
+    
+            if (!recaptchaResponse.data.success) {
+                return res.status(401).send("reCaptcha problem!");
+            }
 
             bcrypt.genSalt(10, (err, salt) => {
                 bcrypt.hash(password, salt, async (err, p_hash) => {
@@ -258,6 +273,19 @@ router.post(
             return res.status(404).json({
                 ...errors,
             });
+        }
+
+        const recaptchaResponse = await axios.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            qs.stringify({
+                secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+                response: req.body.recaptcha_response,
+                remoteip: req.ip,
+            })
+        );
+
+        if (!recaptchaResponse.data.success) {
+            return res.status(401).send("reCaptcha problem!");
         }
 
         // Check Password
