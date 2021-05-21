@@ -18,3 +18,5 @@ ecosystem.config.js
 npm-debug\.log
 
 /config/sitemap.xml
+
+package-lock.json
