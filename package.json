@@ -1,6 +1,6 @@
 {
     "name": "forfansubsback",
-    "version": "4.0.0",
+    "version": "4.0.1",
     "release-name": "ANGEL ATTACK",
     "description": "Back-end Node service for ForFansubs",
     "main": "server.js",

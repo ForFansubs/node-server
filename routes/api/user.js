@@ -96,11 +96,9 @@ router.post(
                         });
                     } catch (err) {
                         console.log(err);
-                        return res
-                            .status(500)
-                            .json({
-                                err: req.t("errors:database.cant_connect"),
-                            });
+                        return res.status(500).json({
+                            err: req.t("errors:database.cant_connect"),
+                        });
                     }
                     const c_hash = SHA256(
                         `${new Date().toString()} ${user_result.insertId}`
@@ -120,11 +118,9 @@ router.post(
                         } catch (err) {
                             console.log(err);
                         }
-                        return res
-                            .status(500)
-                            .json({
-                                err: req.t("errors:database.cant_connect"),
-                            });
+                        return res.status(500).json({
+                            err: req.t("errors:database.cant_connect"),
+                        });
                     }
                     const payload = {
                         to: email,
@@ -216,11 +212,9 @@ router.post(
                         });
                     } catch (err) {
                         console.log(err);
-                        return res
-                            .status(500)
-                            .json({
-                                err: req.t("errors:database.cant_connect"),
-                            });
+                        return res.status(500).json({
+                            err: req.t("errors:database.cant_connect"),
+                        });
                     }
 
                     LogAddUser({
@@ -245,7 +239,7 @@ router.post(
     JoiValidator(loginUserSchema),
     async (req, res) => {
         const { username, password } = req.body;
-
+        let errors = {};
         // Find user by email
         try {
             user = await User.findOne({
@@ -421,31 +415,26 @@ router.post("/kayit-tamamla/yenile", async (req, res) => {
     let { old_hash } = req.body;
 
     try {
-        const {
-            hash_key,
-            user_id,
-            created_time,
-            email,
-            username,
-        } = await PendingUser.findOne({
-            raw: true,
-            where: { hash_key: old_hash },
-            attributes: [
-                "*",
-                [
-                    Sequelize.literal(
-                        `(SELECT email FROM user WHERE id=pending_user.user_id)`
-                    ),
-                    "email",
+        const { hash_key, user_id, created_time, email, username } =
+            await PendingUser.findOne({
+                raw: true,
+                where: { hash_key: old_hash },
+                attributes: [
+                    "*",
+                    [
+                        Sequelize.literal(
+                            `(SELECT email FROM user WHERE id=pending_user.user_id)`
+                        ),
+                        "email",
+                    ],
+                    [
+                        Sequelize.literal(
+                            `(SELECT name FROM user WHERE id=pending_user.user_id)`
+                        ),
+                        "username",
+                    ],
                 ],
-                [
-                    Sequelize.literal(
-                        `(SELECT name FROM user WHERE id=pending_user.user_id)`
-                    ),
-                    "username",
-                ],
-            ],
-        });
+            });
 
         if (!user_id || !hash_key || !created_time) {
             return res
