@@ -15,7 +15,7 @@ module.exports = function (permission) {
             // Token'i headerdan al
             let token = req.headers['x-access-token'] || req.headers['authorization']
             // Token yoksa hata ver
-            if (!token) return res.status(403).json({ message: "Lütfen sisteme giriş yapın." })
+            if (!token) return res.status(401).json({ message: "Lütfen sisteme giriş yapın." })
             // Tokenden "Bearer " bölümünü sil, tokeni al
             // token = token.slice(7, token.length).trimLeft()
             // Gelen body'i kontrol et
@@ -46,7 +46,7 @@ module.exports.inline = async function (permission, req) {
         // Token'i headerdan al
         let token = req.headers['x-access-token'] || req.headers['authorization']
         // Token yoksa hata ver
-        if (!token) return res.status(403).json({ message: "Lütfen sisteme giriş yapın." })
+        if (!token) return res.status(401).json({ message: "Lütfen sisteme giriş yapın." })
         // Tokenden "Bearer " bölümünü sil, tokeni al
         // token = token.slice(7, token.length).trimLeft()
         // Gelen body'i kontrol et
